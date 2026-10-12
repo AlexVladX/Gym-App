@@ -1,0 +1,186 @@
+:root {
+  --fundal: #0f1115;
+  --suprafata: #181b21;
+  --text: #f2f3f5;
+  --discret: #9aa0aa;
+  --accent: #3ddc84;
+  --bordura: #2a2e36;
+  --sus: env(safe-area-inset-top);
+  --jos: env(safe-area-inset-bottom);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--fundal);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body { min-height: 100dvh; padding-bottom: calc(72px + var(--jos)); }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  padding: calc(12px + var(--sus)) 16px 12px;
+  background: var(--fundal);
+  border-bottom: 1px solid var(--bordura);
+  z-index: 5;
+}
+.topbar h1 { margin: 0; font-size: 20px; }
+
+main { padding: 12px 12px 24px; max-width: 640px; margin: 0 auto; }
+
+.ecran { display: none; }
+.ecran.activ { display: block; }
+
+.card {
+  background: var(--suprafata);
+  border: 1px solid var(--bordura);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.card h2 { margin: 0 0 10px; font-size: 17px; }
+
+.eticheta { margin: 0 0 8px; color: var(--discret); font-size: 13px; }
+
+.chipuri { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--bordura);
+  background: transparent;
+  color: var(--text);
+  font-size: 15px;
+  cursor: pointer;
+}
+.chip.activ { background: var(--accent); border-color: var(--accent); color: #0b0d10; }
+
+.rand { display: flex; gap: 8px; }
+
+input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  font-size: 16px; /* evită zoom-ul automat pe iPhone */
+  border-radius: 10px;
+  border: 1px solid var(--bordura);
+  background: var(--fundal);
+  color: var(--text);
+}
+
+.buton {
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--bordura);
+  background: var(--suprafata);
+  color: var(--text);
+  font-size: 15px;
+  cursor: pointer;
+}
+.buton.principal {
+  width: 100%;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0b0d10;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.exercitiu h3 { margin: 0 0 8px; font-size: 16px; }
+
+.serie {
+  display: grid;
+  grid-template-columns: 28px 1fr 1fr 40px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.serie .numar { color: var(--discret); text-align: center; }
+.serie input { padding: 10px; }
+
+.serie .buton { padding: 10px 0; }
+
+.timer { text-align: center; }
+.cifre {
+  font-size: 48px;
+  font-variant-numeric: tabular-nums;
+  margin: 4px 0 12px;
+}
+
+.navigatie {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--suprafata);
+  border-top: 1px solid var(--bordura);
+  padding-bottom: var(--jos);
+  z-index: 10;
+}
+.navigatie button {
+  padding: 12px 4px;
+  background: none;
+  border: none;
+  color: var(--discret);
+  font-size: 13px;
+  cursor: pointer;
+}
+.navigatie button.activ { color: var(--accent); }
+
+.rand.aliniat { align-items: center; justify-content: space-between; }
+.rand.aliniat input { flex: 0 0 96px; }
+
+.mt { margin-top: 8px; }
+.mt input[type="date"] { flex: 1; }
+
+.selector { width: 100%; margin-bottom: 10px; }
+select {
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--bordura);
+  background: var(--fundal);
+  color: var(--text);
+}
+
+.grafic { display: block; width: 100%; height: 180px; margin-bottom: 8px; }
+
+.buton.mic { padding: 6px 12px; }
+
+.rand-lista {
+  display: grid;
+  grid-template-columns: 1fr auto 44px;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px solid var(--bordura);
+}
+.rand-lista .valoare { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.bara-rand {
+  display: grid;
+  grid-template-columns: 84px 1fr 72px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.bara-fundal { background: var(--fundal); border-radius: 6px; height: 14px; overflow: hidden; }
+.bara { background: var(--accent); height: 100%; border-radius: 6px; min-width: 0; }
+.bara-valoare { text-align: right; color: var(--discret); font-variant-numeric: tabular-nums; }
+
+.anunt {
+  position: fixed;
+  left: 12px; right: 12px;
+  bottom: calc(80px + var(--jos));
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--suprafata);
+  border: 1px solid var(--accent);
+  font-size: 14px;
+  z-index: 20;
+}
