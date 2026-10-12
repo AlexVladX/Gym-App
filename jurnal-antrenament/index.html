@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f1115">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Jurnal">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <title>Jurnal de antrenament</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Jurnal</h1>
+  </header>
+
+  <main>
+    <!-- Sesiunea -->
+    <section id="ecran-sesiune" class="ecran activ">
+      <div class="card">
+        <h2>Sesiune nouă</h2>
+        <p class="eticheta">Grupe musculare</p>
+        <div id="grupe" class="chipuri"></div>
+      </div>
+
+      <div class="card">
+        <div class="rand">
+          <input id="exercitiu-nume" type="text" placeholder="Nume exercițiu" list="biblioteca" autocomplete="off">
+          <button id="btn-exercitiu" class="buton">Adaugă</button>
+        </div>
+        <datalist id="biblioteca"></datalist>
+      </div>
+
+      <div id="exercitii"></div>
+
+      <div id="timer" class="card timer" hidden>
+        <p class="eticheta">Pauză</p>
+        <p id="timer-afisaj" class="cifre">00:00</p>
+        <button id="btn-timer-oprit" class="buton">Oprește</button>
+      </div>
+
+      <div class="card">
+        <div class="rand aliniat">
+          <span class="eticheta">Durata pauzei (secunde)</span>
+          <input id="pauza-sec" type="number" inputmode="numeric" min="10" max="600" value="90">
+        </div>
+      </div>
+
+      <button id="btn-inchide" class="buton principal">Închide sesiunea</button>
+    </section>
+
+    <!-- Progres -->
+    <section id="ecran-progres" class="ecran">
+      <div class="card">
+        <h2>Progres pe exercițiu</h2>
+        <select id="progres-exercitiu" class="selector"></select>
+        <p class="eticheta">Forța estimată (formula Epley), kg</p>
+        <canvas id="grafic-forta" class="grafic"></canvas>
+        <p class="eticheta">Volum pe sesiune (kg × repetări)</p>
+        <canvas id="grafic-volum" class="grafic"></canvas>
+        <p id="progres-sumar" class="eticheta"></p>
+      </div>
+
+      <div class="card">
+        <h2>Volum pe grupă</h2>
+        <select id="saptamana" class="selector"></select>
+        <div id="volum-grupe"></div>
+        <p class="eticheta">Volumul fiecărei sesiuni se împarte egal între grupele alese.</p>
+      </div>
+    </section>
+
+    <!-- Măsurători -->
+    <section id="ecran-masuratori" class="ecran">
+      <div class="card">
+        <h2>Adaugă măsurătoare</h2>
+        <div class="rand">
+          <input id="masuratoare-tip" type="text" list="tipuri" placeholder="Tip (ex. Greutate)" autocomplete="off">
+          <datalist id="tipuri"></datalist>
+        </div>
+        <div class="rand mt">
+          <input id="masuratoare-valoare" type="number" inputmode="decimal" placeholder="Valoare">
+          <input id="masuratoare-data" type="date">
+        </div>
+        <button id="btn-masuratoare" class="buton principal">Salvează</button>
+      </div>
+
+      <div class="card">
+        <h2>Evoluție</h2>
+        <select id="masuratoare-grafic-tip" class="selector"></select>
+        <canvas id="grafic-masuratori" class="grafic"></canvas>
+        <div id="masuratori-lista"></div>
+      </div>
+    </section>
+
+    <!-- Setări: backup -->
+    <section id="ecran-setari" class="ecran">
+      <div class="card">
+        <h2>Backup</h2>
+        <p id="backup-info" class="eticheta"></p>
+        <button id="btn-exporta" class="buton principal">Exportă backup</button>
+      </div>
+
+      <div class="card">
+        <h2>Restaurare</h2>
+        <p class="eticheta">Restaurarea înlocuiește toate datele de pe telefon cu cele din fișier.</p>
+        <input id="fisier-import" type="file" accept="application/json,.json">
+      </div>
+    </section>
+  </main>
+
+  <nav class="navigatie">
+    <button data-ecran="ecran-sesiune" class="activ">Sesiune</button>
+    <button data-ecran="ecran-progres">Progres</button>
+    <button data-ecran="ecran-masuratori">Măsurători</button>
+    <button data-ecran="ecran-setari">Setări</button>
+  </nav>
+
+  <script src="db.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
