@@ -115,7 +115,7 @@ input {
   position: fixed;
   left: 0; right: 0; bottom: 0;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   background: var(--suprafata);
   border-top: 1px solid var(--bordura);
   padding-bottom: var(--jos);
@@ -130,6 +130,39 @@ input {
   cursor: pointer;
 }
 .navigatie button.activ { color: var(--accent); }
+.navigatie button { font-size: 12px; }
+
+/* Siluete exerciții */
+.figura, .figura-mica {
+  color: var(--text);
+  flex: 0 0 auto;
+  background: var(--fundal);
+  border-radius: 10px;
+}
+.figura { width: 96px; height: 112px; }
+.figura-mica { width: 52px; height: 60px; }
+.figura *, .figura-mica * {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.figura circle, .figura-mica circle { stroke-width: 4; }
+.figura .bara-ex, .figura-mica .bara-ex { stroke-width: 3; stroke: var(--discret); }
+.figura .sol, .figura-mica .sol { stroke-width: 2; stroke: var(--bordura); }
+
+.fig-card { display: flex; gap: 12px; align-items: flex-start; }
+.fig-text { flex: 1; min-width: 0; }
+.fig-text h3 { margin: 0 0 4px; font-size: 16px; }
+.descriere { margin: 0 0 8px; font-size: 14px; line-height: 1.4; }
+
+.exercitiu-cap { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+.exercitiu-cap h3 { margin: 0; }
+
+.tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+.tabs .chip { flex: 1; text-align: center; }
+#biblio-cautare { width: 100%; margin-top: 4px; }
 
 .rand.aliniat { align-items: center; justify-content: space-between; }
 .rand.aliniat input { flex: 0 0 96px; }
@@ -184,3 +217,109 @@ select {
   font-size: 14px;
   z-index: 20;
 }
+
+/* ---------- Etapa 1: recorduri, sugestii, istoric ---------- */
+.serie { position: relative; }
+.serie.pr input { border-color: #f5c542; }
+.insigna {
+  position: absolute;
+  top: -7px; right: 44px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: #f5c542;
+  color: #0b0d10;
+  font-size: 10px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.insigna[hidden] { display: none; }
+
+.exercitiu-cap h3 { flex: 1; min-width: 0; }
+.sterge-ex { color: var(--discret); }
+
+.sugestie {
+  background: var(--fundal);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.sugestie .eticheta { margin-bottom: 4px; }
+.sugestie-text { margin: 0 0 8px; font-size: 14px; line-height: 1.4; }
+.sugestie-text.crestere { color: var(--accent); font-weight: 600; }
+
+.placute {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.placuta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--fundal);
+}
+.placuta .eticheta { margin: 0; font-size: 12px; }
+.placuta strong { font-size: 18px; font-variant-numeric: tabular-nums; }
+
+.sesiune-istoric h3 { margin: 0; font-size: 16px; }
+.sesiune-istoric .rand.aliniat { margin-bottom: 6px; }
+.lista-exercitii { list-style: none; margin: 8px 0 0; padding: 0; }
+.lista-exercitii li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-top: 1px solid var(--bordura);
+  font-size: 14px;
+}
+.lista-exercitii .valoare { color: var(--discret); text-align: right; font-variant-numeric: tabular-nums; }
+
+.editare h3 { margin-bottom: 10px; }
+.editare label { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+.editare-exercitiu { border-top: 1px solid var(--bordura); padding-top: 10px; margin-bottom: 10px; }
+.editare-exercitiu .rand.aliniat { margin-bottom: 8px; }
+.editare .rand.mt .buton { flex: 1; }
+.editare .rand.mt .buton.principal { margin-top: 0; }
+
+.buton.pericol {
+  width: 100%;
+  margin-top: 10px;
+  background: transparent;
+  border-color: #e5484d;
+  color: #ff6b6f;
+}
+
+.comutator { cursor: pointer; gap: 12px; }
+.comutator input[type="checkbox"] {
+  flex: 0 0 24px;
+  width: 24px; height: 24px;
+  accent-color: var(--accent);
+}
+
+.tabs:only-child { margin-bottom: 0; }
+
+/* ---------- Etapa 2 ---------- */
+.buton.lat { width: 100%; margin-bottom: 8px; }
+.buton.mt { margin-top: 10px; }
+.grupa-noua { margin-bottom: 10px; }
+.grupa-noua .selector { margin-bottom: 0; }
+#greutate-info .placute { margin-bottom: 10px; }
+#greutate-info .eticheta { margin-bottom: 10px; }
+.placuta strong.pozitiv { color: var(--accent); }
+.titlu-sectiune { font-size: 15px; color: var(--discret); margin: 16px 4px 8px; font-weight: 600; }
+.card .rand .buton.principal { margin-top: 0; flex: 1; }
+
+.bara-fundal { position: relative; }
+.bara-zona { position: absolute; top: 0; bottom: 0; background: rgba(61, 220, 132, 0.15); }
+.bara { position: relative; background: var(--discret); }
+.bara.in-zona { background: var(--accent); }
+.bara.peste { background: #f5a442; }
+
+/* ---------- Etapa 3: biblioteca extinsă ---------- */
+#biblio-grupe .chip { padding: 6px 10px; font-size: 14px; }
+#biblio-filtre .rand.aliniat .selector { flex: 1; margin-bottom: 0; }
+#biblio-numar { margin: 0; white-space: nowrap; }
+.fig-text .eticheta { margin-bottom: 6px; }

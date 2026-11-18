@@ -22,6 +22,15 @@
     <!-- Sesiunea -->
     <section id="ecran-sesiune" class="ecran activ">
       <div class="card">
+        <h2>Greutate corporală</h2>
+        <div id="greutate-info"></div>
+        <div class="rand">
+          <input id="greutate-valoare" type="number" inputmode="decimal" step="0.1" placeholder="Greutatea de azi (kg)">
+          <button id="btn-greutate" class="buton" type="button">Salvează</button>
+        </div>
+      </div>
+
+      <div class="card">
         <h2>Sesiune nouă</h2>
         <p class="eticheta">Grupe musculare</p>
         <div id="grupe" class="chipuri"></div>
@@ -50,14 +59,47 @@
         </div>
       </div>
 
+      <button id="btn-rutina" class="buton lat" type="button">Salvează exercițiile ca rutină</button>
       <button id="btn-inchide" class="buton principal">Închide sesiunea</button>
+    </section>
+
+    <!-- Biblioteca -->
+    <section id="ecran-biblioteca" class="ecran">
+      <div class="card">
+        <div class="tabs">
+          <button id="tab-exercitii" class="chip activ" type="button">Exerciții</button>
+          <button id="tab-antrenamente" class="chip" type="button">Antrenamente</button>
+        </div>
+        <div id="biblio-filtre">
+          <input id="biblio-cautare" type="search" placeholder="Caută exercițiu sau mușchi" autocomplete="off">
+          <div id="biblio-grupe" class="chipuri mt"></div>
+          <div class="rand aliniat mt">
+            <select id="biblio-echipament" class="selector" aria-label="Echipament"></select>
+            <span id="biblio-numar" class="eticheta"></span>
+          </div>
+        </div>
+      </div>
+      <div id="biblio-lista"></div>
     </section>
 
     <!-- Progres -->
     <section id="ecran-progres" class="ecran">
       <div class="card">
+        <div class="tabs">
+          <button id="tab-grafice" class="chip activ" type="button">Grafice</button>
+          <button id="tab-istoric" class="chip" type="button">Istoric</button>
+        </div>
+      </div>
+
+      <div id="progres-istoric" hidden>
+        <div id="istoric-lista"></div>
+      </div>
+
+      <div id="progres-grafice">
+      <div class="card">
         <h2>Progres pe exercițiu</h2>
         <select id="progres-exercitiu" class="selector"></select>
+        <div id="progres-recorduri" class="placute"></div>
         <p class="eticheta">Forța estimată (formula Epley), kg</p>
         <canvas id="grafic-forta" class="grafic"></canvas>
         <p class="eticheta">Volum pe sesiune (kg × repetări)</p>
@@ -66,10 +108,11 @@
       </div>
 
       <div class="card">
-        <h2>Volum pe grupă</h2>
+        <h2>Serii pe săptămână, pe grupă</h2>
         <select id="saptamana" class="selector"></select>
         <div id="volum-grupe"></div>
-        <p class="eticheta">Volumul fiecărei sesiuni se împarte egal între grupele alese.</p>
+        <p class="eticheta">Se numără seriile cu repetări, pe grupa principală a fiecărui exercițiu. Banda deschisă marchează 10–20 de serii pe săptămână, intervalul recomandat de obicei pentru creștere musculară.</p>
+      </div>
       </div>
     </section>
 
@@ -99,6 +142,31 @@
     <!-- Setări: backup -->
     <section id="ecran-setari" class="ecran">
       <div class="card">
+        <h2>Progresie</h2>
+        <p class="eticheta">Sugestia urcă repetările până la maxim, apoi crește greutatea cu pasul ales și revine la minim.</p>
+        <div class="rand aliniat mt">
+          <span>Repetări minim</span>
+          <input id="set-min-rep" type="number" inputmode="numeric" min="1" max="50">
+        </div>
+        <div class="rand aliniat mt">
+          <span>Repetări maxim</span>
+          <input id="set-max-rep" type="number" inputmode="numeric" min="1" max="50">
+        </div>
+        <div class="rand aliniat mt">
+          <span>Pas de greutate (kg)</span>
+          <input id="set-pas-kg" type="number" inputmode="decimal" min="0.5" max="20" step="0.5">
+        </div>
+      </div>
+
+      <div class="card">
+        <label class="rand aliniat comutator">
+          <span>Ține ecranul aprins în timpul sesiunii</span>
+          <input id="set-ecran" type="checkbox">
+        </label>
+        <p class="eticheta">Funcționează pe iPhone cu iOS 18.4 sau mai nou și pe Android în Chrome.</p>
+      </div>
+
+      <div class="card">
         <h2>Backup</h2>
         <p id="backup-info" class="eticheta"></p>
         <button id="btn-exporta" class="buton principal">Exportă backup</button>
@@ -114,12 +182,17 @@
 
   <nav class="navigatie">
     <button data-ecran="ecran-sesiune" class="activ">Sesiune</button>
+    <button data-ecran="ecran-biblioteca">Biblioteca</button>
     <button data-ecran="ecran-progres">Progres</button>
     <button data-ecran="ecran-masuratori">Măsurători</button>
     <button data-ecran="ecran-setari">Setări</button>
   </nav>
 
   <script src="db.js"></script>
+  <script src="exercitii.js"></script>
+  <script src="analiza.js"></script>
   <script src="app.js"></script>
+  <script src="istoric.js"></script>
+  <script src="biblioteca.js"></script>
 </body>
 </html>

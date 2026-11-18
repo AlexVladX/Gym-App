@@ -1,6 +1,6 @@
 // Cache simplu: fișierele aplicației sunt păstrate local, ca aplicația să meargă fără internet.
-const CACHE = 'jurnal-v4'; // schimbă numărul la fiecare modificare a fișierelor aplicației
-const FISIERE = ['./', './index.html', './styles.css', './db.js', './app.js', './manifest.webmanifest', './icon.svg'];
+const CACHE = 'jurnal-v8'; // schimbă numărul la fiecare modificare a fișierelor aplicației
+const FISIERE = ['./', './index.html', './styles.css', './db.js', './exercitii.js', './analiza.js', './app.js', './istoric.js', './biblioteca.js', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FISIERE)));
