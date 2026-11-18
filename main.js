@@ -1,6 +1,7 @@
 // Pornirea aplicației și navigarea între ecrane. Se încarcă ultimul.
 
 const TITLURI_ECRANE = {
+  'ecran-acasa': 'Acasă',
   'ecran-sesiune': 'Antrenament',
   'ecran-biblioteca': 'Exerciții',
   'ecran-progres': 'Progres',
@@ -8,7 +9,7 @@ const TITLURI_ECRANE = {
   'ecran-setari': 'Setări',
 };
 
-let ecranCurent = 'ecran-sesiune';
+let ecranCurent = 'ecran-acasa';
 
 function arataEcran(id) {
   const schimbat = id !== ecranCurent;
@@ -32,6 +33,7 @@ function arataEcran(id) {
   if (schimbat) window.scrollTo({ top: 0 });
 
   // Ecranele cu date se reîncarcă la fiecare deschidere (graficele au nevoie de dimensiunea reală).
+  if (id === 'ecran-acasa') randeazaAcasa();
   if (id === 'ecran-progres') arataFilaProgres($('progres-istoric').hidden ? 'grafice' : 'istoric');
   if (id === 'ecran-masuratori') reincarcaMasuratori();
   if (id === 'ecran-setari') {
@@ -44,7 +46,7 @@ function arataEcran(id) {
 async function initializeaza() {
   document.querySelectorAll('.navigatie button').forEach(b =>
     b.addEventListener('click', () => arataEcran(b.dataset.ecran)));
-  $('btn-setari').addEventListener('click', () => arataEcran(ecranCurent === 'ecran-setari' ? 'ecran-sesiune' : 'ecran-setari'));
+  $('btn-setari').addEventListener('click', () => arataEcran(ecranCurent === 'ecran-setari' ? 'ecran-acasa' : 'ecran-setari'));
 
   citesteSetari();
   initSetari();
@@ -71,6 +73,8 @@ async function initializeaza() {
   deseneazaGrupe();
   deseneazaExercitii();
   tineEcranulAprins();
+  // Cu un antrenament în curs, aplicația se deschide direct pe el (în sală contează fiecare secundă).
+  arataEcran(stare.exercitii.length > 0 ? 'ecran-sesiune' : 'ecran-acasa');
   document.body.classList.remove('se-incarca');
 
   // În fundal, fără să întârzie afișarea:

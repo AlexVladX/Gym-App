@@ -218,13 +218,8 @@ function dataLocala() { return formatData(new Date()); }
 // Timestamp pentru o dată AAAA-LL-ZZ (la prânz, ca să nu sară peste zi din cauza fusului orar).
 function timpDinData(data) { return Date.parse(data + 'T12:00:00'); }
 
-// Luni-ul săptămânii în care cade data (format AAAA-LL-ZZ).
-function luniaSaptamanii(data) {
-  const d = new Date(timpDinData(data));
-  const zi = (d.getDay() + 6) % 7; // 0 = luni
-  d.setDate(d.getDate() - zi);
-  return formatData(d);
-}
+// Luni-ul săptămânii în care cade data (format AAAA-LL-ZZ). Calculul e în analiza.js.
+function luniaSaptamanii(data) { return cheieSaptamana(data); }
 
 function afiseazaData(data) {
   const [an, luna, zi] = data.split('-');

@@ -140,6 +140,17 @@ function arataFilaBiblioteca(fila) {
   randeazaBiblioteca();
 }
 
+// Deschide biblioteca filtrată pe o grupă musculară (folosit din panoul Acasă).
+function deschideBibliotecaPeGrupa(grupa) {
+  filtruGrupa = GRUPE.includes(grupa) ? grupa : '';
+  filtruEchipament = '';
+  cautareBiblioteca = '';
+  $('biblio-cautare').value = '';
+  $('biblio-echipament').value = '';
+  deseneazaFiltre();
+  deschideBiblioteca('exercitii');
+}
+
 function reseteazaFiltrele() {
   filtruGrupa = '';
   filtruEchipament = '';

@@ -21,6 +21,7 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `istoric.js` | Istoricul sesiunilor, editare și ștergere |
 | `biblioteca.js` | Ecranul Exerciții (bibliotecă și rutine) |
 | `backup.js` | Export, restaurare, copii automate, stare stocare, ștergerea datelor |
+| `acasa.js` | Ecranul Acasă (panoul): doar afișare; calculele sunt în `analiza.js` |
 | `main.js` | Navigarea și pornirea aplicației (se încarcă ultimul) |
 | `sw.js` | Service worker: întâi rețeaua (max. 3 s), apoi cache |
 
@@ -61,6 +62,16 @@ Se pot importa și backupurile v1/v2. La restaurare:
 - **1RM estimat** (Epley): `kg × (1 + repetări / 30)`. Mai puțin precis peste 10–12 repetări.
 - **Volum**: `kg × repetări`, adunat pe serii. Exercițiile cu greutatea corpului au volum 0 (de revăzut în etapa 5).
 - **Serii pe grupă**: seriile cu repetări > 0, pe grupa principală a exercițiului.
+
+## Panoul Acasă
+
+- Se deschide la pornire; dacă e un antrenament în curs, aplicația pornește direct pe Antrenament.
+- **Serie** = săptămâni consecutive cu cel puțin un antrenament. Săptămâna curentă fără antrenament nu rupe seria.
+- **Recorduri recente** = recordurile din ultimele 30 de zile, obținute reluând istoricul sesiune cu sesiune
+  (aceleași reguli ca insigna PR din timpul antrenamentului). Fără recorduri recente: cele mai mari 1RM estimate.
+- **Următorul antrenament** = rutina făcută cel mai demult (o rutină contează ca făcută într-o sesiune
+  cu cel puțin jumătate din exercițiile ei); fără rutine, cele 3 grupe lucrate cel mai demult.
+- **Grupe musculare** = serii complete pe grupa principală, în ultimele 7 sau 30 de zile.
 
 ## Teste
 

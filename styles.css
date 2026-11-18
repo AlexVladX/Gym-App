@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "11";
+  --versiune-css: "12";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -628,7 +628,7 @@ input[type="file"] { display: none; }
   left: 0; right: 0; bottom: 0;
   z-index: 16;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   padding: 0 var(--dreapta) var(--jos) var(--stanga);
   background: rgba(21, 25, 31, 0.92);
   -webkit-backdrop-filter: saturate(160%) blur(16px);
@@ -648,9 +648,12 @@ input[type="file"] { display: none; }
   font: inherit;
   font-size: 11px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   cursor: pointer;
   touch-action: manipulation;
   transition: color var(--tranzitie);
+  min-width: 0;
+  padding: 0 2px;
 }
 .navigatie button .iconita { width: 24px; height: 24px; transition: transform var(--tranzitie); }
 .navigatie button.activ { color: var(--accent); }
@@ -736,6 +739,105 @@ input[type="file"] { display: none; }
   .dialog-fundal { align-items: center; }
 }
 
+/* ---------- Acasă ---------- */
+.acasa-erou { padding: var(--s5) var(--s4) var(--s4); }
+.acasa-data { color: var(--accent); font-size: 13px; font-weight: 650; letter-spacing: 0.02em; margin-bottom: 2px; }
+.acasa-salut { font-size: 26px; font-weight: 750; margin-bottom: var(--s3); }
+.acasa-indemn { font-size: 15px; color: var(--text-2); margin-bottom: var(--s4); }
+.acasa-stare {
+  display: flex; align-items: center; gap: var(--s3);
+  padding: var(--s3);
+  margin-bottom: var(--s3);
+  border-radius: var(--raza);
+  background: rgba(0, 0, 0, 0.25);
+}
+.acasa-stare strong { display: block; font-size: 15px; }
+.acasa-stare .nota { margin: 2px 0 0; font-variant-numeric: tabular-nums; }
+.punct-viu {
+  flex: 0 0 auto; width: 12px; height: 12px; margin: 0 4px;
+  border-radius: 50%; background: var(--accent);
+  box-shadow: 0 0 0 0 rgba(183, 243, 74, 0.6);
+  animation: puls 1.8s ease-out infinite;
+}
+@keyframes puls { 0% { box-shadow: 0 0 0 0 rgba(183, 243, 74, 0.55); } 100% { box-shadow: 0 0 0 12px rgba(183, 243, 74, 0); } }
+.acasa-bifa { flex: 0 0 auto; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: var(--pe-accent); }
+.acasa-bifa .iconita { width: 20px; height: 20px; stroke-width: 2.6; }
+.acasa-rutina { font-size: 20px; font-weight: 700; margin-bottom: 2px; overflow-wrap: anywhere; }
+
+.acasa-grupe { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: var(--s2); }
+.acasa-grupa {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  min-height: 60px; padding: var(--s3);
+  border: 1px solid var(--bordura); border-radius: var(--raza);
+  background: var(--suprafata-2); text-align: left; cursor: pointer;
+  transition: background var(--tranzitie), border-color var(--tranzitie);
+}
+.acasa-grupa strong { font-size: 15px; }
+.acasa-grupa span { font-size: 12px; color: var(--discret); }
+.acasa-grupa:active { background: var(--suprafata-3); }
+
+.zile-saptamana { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.zi { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--discret); }
+.zi i {
+  display: grid; place-items: center;
+  width: 100%; max-width: 38px; aspect-ratio: 1;
+  border-radius: 12px;
+  background: var(--suprafata-2);
+  border: 1px solid transparent;
+}
+.zi.activa i { background: var(--accent); color: var(--pe-accent); }
+.zi.activa i .iconita { stroke-width: 3; }
+.zi.azi span { color: var(--text); }
+.zi.azi i { border-color: var(--accent); }
+.zi.viitor i { background: transparent; border: 1px dashed var(--bordura-tare); }
+
+.segment-mic { margin-bottom: var(--s3); }
+.segment-mic button { min-height: 34px; font-size: 13px; }
+
+.grafic-mic { height: 120px; }
+
+.bara-procent { grid-template-columns: 84px 1fr 64px; }
+
+.rand-record, .rand-sesiune {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--s3);
+  min-height: 56px;
+  padding: var(--s2) 0;
+  border-top: 1px solid var(--bordura);
+}
+.rand-record .nota, .rand-sesiune .nota { margin: 0; font-size: 13px; }
+.rand-record strong, .rand-sesiune-text strong { display: block; font-size: 15px; overflow-wrap: anywhere; }
+.rand-record .valoare, .rand-sesiune .valoare { font-weight: 650; font-variant-numeric: tabular-nums; text-align: right; font-size: 14px; }
+.record-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: rgba(255, 210, 74, 0.14); color: var(--record); }
+.rand-sesiune {
+  width: 100%;
+  background: none; border-left: 0; border-right: 0; border-bottom: 0;
+  text-align: left; cursor: pointer;
+}
+.rand-sesiune:active { background: var(--suprafata-2); }
+.rand-sesiune-text { min-width: 0; }
+.rand-sesiune-data {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  width: 44px; height: 44px; border-radius: 12px; background: var(--suprafata-2); line-height: 1.05;
+}
+.rand-sesiune-data strong { font-size: 17px; }
+.rand-sesiune-data span { font-size: 11px; color: var(--discret); text-transform: uppercase; }
+
+.pas {
+  display: flex; align-items: center; gap: var(--s3);
+  width: 100%; min-height: 52px; padding: 0 var(--s1);
+  background: none; border: 0; border-top: 1px solid var(--bordura);
+  text-align: left; font-size: 15px; cursor: pointer;
+}
+.pas > span:nth-child(2) { flex: 1; }
+.pas .iconita { color: var(--discret); }
+.pas-bifa { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--bordura-tare); }
+.pas.gata { cursor: default; color: var(--discret); text-decoration: line-through; opacity: 1; }
+.pas.gata .pas-bifa { background: var(--accent); border-color: var(--accent); color: var(--pe-accent); }
+.pas.gata .pas-bifa .iconita { color: var(--pe-accent); stroke-width: 3; }
+
 /* ---------- Stări la trecerea mouse-ului (doar pe dispozitive cu mouse) ---------- */
 @media (hover: hover) and (pointer: fine) {
   .btn-principal:hover:not(:disabled) { background: var(--accent-apasat); }
@@ -746,12 +848,13 @@ input[type="file"] { display: none; }
   .chip:hover:not(.activ) { border-color: var(--discret); color: var(--text); }
   .segment button:hover:not(.activ) { color: var(--text-2); }
   .navigatie button:hover:not(.activ) { color: var(--text-2); }
+  .acasa-grupa:hover, .rand-sesiune:hover, .pas:not(.gata):hover { background: var(--suprafata-2); }
 }
 
 /* ---------- Ecrane mai late ---------- */
 @media (min-width: 600px) {
   main { padding-left: var(--s5); padding-right: var(--s5); }
-  .navigatie { grid-template-columns: repeat(4, 120px); justify-content: center; }
+  .navigatie { grid-template-columns: repeat(5, 112px); justify-content: center; }
 }
 
 /* ---------- Ecrane foarte înguste ---------- */
@@ -760,6 +863,8 @@ input[type="file"] { display: none; }
   .statistici { grid-template-columns: repeat(2, 1fr); }
   .serie { grid-template-columns: 34px 1fr 1fr 36px; }
   .bara-rand { grid-template-columns: 72px 1fr 28px; }
+  .bara-procent { grid-template-columns: 72px 1fr 60px; }
+  .navigatie button { font-size: 10px; }
   .chipuri-defilare { margin-left: calc(-1 * var(--s3)); margin-right: calc(-1 * var(--s3)); padding: 0 var(--s3); }
 }
 
