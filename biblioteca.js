@@ -1,6 +1,6 @@
 // Ecranul Biblioteca: exerciții cu imagini și antrenamente gata făcute.
 // Folosește: BIBLIOTECA, ANTRENAMENTE, creeazaFigura (exercitii.js),
-// și adaugaExercitiu, deseneazaGrupe, programeazaCiorna, arataEcran, anunta (app.js).
+// adaugaExercitiu, deseneazaGrupe, programeazaCiorna, stare (sesiune.js), arataEcran (main.js).
 
 let modBiblioteca = 'exercitii';
 let cautareBiblioteca = '';
@@ -14,30 +14,24 @@ function fara(text) {
 
 function cardExercitiu(e) {
   const detalii = [e.grupa, e.echipament, e.nivel].filter(Boolean).join(' · ');
-  return el('div', { class: 'card fig-card' }, [
+  return el('article', { class: 'card fig-card' }, [
     creeazaFigura(e.poza, e.nume, 'figura') || el('span'),
     el('div', { class: 'fig-text' }, [
       el('h3', { text: e.nume }),
-      el('p', { class: 'eticheta', text: detalii }),
+      el('p', { class: 'nota', text: detalii }),
       el('p', { class: 'descriere', text: e.descriere }),
-      e.muschi?.length ? el('p', { class: 'eticheta', text: 'Mușchi: ' + e.muschi.join(', ') }) : el('span'),
-      el('button', {
-        class: 'buton mic', type: 'button', text: '+ Sesiune',
-        onclick: () => adaugaInSesiune([e.nume], [e.grupa]),
-      }),
+      e.muschi?.length ? el('p', { class: 'nota', text: 'Mușchi: ' + e.muschi.join(', ') }) : null,
+      buton({ text: 'Adaugă în antrenament', icon: 'plus', tip: 'secundar', mic: true, onclick: () => adaugaInSesiune([e.nume], [e.grupa]) }),
     ]),
   ]);
 }
 
 function cardAntrenament(a) {
-  return el('div', { class: 'card' }, [
+  return el('article', { class: 'card' }, [
     el('h3', { text: a.nume }),
     el('p', { class: 'descriere', text: a.descriere }),
-    el('p', { class: 'eticheta', text: a.exercitii.join(' · ') }),
-    el('button', {
-      class: 'buton principal', type: 'button', text: 'Adaugă în sesiune',
-      onclick: () => adaugaInSesiune(a.exercitii, a.grupe),
-    }),
+    el('p', { class: 'nota', text: a.exercitii.join(' · ') }),
+    buton({ text: 'Adaugă în antrenament', icon: 'plus', tip: 'principal', lat: true, onclick: () => adaugaInSesiune(a.exercitii, a.grupe) }),
   ]);
 }
 
@@ -56,8 +50,10 @@ function randeazaBiblioteca() {
     });
     $('biblio-numar').textContent = plural(potrivite.length, 'exercițiu', 'exerciții');
     if (potrivite.length === 0) {
-      lista.replaceChildren(el('div', { class: 'card' }, [
-        el('p', { class: 'eticheta', text: 'Niciun exercițiu găsit. Schimbă filtrele sau caută altfel.' })]));
+      lista.replaceChildren(stareGoala({
+        icon: 'cauta', titlu: 'Niciun exercițiu găsit', text: 'Schimbă filtrele sau caută altfel.',
+        actiune: buton({ text: 'Șterge filtrele', tip: 'secundar', onclick: reseteazaFiltrele }),
+      }));
     } else {
       lista.replaceChildren(...potrivite.map(cardExercitiu));
     }
@@ -71,8 +67,8 @@ async function randeazaAntrenamente() {
   const lista = $('biblio-lista');
   const continut = [el('h2', { class: 'titlu-sectiune', text: 'Rutinele mele' })];
   if (rutine.length === 0) {
-    continut.push(el('div', { class: 'card' }, [el('p', { class: 'eticheta',
-      text: 'Nu ai rutine salvate. În ecranul Sesiune apasă „Salvează exercițiile ca rutină", sau „Salvează ca rutină" din Istoric.' })]));
+    continut.push(stareGoala({ icon: 'lista', titlu: 'Nicio rutină salvată',
+      text: 'În timpul unui antrenament apasă „Salvează ca rutină", sau fă asta dintr-o sesiune din Istoric.' }));
   } else {
     continut.push(...[...rutine].reverse().map(cardRutina));
   }
@@ -81,25 +77,29 @@ async function randeazaAntrenamente() {
 }
 
 function cardRutina(r) {
-  return el('div', { class: 'card' }, [
+  return el('article', { class: 'card' }, [
     el('h3', { text: r.nume }),
-    r.grupe?.length ? el('p', { class: 'eticheta', text: r.grupe.join(', ') }) : el('span'),
+    r.grupe?.length ? el('p', { class: 'nota', text: r.grupe.join(' · ') }) : null,
     el('p', { class: 'descriere', text: r.exercitii.join(' · ') }),
-    el('div', { class: 'rand' }, [
-      el('button', {
-        class: 'buton', type: 'button', text: 'Șterge',
-        onclick: async () => {
-          if (!confirm(`Ștergi rutina „${r.nume}"?`)) return;
-          await stergeRutina(r.id);
-          randeazaBiblioteca();
-        },
-      }),
-      el('button', {
-        class: 'buton principal', type: 'button', text: 'Adaugă în sesiune',
-        onclick: () => adaugaInSesiune(r.exercitii, r.grupe || []),
-      }),
+    el('div', { class: 'rand-butoane' }, [
+      buton({ icon: 'cos', tip: 'fantoma', eticheta: `Șterge rutina ${r.nume}`, onclick: () => stergeRutinaConfirmat(r) }),
+      buton({ text: 'Adaugă în antrenament', icon: 'plus', tip: 'principal', onclick: () => adaugaInSesiune(r.exercitii, r.grupe || []) }),
     ]),
   ]);
+}
+
+async function stergeRutinaConfirmat(r) {
+  const da = await confirma({ titlu: 'Ștergi rutina?', text: `Rutina „${r.nume}" se șterge. Istoricul antrenamentelor nu se schimbă.`, ok: 'Șterge', pericol: true });
+  if (!da) return;
+  try {
+    await stergeRutina(r.id);
+  } catch (err) {
+    console.error(err);
+    notifica('Rutina nu a putut fi ștearsă.', 'eroare');
+    return;
+  }
+  randeazaBiblioteca();
+  notifica('Rutină ștearsă.', 'succes');
 }
 
 // Adaugă exercițiile în sesiunea curentă, cu grupele lor, și deschide ecranul Sesiune.
@@ -118,31 +118,37 @@ async function adaugaInSesiune(exercitii, grupe = []) {
   $('exercitiu-nume').value = '';
   programeazaCiorna();
   arataEcran('ecran-sesiune');
-  anunta(adaugate > 0
-    ? `Adăugate în sesiune: ${plural(adaugate, 'exercițiu', 'exerciții')}.`
-    : 'Exercițiile sunt deja în sesiune.');
+  notifica(adaugate > 0
+    ? `Adăugate în antrenament: ${plural(adaugate, 'exercițiu', 'exerciții')}.`
+    : 'Exercițiile sunt deja în antrenament.', adaugate > 0 ? 'succes' : 'info');
 }
 
-$('tab-exercitii').addEventListener('click', () => {
-  modBiblioteca = 'exercitii';
-  $('tab-exercitii').classList.add('activ');
-  $('tab-antrenamente').classList.remove('activ');
-  $('biblio-filtre').hidden = false;
-  randeazaBiblioteca();
-});
+// Deschide ecranul Exerciții pe fila cerută ('exercitii' sau 'antrenamente').
+function deschideBiblioteca(fila) {
+  arataFilaBiblioteca(fila);
+  arataEcran('ecran-biblioteca');
+}
 
-$('tab-antrenamente').addEventListener('click', () => {
-  modBiblioteca = 'antrenamente';
-  $('tab-antrenamente').classList.add('activ');
-  $('tab-exercitii').classList.remove('activ');
-  $('biblio-filtre').hidden = true;
+function arataFilaBiblioteca(fila) {
+  modBiblioteca = fila;
+  const ex = fila === 'exercitii';
+  $('tab-exercitii').classList.toggle('activ', ex);
+  $('tab-antrenamente').classList.toggle('activ', !ex);
+  $('tab-exercitii').setAttribute('aria-selected', String(ex));
+  $('tab-antrenamente').setAttribute('aria-selected', String(!ex));
+  $('biblio-filtre').hidden = !ex;
   randeazaBiblioteca();
-});
+}
 
-$('biblio-cautare').addEventListener('input', e => {
-  cautareBiblioteca = e.target.value.trim();
+function reseteazaFiltrele() {
+  filtruGrupa = '';
+  filtruEchipament = '';
+  cautareBiblioteca = '';
+  $('biblio-cautare').value = '';
+  $('biblio-echipament').value = '';
+  deseneazaFiltre();
   randeazaBiblioteca();
-});
+}
 
 // Filtrele: grupe (chip-uri) și echipament (listă).
 function deseneazaFiltre() {
@@ -160,10 +166,17 @@ function deseneazaFiltre() {
   }
 }
 
-$('biblio-echipament').addEventListener('change', e => {
-  filtruEchipament = e.target.value;
+function initBiblioteca() {
+  $('tab-exercitii').addEventListener('click', () => arataFilaBiblioteca('exercitii'));
+  $('tab-antrenamente').addEventListener('click', () => arataFilaBiblioteca('antrenamente'));
+  $('biblio-cautare').addEventListener('input', e => {
+    cautareBiblioteca = e.target.value.trim();
+    randeazaBiblioteca();
+  });
+  $('biblio-echipament').addEventListener('change', e => {
+    filtruEchipament = e.target.value;
+    randeazaBiblioteca();
+  });
+  deseneazaFiltre();
   randeazaBiblioteca();
-});
-
-deseneazaFiltre();
-randeazaBiblioteca();
+}

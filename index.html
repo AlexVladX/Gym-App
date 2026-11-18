@@ -3,8 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0f1115">
+  <meta name="theme-color" content="#0B0D10">
+  <meta name="color-scheme" content="dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Jurnal">
   <link rel="manifest" href="manifest.webmanifest">
@@ -13,82 +15,87 @@
   <title>Jurnal de antrenament</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="se-incarca">
   <header class="topbar">
-    <h1>Jurnal</h1>
+    <div class="topbar-interior">
+      <div class="marca">
+        <span class="marca-semn" aria-hidden="true"></span>
+        <h1 id="titlu-ecran">Antrenament</h1>
+      </div>
+      <button id="btn-setari" class="btn btn-fantoma btn-icon" type="button" aria-label="Setări">
+        <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
   </header>
 
   <main>
-    <!-- Sesiunea -->
-    <section id="ecran-sesiune" class="ecran activ">
-      <div class="card">
-        <h2>Greutate corporală</h2>
-        <div id="greutate-info"></div>
-        <div class="rand">
-          <input id="greutate-valoare" type="number" inputmode="decimal" step="0.1" placeholder="Greutatea de azi (kg)">
-          <button id="btn-greutate" class="buton" type="button">Salvează</button>
+    <!-- ================= Antrenament ================= -->
+    <section id="ecran-sesiune" class="ecran activ" aria-labelledby="titlu-ecran">
+      <div class="card card-erou">
+        <div class="card-cap">
+          <div>
+            <h2 id="sesiune-titlu">Antrenament nou</h2>
+            <p id="sesiune-subtitlu" class="nota">Alege grupele, apoi adaugă primul exercițiu.</p>
+          </div>
+          <button id="btn-renunta" class="btn btn-fantoma btn-mic" type="button" hidden>Renunță</button>
+        </div>
+        <div id="sesiune-statistici" class="statistici" hidden>
+          <div><span class="stat-valoare" id="stat-durata">0:00</span><span class="stat-eticheta">Durată</span></div>
+          <div><span class="stat-valoare" id="stat-exercitii">0</span><span class="stat-eticheta">Exerciții</span></div>
+          <div><span class="stat-valoare" id="stat-serii">0</span><span class="stat-eticheta">Serii</span></div>
+          <div><span class="stat-valoare" id="stat-volum">0</span><span class="stat-eticheta">Volum</span></div>
         </div>
       </div>
 
       <div class="card">
-        <h2>Sesiune nouă</h2>
-        <p class="eticheta">Grupe musculare</p>
+        <p class="sectiune-eticheta">Grupe musculare</p>
         <div id="grupe" class="chipuri"></div>
       </div>
 
       <div class="card">
+        <p class="sectiune-eticheta">Adaugă exercițiu</p>
         <div class="rand">
-          <input id="exercitiu-nume" type="text" placeholder="Nume exercițiu" list="biblioteca" autocomplete="off">
-          <button id="btn-exercitiu" class="buton">Adaugă</button>
+          <input id="exercitiu-nume" type="text" placeholder="Ex. Împins cu bara pe bancă" list="biblioteca" autocomplete="off" enterkeyhint="done" aria-label="Numele exercițiului">
+          <button id="btn-exercitiu" class="btn btn-principal btn-icon" type="button" aria-label="Adaugă exercițiul">
+            <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
         </div>
         <datalist id="biblioteca"></datalist>
       </div>
 
       <div id="exercitii"></div>
 
-      <div id="timer" class="card timer" hidden>
-        <p class="eticheta">Pauză</p>
-        <p id="timer-afisaj" class="cifre">00:00</p>
-        <button id="btn-timer-oprit" class="buton">Oprește</button>
+      <div id="sesiune-actiuni" class="actiuni-final" hidden>
+        <button id="btn-rutina" class="btn btn-secundar btn-lat" type="button">Salvează ca rutină</button>
+        <button id="btn-inchide" class="btn btn-principal btn-lat btn-mare" type="button">Încheie antrenamentul</button>
       </div>
-
-      <div class="card">
-        <div class="rand aliniat">
-          <span class="eticheta">Durata pauzei (secunde)</span>
-          <input id="pauza-sec" type="number" inputmode="numeric" min="10" max="600" value="90">
-        </div>
-      </div>
-
-      <button id="btn-rutina" class="buton lat" type="button">Salvează exercițiile ca rutină</button>
-      <button id="btn-inchide" class="buton principal">Închide sesiunea</button>
     </section>
 
-    <!-- Biblioteca -->
-    <section id="ecran-biblioteca" class="ecran">
-      <div class="card">
-        <div class="tabs">
-          <button id="tab-exercitii" class="chip activ" type="button">Exerciții</button>
-          <button id="tab-antrenamente" class="chip" type="button">Antrenamente</button>
+    <!-- ================= Exerciții ================= -->
+    <section id="ecran-biblioteca" class="ecran" aria-labelledby="titlu-ecran">
+      <div class="segment" role="tablist">
+        <button id="tab-exercitii" class="activ" type="button" role="tab" aria-selected="true">Exerciții</button>
+        <button id="tab-antrenamente" type="button" role="tab" aria-selected="false">Rutine</button>
+      </div>
+      <div id="biblio-filtre" class="card">
+        <div class="cautare">
+          <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4"/></svg>
+          <input id="biblio-cautare" type="search" placeholder="Caută exercițiu sau mușchi" autocomplete="off" aria-label="Caută exercițiu">
         </div>
-        <div id="biblio-filtre">
-          <input id="biblio-cautare" type="search" placeholder="Caută exercițiu sau mușchi" autocomplete="off">
-          <div id="biblio-grupe" class="chipuri mt"></div>
-          <div class="rand aliniat mt">
-            <select id="biblio-echipament" class="selector" aria-label="Echipament"></select>
-            <span id="biblio-numar" class="eticheta"></span>
-          </div>
+        <div id="biblio-grupe" class="chipuri chipuri-defilare mt"></div>
+        <div class="rand aliniat mt">
+          <select id="biblio-echipament" aria-label="Echipament"></select>
+          <span id="biblio-numar" class="nota"></span>
         </div>
       </div>
       <div id="biblio-lista"></div>
     </section>
 
-    <!-- Progres -->
-    <section id="ecran-progres" class="ecran">
-      <div class="card">
-        <div class="tabs">
-          <button id="tab-grafice" class="chip activ" type="button">Grafice</button>
-          <button id="tab-istoric" class="chip" type="button">Istoric</button>
-        </div>
+    <!-- ================= Progres ================= -->
+    <section id="ecran-progres" class="ecran" aria-labelledby="titlu-ecran">
+      <div class="segment" role="tablist">
+        <button id="tab-grafice" class="activ" type="button" role="tab" aria-selected="true">Grafice</button>
+        <button id="tab-istoric" type="button" role="tab" aria-selected="false">Istoric</button>
       </div>
 
       <div id="progres-istoric" hidden>
@@ -96,103 +103,200 @@
       </div>
 
       <div id="progres-grafice">
-      <div class="card">
-        <h2>Progres pe exercițiu</h2>
-        <select id="progres-exercitiu" class="selector"></select>
-        <div id="progres-recorduri" class="placute"></div>
-        <p class="eticheta">Forța estimată (formula Epley), kg</p>
-        <canvas id="grafic-forta" class="grafic"></canvas>
-        <p class="eticheta">Volum pe sesiune (kg × repetări)</p>
-        <canvas id="grafic-volum" class="grafic"></canvas>
-        <p id="progres-sumar" class="eticheta"></p>
-      </div>
+        <div id="progres-gol" class="card" hidden>
+          <div class="gol">
+            <div class="gol-icon"><svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
+            <p class="gol-titlu">Încă nu sunt date</p>
+            <p class="gol-text">Salvează primul antrenament ca să vezi forța, volumul și seriile pe grupă.</p>
+          </div>
+        </div>
+        <div id="progres-continut">
+          <div class="card">
+            <h2>Progres pe exercițiu</h2>
+            <select id="progres-exercitiu" aria-label="Exercițiul afișat"></select>
+            <div id="progres-recorduri" class="placute mt"></div>
+            <p class="sectiune-eticheta">1RM estimat (formula Epley), kg</p>
+            <canvas id="grafic-forta" class="grafic" aria-label="Graficul forței estimate"></canvas>
+            <p class="sectiune-eticheta">Volum pe sesiune (kg × repetări)</p>
+            <canvas id="grafic-volum" class="grafic" aria-label="Graficul volumului pe sesiune"></canvas>
+            <p id="progres-sumar" class="nota"></p>
+            <p class="nota">1RM estimat = greutate × (1 + repetări / 30). E o estimare, mai puțin precisă peste 10–12 repetări.</p>
+          </div>
 
-      <div class="card">
-        <h2>Serii pe săptămână, pe grupă</h2>
-        <select id="saptamana" class="selector"></select>
-        <div id="volum-grupe"></div>
-        <p class="eticheta">Se numără seriile cu repetări, pe grupa principală a fiecărui exercițiu. Banda deschisă marchează 10–20 de serii pe săptămână, intervalul recomandat de obicei pentru creștere musculară.</p>
-      </div>
+          <div class="card">
+            <h2>Serii pe săptămână, pe grupă</h2>
+            <select id="saptamana" aria-label="Săptămâna afișată"></select>
+            <div id="volum-grupe" class="mt"></div>
+            <p class="nota">Se numără seriile cu repetări, pe grupa principală a fiecărui exercițiu. Banda deschisă marchează 10–20 de serii pe săptămână, intervalul recomandat de obicei pentru creștere musculară.</p>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- Măsurători -->
-    <section id="ecran-masuratori" class="ecran">
+    <!-- ================= Corp ================= -->
+    <section id="ecran-masuratori" class="ecran" aria-labelledby="titlu-ecran">
+      <div class="card">
+        <div class="card-cap">
+          <h2>Greutate corporală</h2>
+        </div>
+        <div id="greutate-info"></div>
+        <div class="rand mt">
+          <input id="greutate-valoare" type="number" inputmode="decimal" step="0.1" min="20" max="300" placeholder="Greutatea de azi (kg)" aria-label="Greutatea de azi, în kg" enterkeyhint="done">
+          <button id="btn-greutate" class="btn btn-principal" type="button">Salvează</button>
+        </div>
+      </div>
+
       <div class="card">
         <h2>Adaugă măsurătoare</h2>
+        <label class="camp">
+          <span class="camp-eticheta">Tip</span>
+          <input id="masuratoare-tip" type="text" list="tipuri" placeholder="Ex. Talie, Braț, Piept" autocomplete="off">
+        </label>
+        <datalist id="tipuri"></datalist>
         <div class="rand">
-          <input id="masuratoare-tip" type="text" list="tipuri" placeholder="Tip (ex. Greutate)" autocomplete="off">
-          <datalist id="tipuri"></datalist>
+          <label class="camp">
+            <span class="camp-eticheta">Valoare</span>
+            <input id="masuratoare-valoare" type="number" inputmode="decimal" step="any" placeholder="cm sau kg">
+          </label>
+          <label class="camp">
+            <span class="camp-eticheta">Data</span>
+            <input id="masuratoare-data" type="date">
+          </label>
         </div>
-        <div class="rand mt">
-          <input id="masuratoare-valoare" type="number" inputmode="decimal" placeholder="Valoare">
-          <input id="masuratoare-data" type="date">
-        </div>
-        <button id="btn-masuratoare" class="buton principal">Salvează</button>
+        <button id="btn-masuratoare" class="btn btn-principal btn-lat" type="button">Salvează măsurătoarea</button>
       </div>
 
       <div class="card">
         <h2>Evoluție</h2>
-        <select id="masuratoare-grafic-tip" class="selector"></select>
-        <canvas id="grafic-masuratori" class="grafic"></canvas>
+        <select id="masuratoare-grafic-tip" aria-label="Tipul de măsurătoare afișat"></select>
+        <canvas id="grafic-masuratori" class="grafic mt" aria-label="Graficul măsurătorii"></canvas>
         <div id="masuratori-lista"></div>
       </div>
     </section>
 
-    <!-- Setări: backup -->
-    <section id="ecran-setari" class="ecran">
+    <!-- ================= Setări ================= -->
+    <section id="ecran-setari" class="ecran" aria-labelledby="titlu-ecran">
+      <h2 class="titlu-sectiune">Antrenament</h2>
       <div class="card">
-        <h2>Progresie</h2>
-        <p class="eticheta">Sugestia urcă repetările până la maxim, apoi crește greutatea cu pasul ales și revine la minim.</p>
-        <div class="rand aliniat mt">
-          <span>Repetări minim</span>
-          <input id="set-min-rep" type="number" inputmode="numeric" min="1" max="50">
+        <div class="rand aliniat">
+          <label for="set-pauza">Pauză între serii (secunde)</label>
+          <input id="set-pauza" class="camp-scurt" type="number" inputmode="numeric" min="10" max="600">
         </div>
-        <div class="rand aliniat mt">
-          <span>Repetări maxim</span>
-          <input id="set-max-rep" type="number" inputmode="numeric" min="1" max="50">
+        <div class="chipuri mt" aria-label="Valori rapide pentru pauză">
+          <button class="chip" type="button" data-pauza="60">1:00</button>
+          <button class="chip" type="button" data-pauza="90">1:30</button>
+          <button class="chip" type="button" data-pauza="120">2:00</button>
+          <button class="chip" type="button" data-pauza="180">3:00</button>
         </div>
-        <div class="rand aliniat mt">
-          <span>Pas de greutate (kg)</span>
-          <input id="set-pas-kg" type="number" inputmode="decimal" min="0.5" max="20" step="0.5">
-        </div>
-      </div>
-
-      <div class="card">
+        <div class="separator"></div>
         <label class="rand aliniat comutator">
-          <span>Ține ecranul aprins în timpul sesiunii</span>
-          <input id="set-ecran" type="checkbox">
+          <span>Ține ecranul aprins în timpul antrenamentului</span>
+          <input id="set-ecran" type="checkbox" role="switch">
         </label>
-        <p class="eticheta">Funcționează pe iPhone cu iOS 18.4 sau mai nou și pe Android în Chrome.</p>
+        <p class="nota">Funcționează pe iPhone cu iOS 18.4 sau mai nou și pe Android în Chrome.</p>
       </div>
 
+      <h2 class="titlu-sectiune">Progresie</h2>
+      <div class="card">
+        <p class="nota">Sugestia urcă repetările până la maxim, apoi crește greutatea cu pasul ales și revine la minim.</p>
+        <div class="rand aliniat">
+          <label for="set-min-rep">Repetări minim</label>
+          <input id="set-min-rep" class="camp-scurt" type="number" inputmode="numeric" min="1" max="50">
+        </div>
+        <div class="rand aliniat mt">
+          <label for="set-max-rep">Repetări maxim</label>
+          <input id="set-max-rep" class="camp-scurt" type="number" inputmode="numeric" min="1" max="50">
+        </div>
+        <div class="rand aliniat mt">
+          <label for="set-pas-kg">Pas de greutate (kg)</label>
+          <input id="set-pas-kg" class="camp-scurt" type="number" inputmode="decimal" min="0.5" max="20" step="0.5">
+        </div>
+      </div>
+
+      <h2 class="titlu-sectiune">Date și backup</h2>
       <div class="card">
         <h2>Backup</h2>
-        <p id="backup-info" class="eticheta"></p>
-        <button id="btn-exporta" class="buton principal">Exportă backup</button>
+        <p id="backup-info" class="nota"></p>
+        <div class="rand-butoane">
+          <button id="btn-exporta" class="btn btn-principal" type="button">
+            <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Exportă</span>
+          </button>
+          <button id="btn-importa" class="btn btn-secundar" type="button">
+            <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg><span>Restaurează</span>
+          </button>
+        </div>
+        <input id="fisier-import" type="file" accept="application/json,.json" hidden>
+        <p class="nota mt">Restaurarea înlocuiește datele de pe telefon cu cele din fișier. Înainte, aplicația face automat o copie a datelor actuale.</p>
       </div>
 
       <div class="card">
-        <h2>Restaurare</h2>
-        <p class="eticheta">Restaurarea înlocuiește toate datele de pe telefon cu cele din fișier.</p>
-        <input id="fisier-import" type="file" accept="application/json,.json">
+        <h2>Copii automate</h2>
+        <p class="nota">Ultimele 5 copii, păstrate pe acest telefon. Le poți descărca sau restaura.</p>
+        <div id="instantanee-lista"></div>
       </div>
+
+      <div class="card">
+        <h2>Stocare</h2>
+        <p id="stocare-info" class="nota"></p>
+      </div>
+
+      <div class="card card-pericol">
+        <h2>Ștergerea datelor</h2>
+        <p class="nota">Toate datele stau doar pe acest telefon și nu sunt trimise nicăieri.</p>
+        <button id="btn-sterge-tot" class="btn btn-pericol btn-lat" type="button">Șterge toate datele</button>
+      </div>
+
+      <p class="versiune">Jurnal de antrenament · versiunea 1.0 (etapa 1)</p>
     </section>
   </main>
 
-  <nav class="navigatie">
-    <button data-ecran="ecran-sesiune" class="activ">Sesiune</button>
-    <button data-ecran="ecran-biblioteca">Biblioteca</button>
-    <button data-ecran="ecran-progres">Progres</button>
-    <button data-ecran="ecran-masuratori">Măsurători</button>
-    <button data-ecran="ecran-setari">Setări</button>
+  <!-- Timerul de pauză: bară fixă deasupra navigației -->
+  <div id="timer" class="timer" role="timer" aria-live="off" hidden>
+    <div class="timer-progres"><div id="timer-progres"></div></div>
+    <div class="timer-interior">
+      <button id="btn-timer-minus" class="btn btn-fantoma btn-mic" type="button" aria-label="Scade 15 secunde">−15</button>
+      <div class="timer-centru">
+        <span class="timer-eticheta">Pauză</span>
+        <span id="timer-afisaj" class="timer-cifre">0:00</span>
+      </div>
+      <button id="btn-timer-plus" class="btn btn-fantoma btn-mic" type="button" aria-label="Adaugă 15 secunde">+15</button>
+      <button id="btn-timer-oprit" class="btn btn-secundar btn-mic" type="button">Sari</button>
+    </div>
+  </div>
+
+  <nav class="navigatie" aria-label="Navigare principală">
+    <button data-ecran="ecran-sesiune" class="activ" type="button" aria-current="page">
+      <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>
+      <span>Antrenament</span>
+    </button>
+    <button data-ecran="ecran-biblioteca" type="button">
+      <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5zM4 19a2 2 0 0 1 2-2h13M9 7h6"/></svg>
+      <span>Exerciții</span>
+    </button>
+    <button data-ecran="ecran-progres" type="button">
+      <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      <span>Progres</span>
+    </button>
+    <button data-ecran="ecran-masuratori" type="button">
+      <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM5 9l7 1.5L19 9M12 10.5V15M9 22l3-7 3 7"/></svg>
+      <span>Corp</span>
+    </button>
   </nav>
 
   <script src="db.js"></script>
+  <script src="validare.js"></script>
   <script src="exercitii.js"></script>
   <script src="analiza.js"></script>
-  <script src="app.js"></script>
+  <script src="ui.js"></script>
+  <script src="grafice.js"></script>
+  <script src="setari.js"></script>
+  <script src="timer.js"></script>
+  <script src="sesiune.js"></script>
+  <script src="corp.js"></script>
+  <script src="progres.js"></script>
   <script src="istoric.js"></script>
   <script src="biblioteca.js"></script>
+  <script src="backup.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>
