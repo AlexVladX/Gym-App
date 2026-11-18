@@ -13,9 +13,9 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
   <title>Jurnal de antrenament</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=11">
 </head>
-<body class="se-incarca">
+<body class="se-incarca" data-versiune="11">
   <header class="topbar">
     <div class="topbar-interior">
       <div class="marca">
@@ -23,7 +23,7 @@
         <h1 id="titlu-ecran">Antrenament</h1>
       </div>
       <button id="btn-setari" class="btn btn-fantoma btn-icon" type="button" aria-label="Setări">
-        <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
       </button>
     </div>
   </header>
@@ -57,7 +57,7 @@
         <div class="rand">
           <input id="exercitiu-nume" type="text" placeholder="Ex. Împins cu bara pe bancă" list="biblioteca" autocomplete="off" enterkeyhint="done" aria-label="Numele exercițiului">
           <button id="btn-exercitiu" class="btn btn-principal btn-icon" type="button" aria-label="Adaugă exercițiul">
-            <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
           </button>
         </div>
         <datalist id="biblioteca"></datalist>
@@ -79,10 +79,10 @@
       </div>
       <div id="biblio-filtre" class="card">
         <div class="cautare">
-          <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4"/></svg>
+          <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4"/></svg>
           <input id="biblio-cautare" type="search" placeholder="Caută exercițiu sau mușchi" autocomplete="off" aria-label="Caută exercițiu">
         </div>
-        <div id="biblio-grupe" class="chipuri chipuri-defilare mt"></div>
+        <div id="biblio-grupe" class="chipuri mt"></div>
         <div class="rand aliniat mt">
           <select id="biblio-echipament" aria-label="Echipament"></select>
           <span id="biblio-numar" class="nota"></span>
@@ -105,7 +105,7 @@
       <div id="progres-grafice">
         <div id="progres-gol" class="card" hidden>
           <div class="gol">
-            <div class="gol-icon"><svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
+            <div class="gol-icon"><svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
             <p class="gol-titlu">Încă nu sunt date</p>
             <p class="gol-text">Salvează primul antrenament ca să vezi forța, volumul și seriile pe grupă.</p>
           </div>
@@ -219,10 +219,10 @@
         <p id="backup-info" class="nota"></p>
         <div class="rand-butoane">
           <button id="btn-exporta" class="btn btn-principal" type="button">
-            <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Exportă</span>
+            <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Exportă</span>
           </button>
           <button id="btn-importa" class="btn btn-secundar" type="button">
-            <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg><span>Restaurează</span>
+            <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg><span>Restaurează</span>
           </button>
         </div>
         <input id="fisier-import" type="file" accept="application/json,.json" hidden>
@@ -246,7 +246,7 @@
         <button id="btn-sterge-tot" class="btn btn-pericol btn-lat" type="button">Șterge toate datele</button>
       </div>
 
-      <p class="versiune">Jurnal de antrenament · versiunea 1.0 (etapa 1)</p>
+      <p class="versiune">Jurnal de antrenament · versiunea 1.1</p>
     </section>
   </main>
 
@@ -266,37 +266,37 @@
 
   <nav class="navigatie" aria-label="Navigare principală">
     <button data-ecran="ecran-sesiune" class="activ" type="button" aria-current="page">
-      <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>
+      <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>
       <span>Antrenament</span>
     </button>
     <button data-ecran="ecran-biblioteca" type="button">
-      <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5zM4 19a2 2 0 0 1 2-2h13M9 7h6"/></svg>
+      <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5zM4 19a2 2 0 0 1 2-2h13M9 7h6"/></svg>
       <span>Exerciții</span>
     </button>
     <button data-ecran="ecran-progres" type="button">
-      <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
       <span>Progres</span>
     </button>
     <button data-ecran="ecran-masuratori" type="button">
-      <svg class="iconita" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM5 9l7 1.5L19 9M12 10.5V15M9 22l3-7 3 7"/></svg>
+      <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM5 9l7 1.5L19 9M12 10.5V15M9 22l3-7 3 7"/></svg>
       <span>Corp</span>
     </button>
   </nav>
 
-  <script src="db.js"></script>
-  <script src="validare.js"></script>
-  <script src="exercitii.js"></script>
-  <script src="analiza.js"></script>
-  <script src="ui.js"></script>
-  <script src="grafice.js"></script>
-  <script src="setari.js"></script>
-  <script src="timer.js"></script>
-  <script src="sesiune.js"></script>
-  <script src="corp.js"></script>
-  <script src="progres.js"></script>
-  <script src="istoric.js"></script>
-  <script src="biblioteca.js"></script>
-  <script src="backup.js"></script>
-  <script src="main.js"></script>
+  <script src="db.js?v=11"></script>
+  <script src="validare.js?v=11"></script>
+  <script src="exercitii.js?v=11"></script>
+  <script src="analiza.js?v=11"></script>
+  <script src="ui.js?v=11"></script>
+  <script src="grafice.js?v=11"></script>
+  <script src="setari.js?v=11"></script>
+  <script src="timer.js?v=11"></script>
+  <script src="sesiune.js?v=11"></script>
+  <script src="corp.js?v=11"></script>
+  <script src="progres.js?v=11"></script>
+  <script src="istoric.js?v=11"></script>
+  <script src="biblioteca.js?v=11"></script>
+  <script src="backup.js?v=11"></script>
+  <script src="main.js?v=11"></script>
 </body>
 </html>

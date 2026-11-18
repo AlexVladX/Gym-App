@@ -314,7 +314,9 @@ function figuraSvg(p, nume, clasa) {
   s += linie(p.trunchi);
   for (const b of p.brate) s += linie(b);
   for (const l of p.picioare) s += linie(l);
-  return `<svg class="${clasa}" viewBox="0 0 120 140" role="img" aria-label="${nume}">${s}</svg>`;
+  // Atributele de desen sunt și pe SVG (nu doar în CSS), ca figura să nu apară plină, neagră, fără foaia de stil.
+  const [w, h] = clasa === 'figura' ? [88, 104] : [46, 54];
+  return `<svg class="${clasa}" viewBox="0 0 120 140" width="${w}" height="${h}" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="${nume}">${s}</svg>`;
 }
 
 // Întoarce elementul SVG pentru un exercițiu din bibliotecă, sau null.

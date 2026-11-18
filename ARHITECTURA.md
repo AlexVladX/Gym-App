@@ -70,4 +70,15 @@ node --test tests/*.test.js
 
 ## La fiecare publicare
 
-Mărește numărul din `CACHE` în `sw.js` (ex. `jurnal-v9` → `jurnal-v10`) și adaugă în `FISIERE` orice fișier nou.
+Versiunea apare în trei locuri și trebuie să fie aceeași (ex. `11` → `12`):
+
+1. `sw.js` — `const VERSIUNE = '11'` (și orice fișier nou adăugat în `FISIERE_VERSIONATE`);
+2. `index.html` — `data-versiune="11"` pe `<body>` și `?v=11` la `styles.css` și la fiecare script;
+3. `styles.css` — `--versiune-css: "11"`.
+
+De ce: GitHub Pages lasă browserul să păstreze fișierele 10 minute. Fără versiune în adresă,
+telefonul putea combina pagina nouă cu foaia de stil veche (iconițe negre, pline).
+Dacă totuși se întâmplă, `main.js` observă diferența, golește cache-ul și reîncarcă o dată.
+
+Iconițele SVG au atributele de desen (`fill="none"`, `stroke="currentColor"`, dimensiuni) direct pe element,
+nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.

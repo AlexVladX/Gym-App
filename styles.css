@@ -4,6 +4,9 @@
    ========================================================= */
 
 :root {
+  /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
+  --versiune-css: "11";
+
   /* Culori */
   --fundal: #0B0D10;
   --suprafata: #15191F;
@@ -41,8 +44,10 @@
   --atingere: 44px;
   --nav-h: 64px;
   --timer-h: 72px;
-  --sus: env(safe-area-inset-top);
-  --jos: env(safe-area-inset-bottom);
+  --sus: env(safe-area-inset-top, 0px);
+  --jos: env(safe-area-inset-bottom, 0px);
+  --stanga: env(safe-area-inset-left, 0px);
+  --dreapta: env(safe-area-inset-right, 0px);
 
   --tranzitie: 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
   color-scheme: dark;
@@ -64,6 +69,7 @@ html, body {
 }
 
 body {
+  min-height: 100vh;
   min-height: 100dvh;
   padding-bottom: calc(var(--nav-h) + var(--jos) + var(--s4));
 }
@@ -71,6 +77,16 @@ body.cu-timer { padding-bottom: calc(var(--nav-h) + var(--timer-h) + var(--jos) 
 body.se-incarca main { opacity: 0; }
 
 [hidden] { display: none !important; }
+
+/* Safari dă butoanelor stil de sistem (text albastru, fundal gri). Pornim de la zero. */
+button {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+svg { overflow: visible; }
 
 h1, h2, h3 { margin: 0; letter-spacing: -0.01em; }
 h2 { font-size: 17px; font-weight: 650; }
@@ -94,7 +110,7 @@ p { margin: 0; }
   max-width: 640px;
   margin: 0 auto;
   height: 56px;
-  padding: 0 var(--s2) 0 var(--s4);
+  padding: 0 calc(var(--s2) + var(--dreapta)) 0 calc(var(--s4) + var(--stanga));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -113,7 +129,7 @@ p { margin: 0; }
 main {
   max-width: 640px;
   margin: 0 auto;
-  padding: var(--s4) var(--s4) var(--s6);
+  padding: var(--s4) calc(var(--s4) + var(--dreapta)) var(--s6) calc(var(--s4) + var(--stanga));
   transition: opacity var(--tranzitie);
 }
 
@@ -264,6 +280,8 @@ main {
 }
 .btn:active { transform: scale(0.97); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn:focus-visible, .chip:focus-visible, .segment button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn .iconita { width: 20px; height: 20px; }
 
 .btn-principal { background: var(--accent); color: var(--pe-accent); }
@@ -595,7 +613,7 @@ input[type="file"] { display: none; }
   max-width: 640px;
   margin: 0 auto;
   height: calc(var(--timer-h) - 3px);
-  padding: 0 var(--s4);
+  padding: 0 calc(var(--s4) + var(--dreapta)) 0 calc(var(--s4) + var(--stanga));
   display: flex;
   align-items: center;
   gap: var(--s2);
@@ -611,7 +629,7 @@ input[type="file"] { display: none; }
   z-index: 16;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  padding-bottom: var(--jos);
+  padding: 0 var(--dreapta) var(--jos) var(--stanga);
   background: rgba(21, 25, 31, 0.92);
   -webkit-backdrop-filter: saturate(160%) blur(16px);
   backdrop-filter: saturate(160%) blur(16px);
@@ -636,6 +654,9 @@ input[type="file"] { display: none; }
 }
 .navigatie button .iconita { width: 24px; height: 24px; transition: transform var(--tranzitie); }
 .navigatie button.activ { color: var(--accent); }
+.navigatie button:active .iconita { transform: scale(0.9); }
+.navigatie button:focus-visible { outline-offset: -4px; border-radius: var(--raza); }
+.navigatie button span { line-height: 1.1; }
 .navigatie button.activ .iconita { transform: translateY(-1px); }
 
 /* ---------- Toast ---------- */
@@ -713,6 +734,18 @@ input[type="file"] { display: none; }
 @keyframes apare { from { opacity: 0; } to { opacity: 1; } }
 @media (min-width: 600px) {
   .dialog-fundal { align-items: center; }
+}
+
+/* ---------- Stări la trecerea mouse-ului (doar pe dispozitive cu mouse) ---------- */
+@media (hover: hover) and (pointer: fine) {
+  .btn-principal:hover:not(:disabled) { background: var(--accent-apasat); }
+  .btn-secundar:hover:not(:disabled) { background: #2B313B; border-color: var(--bordura-tare); }
+  .btn-fantoma:hover:not(:disabled) { background: var(--suprafata-2); color: var(--text); }
+  .btn-pericol:hover:not(:disabled) { background: rgba(255, 92, 92, 0.2); }
+  .dialog-butoane .btn-pericol:hover:not(:disabled) { background: #E64848; }
+  .chip:hover:not(.activ) { border-color: var(--discret); color: var(--text); }
+  .segment button:hover:not(.activ) { color: var(--text-2); }
+  .navigatie button:hover:not(.activ) { color: var(--text-2); }
 }
 
 /* ---------- Ecrane mai late ---------- */

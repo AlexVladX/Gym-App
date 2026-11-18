@@ -78,7 +78,34 @@ async function initializeaza() {
   copieAutomataSaptamanala();
 }
 
-initializeaza().catch(err => {
+// Verifică dacă foaia de stil încărcată are aceeași versiune ca pagina.
+// Dacă nu (fișiere amestecate dintr-un cache vechi), golește cache-ul aplicației și reîncarcă o singură dată.
+// Întoarce true dacă a pornit reîncărcarea.
+function verificaVersiuneaFisierelor() {
+  const asteptata = document.body.dataset.versiune;
+  const css = getComputedStyle(document.documentElement).getPropertyValue('--versiune-css').trim().replace(/["']/g, '');
+  if (!asteptata || css === asteptata) {
+    try { sessionStorage.removeItem('reincarcareVersiune'); } catch (_) { /* ignorat */ }
+    return false;
+  }
+  let incercat = null;
+  try { incercat = sessionStorage.getItem('reincarcareVersiune'); } catch (_) { /* ignorat */ }
+  console.warn(`Foaia de stil are versiunea „${css || 'veche'}", pagina „${asteptata}".`);
+  if (incercat === asteptata) return false; // am încercat deja o dată: nu intrăm în buclă
+  try { sessionStorage.setItem('reincarcareVersiune', asteptata); } catch (_) { /* ignorat */ }
+  const goleste = 'caches' in window
+    ? caches.keys().then(chei => Promise.all(chei.map(c => caches.delete(c))))
+    : Promise.resolve();
+  const actualizeaza = navigator.serviceWorker
+    ? navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => {})
+    : Promise.resolve();
+  Promise.all([goleste, actualizeaza]).finally(() => location.reload());
+  return true;
+}
+
+if (verificaVersiuneaFisierelor()) {
+  // Pagina se reîncarcă; nu mai pornim aplicația cu stilurile greșite.
+} else initializeaza().catch(err => {
   console.error(err);
   document.body.classList.remove('se-incarca');
   notifica('Aplicația nu a putut porni complet. Reîncarcă pagina.', 'eroare');
@@ -86,5 +113,5 @@ initializeaza().catch(err => {
 
 // Service worker: aplicația funcționează offline după prima încărcare. Necesită HTTPS sau localhost.
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => { /* fără offline, aplicația merge oricum */ });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => { /* fără offline, aplicația merge oricum */ });
 }

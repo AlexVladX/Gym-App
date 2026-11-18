@@ -53,6 +53,11 @@ function iconita(nume, clasa = 'iconita') {
   svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('class', clasa);
   svg.setAttribute('aria-hidden', 'true');
+  // Atributele de desen sunt puse direct pe SVG, nu doar în CSS: dacă foaia de stil
+  // lipsește sau e o versiune veche, iconița rămâne contur mic, nu o formă neagră plină.
+  const marime = clasa.includes('mica') ? '16' : '22';
+  for (const [a, v] of [['width', marime], ['height', marime], ['fill', 'none'], ['stroke', 'currentColor'],
+    ['stroke-width', '2'], ['stroke-linecap', 'round'], ['stroke-linejoin', 'round']]) svg.setAttribute(a, v);
   const cale = document.createElementNS(ns, 'path');
   cale.setAttribute('d', ICONITE[nume] || ICONITE.info);
   svg.append(cale);
