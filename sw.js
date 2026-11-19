@@ -4,21 +4,33 @@
 //
 // La fiecare publicare: mărește VERSIUNE aici, în index.html (?v=… și data-versiune)
 // și în styles.css (--versiune-css). Toate trei trebuie să fie egale.
-const VERSIUNE = '13';
+const VERSIUNE = '16';
 const CACHE = `jurnal-v${VERSIUNE}`;
 const FISIERE_FIXE = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 const FISIERE_VERSIONATE = [
-  'styles.css', 'db.js', 'validare.js', 'exercitii.js', 'analiza.js', 'ui.js', 'grafice.js',
+  'styles.css', 'db.js', 'validare.js', 'exercitii.js', 'analiza.js', 'catalog.js', 'figuri.js', 'ui.js', 'grafice.js',
   'setari.js', 'timer.js', 'sesiune.js', 'corp.js', 'progres.js', 'istoric.js',
   'biblioteca.js', 'backup.js', 'acasa.js', 'main.js',
 ].map(f => `./${f}?v=${VERSIUNE}`);
 const LIMITA_RETEA_MS = 3000;
 
+// Miniaturile ilustrațiilor (lista e scrisă de tools/ilustratii/genereaza.js) se salvează la instalare,
+// ca listele de exerciții să aibă desenele și fără semnal. Dacă vreuna nu se descarcă, instalarea continuă;
+// desenele mari se salvează când le deschizi prima dată.
+function salveazaMiniaturi(c) {
+  return fetch(`./ilustratii/lista.json?v=${VERSIUNE}`, { cache: 'reload' })
+    .then(r => (r.ok ? r.json() : { miniaturi: [] }))
+    .then(lista => Promise.allSettled((lista.miniaturi || []).map(f =>
+      c.add(new Request(`./ilustratii/${f}?v=${VERSIUNE}`, { cache: 'reload' })))))
+    .catch(() => {});
+}
+
 self.addEventListener('install', e => {
   // cache: 'reload' ocolește cache-ul HTTP al browserului (GitHub Pages ține fișierele 10 minute),
   // ca să nu salvăm o foaie de stil veche lângă o pagină nouă.
   e.waitUntil(caches.open(CACHE).then(c =>
-    c.addAll([...FISIERE_FIXE, ...FISIERE_VERSIONATE].map(u => new Request(u, { cache: 'reload' })))));
+    c.addAll([...FISIERE_FIXE, ...FISIERE_VERSIONATE].map(u => new Request(u, { cache: 'reload' })))
+      .then(() => salveazaMiniaturi(c))));
   self.skipWaiting();
 });
 
@@ -45,9 +57,19 @@ function dinRetea(cerere) {
   });
 }
 
+// Ilustrațiile au versiunea în adresă și nu se schimbă în cadrul unei versiuni: întâi copia locală.
+function ilustratie(cerere) {
+  return caches.match(cerere.url).then(r => r || dinRetea(cerere));
+}
+
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  if (new URL(e.request.url).origin !== self.location.origin) return;
+  const url = new URL(e.request.url);
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.includes('/ilustratii/') && url.searchParams.has('v')) {
+    e.respondWith(ilustratie(e.request).catch(() => Response.error()));
+    return;
+  }
   e.respondWith(
     // Căutarea în cache se face cu adresa exactă (inclusiv ?v=…), ca să nu primim o versiune greșită.
     dinRetea(e.request).catch(() =>

@@ -2,8 +2,6 @@
 // Serii bifate, tipuri de serii și de exerciții, supersets, notițe, pauza antrenamentului,
 // performanța anterioară, recorduri, sugestii și închiderea antrenamentului.
 
-const GRUPE = ['Piept', 'Spate', 'Umeri', 'Biceps', 'Triceps', 'Picioare', 'Gambe', 'Fese', 'Abdomen', 'Antebrațe'];
-
 // Tipurile de exerciții și câmpurile fiecăruia. Ultimul câmp e „principalul": trebuie > 0 ca seria să conteze.
 const TIPURI_EXERCITIU = {
   greutate: { nume: 'Greutate × repetări', scurt: null, campuri: [
@@ -85,23 +83,6 @@ function salveazaCiornaAcum() {
   });
 }
 
-// ---------- Tipul exercițiului ----------
-let tipuriProprii = new Map(); // nume cu litere mici → tip ales de tine
-
-function tipImplicit(nume) {
-  const cheie = nume.toLowerCase();
-  const gasit = BIBLIOTECA.find(e => e.nume.toLowerCase() === cheie);
-  if (!gasit) return 'greutate';
-  if (gasit.poza === 'plank') return 'timp';
-  if (/farmer/i.test(gasit.nume)) return 'distanta';
-  if (gasit.echipament === 'Corp') return 'corp';
-  return 'greutate';
-}
-
-function tipExercitiu(nume) {
-  return tipuriProprii.get(nume.toLowerCase()) || tipImplicit(nume);
-}
-
 function campuriExercitiu(ex) {
   return (TIPURI_EXERCITIU[ex.tip] || TIPURI_EXERCITIU.greutate).campuri;
 }
@@ -112,8 +93,10 @@ function campPrincipal(ex) {
 }
 
 // ---------- Grupe ----------
+// Grupele (din catalog.js), plus una veche („Picioare") dacă e încă bifată într-un antrenament început înainte.
 function deseneazaGrupe() {
-  $('grupe').replaceChildren(...GRUPE.map(nume => el('button', {
+  const lista = [...GRUPE, ...[...stare.grupe].filter(g => !GRUPE.includes(g))];
+  $('grupe').replaceChildren(...lista.map(nume => el('button', {
     class: 'chip' + (stare.grupe.has(nume) ? ' activ' : ''),
     type: 'button',
     'aria-pressed': stare.grupe.has(nume) ? 'true' : 'false',
@@ -250,7 +233,8 @@ function serieGoala(tip = 'normal') {
 async function adaugaExercitiu() {
   deblocheazaAudio();
   const input = $('exercitiu-nume');
-  const nume = input.value.trim().replace(/\s+/g, ' ');
+  // Numele scris se potrivește cu cel din bibliotecă (aceleași litere), ca istoricul să nu se împartă.
+  const nume = numeInBiblioteca(input.value.trim().replace(/\s+/g, ' '));
   if (!nume) {
     input.focus();
     return;
@@ -537,6 +521,13 @@ function alegereGrupa(ex) {
   ]);
 }
 
+// Nota ta permanentă pentru exercițiu (din bibliotecă), afișată la fiecare antrenament.
+function notaPersonala(ex) {
+  const e = exercitiuDupaNume(ex.nume);
+  if (!e || !e.nota) return null;
+  return el('p', { class: 'nota-personala' }, [iconita('nota', 'iconita mica'), el('span', { text: e.nota })]);
+}
+
 // ---------- Meniul exercițiului ----------
 function meniuExercitiu(ex) {
   const i = stare.exercitii.indexOf(ex);
@@ -544,8 +535,12 @@ function meniuExercitiu(ex) {
   alegeDinLista({
     titlu: ex.nume,
     optiuni: [
-      { text: ex.nota ? 'Editează nota' : 'Adaugă o notă', icon: 'nota', actiune: () => deschideNota(ex) },
+      { text: ex.nota ? 'Editează nota de azi' : 'Adaugă o notă pentru azi', icon: 'nota', actiune: () => deschideNota(ex) },
       { text: 'Tipul exercițiului', icon: 'tip', detaliu: TIPURI_EXERCITIU[ex.tip].nume, actiune: () => meniuTip(ex) },
+      { text: 'Înlocuiește cu o alternativă', icon: 'schimba',
+        detaliu: ex.serii.some(s => s.facut) ? 'Indisponibil: are serii bifate' : 'Ex. când aparatul e ocupat',
+        dezactivat: ex.serii.some(s => s.facut), actiune: () => alegeAlternativa(ex) },
+      { text: 'Detalii exercițiu', icon: 'info', actiune: () => arataDetaliiExercitiu(ex.nume) },
       { text: 'Mută mai sus', icon: 'sus', dezactivat: i === 0, actiune: () => mutaExercitiul(ex, -1) },
       { text: 'Mută mai jos', icon: 'jos', dezactivat: !urmator, actiune: () => mutaExercitiul(ex, 1) },
       ex.superset
@@ -555,6 +550,39 @@ function meniuExercitiu(ex) {
       { text: 'Scoate exercițiul', icon: 'cos', pericol: true, actiune: () => scoateExercitiul(ex) },
     ],
   });
+}
+
+// Înlocuiește un exercițiu fără serii bifate cu altul (alternativele întâi).
+function alegeAlternativa(ex) {
+  const tinta = exercitiuDupaNume(ex.nume);
+  const alternative = tinta ? alternativePentru(tinta, toateExercitiile(), 6) : [];
+  deschideSelectorExercitii({
+    titlu: `Înlocuiește ${ex.nume}`,
+    unul: true,
+    sugestii: alternative.map(e => e.nume),
+    eticheteSugestii: 'Alternative',
+    grupaInitiala: tinta?.grupa || '',
+    laAlegere: ([nume]) => {
+      if (!nume || nume.toLowerCase() === ex.nume.toLowerCase()) return;
+      const i = stare.exercitii.indexOf(ex);
+      if (i < 0) return;
+      const nou = exercitiuNou(nume);
+      nou.superset = ex.superset;
+      nou.nota = ex.nota;
+      stare.exercitii[i] = nou;
+      const grupa = grupaExercitiu(nume);
+      if (grupa) { stare.grupe.add(grupa); deseneazaGrupe(); }
+      deseneazaExercitii();
+      programeazaCiorna();
+      notifica(`${ex.nume} a fost înlocuit cu ${nume}.`, 'succes');
+    },
+  });
+}
+
+// Numele exact sub care e ținut exercițiul în bibliotecă (litere mari/mici ca în catalog).
+function numeInBiblioteca(nume) {
+  const e = exercitiuDupaNume(nume);
+  return e ? e.nume : nume;
 }
 
 function meniuTip(ex) {
@@ -573,11 +601,11 @@ async function schimbaTipul(ex, tip) {
   ex.tip = tip;
   // Seriile bifate fără valoarea principală a noului tip se debifează.
   for (const s of ex.serii) if (s.facut && !((valoareNumerica(s[campPrincipal(ex)]) ?? 0) > 0)) s.facut = false;
-  tipuriProprii.set(ex.nume.toLowerCase(), tip);
   deseneazaExercitii();
   programeazaCiorna();
   try {
-    await seteazaInBiblioteca(ex.nume, { tip });
+    await seteazaInBiblioteca(numeInBiblioteca(ex.nume), { tip });
+    await reincarcaBiblioteca();
   } catch (err) {
     console.error(err);
     notifica('Tipul a fost schimbat doar pentru azi: nu a putut fi salvat pentru data viitoare.', 'eroare');
@@ -651,6 +679,7 @@ function deseneazaExercitii() {
         buton({ icon: 'puncte', tip: 'fantoma', eticheta: `Opțiuni pentru ${ex.nume}`, onclick: () => meniuExercitiu(ex) }),
       ]),
       alegereGrupa(ex),
+      notaPersonala(ex),
       arataNota ? el('textarea', {
         class: 'nota-exercitiu', rows: '2', placeholder: 'Notă pentru acest exercițiu (ex. reglaj aparat, priză)…',
         'aria-label': `Notă pentru ${ex.nume}`,
@@ -673,30 +702,6 @@ function deseneazaExercitii() {
   actualizeazaSumarSesiune();
 }
 
-// ---------- Biblioteca și grupa fiecărui exercițiu ----------
-// Grupele alese de tine pentru exercițiile proprii (cheie: numele cu litere mici).
-let grupeProprii = new Map();
-
-async function reincarcaBiblioteca() {
-  const lista = await bibliotecaExercitii();
-  grupeProprii = new Map(lista.filter(e => e.grupa).map(e => [e.nume.toLowerCase(), e.grupa]));
-  tipuriProprii = new Map(lista.filter(e => TIPURI_EXERCITIU[e.tip]).map(e => [e.nume.toLowerCase(), e.tip]));
-  // Sugestii la tastare: exercițiile tale și cele din bibliotecă.
-  const nume = new Map();
-  for (const e of [...lista, ...BIBLIOTECA]) {
-    if (!nume.has(e.nume.toLowerCase())) nume.set(e.nume.toLowerCase(), e.nume);
-  }
-  $('biblioteca').replaceChildren(...[...nume.values()].map(n => el('option', { value: n })));
-}
-
-// Grupa principală a exercițiului: întâi cea aleasă de tine, apoi cea din bibliotecă.
-function grupaExercitiu(nume) {
-  const cheie = nume.toLowerCase();
-  if (grupeProprii.has(cheie)) return grupeProprii.get(cheie);
-  const dinBiblioteca = BIBLIOTECA.find(e => e.nume.toLowerCase() === cheie);
-  return dinBiblioteca ? dinBiblioteca.grupa : null;
-}
-
 async function seteazaGrupa(nume, grupa) {
   try {
     await adaugaInBiblioteca(nume, grupa);
@@ -705,7 +710,7 @@ async function seteazaGrupa(nume, grupa) {
     notifica('Grupa nu a putut fi salvată.', 'eroare');
     return;
   }
-  grupeProprii.set(nume.toLowerCase(), grupa);
+  await reincarcaBiblioteca().catch(err => console.warn(err));
   stare.grupe.add(grupa);
   deseneazaGrupe();
   deseneazaExercitii();
@@ -796,7 +801,7 @@ async function inchideSesiunea(sfarsitFortat = null) {
 
   try {
     await salveazaSesiune(sesiune);
-    for (const ex of sesiune.exercitii) await adaugaInBiblioteca(ex.nume);
+    for (const ex of sesiune.exercitii) await adaugaInBiblioteca(numeInBiblioteca(ex.nume));
     clearTimeout(timerCiorna);
     timerCiorna = null;
     await stergeCiorna();
@@ -907,6 +912,10 @@ async function salveazaCaRutina(exercitii, grupe, numeImplicit) {
 // ---------- Inițializare ----------
 function initSesiune() {
   $('btn-exercitiu').addEventListener('click', adaugaExercitiu);
+  $('btn-alege-exercitii').addEventListener('click', () => deschideSelectorExercitii({
+    titlu: 'Adaugă exerciții',
+    laAlegere: nume => adaugaInSesiune(nume, [], { faraNavigare: true }),
+  }));
   $('exercitiu-nume').addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); adaugaExercitiu(); }
   });

@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "13";
+  --versiune-css: "16";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -190,6 +190,7 @@ main {
 .nota { color: var(--discret); font-size: 14px; line-height: 1.45; margin: var(--s1) 0 var(--s2); }
 .nota:last-child { margin-bottom: 0; }
 .nota-avertizare { color: var(--avertizare); }
+.nota-info { color: var(--text-2); padding: var(--s2) var(--s3); border-radius: var(--raza-mica); background: var(--suprafata-2); }
 .descriere { margin: 0 0 var(--s2); font-size: 14px; line-height: 1.5; color: var(--text-2); }
 .separator { height: 1px; background: var(--bordura); margin: var(--s4) 0; }
 .versiune { text-align: center; color: var(--discret); font-size: 12px; margin: var(--s6) 0 var(--s2); }
@@ -580,23 +581,26 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 
 /* ---------- Figuri exerciții ---------- */
 .figura, .figura-mica {
-  color: var(--text);
   flex: 0 0 auto;
   background: var(--suprafata-2);
   border-radius: var(--raza);
 }
-.figura { width: 88px; height: 104px; }
+.figura { width: 120px; height: 140px; }
 .figura-mica { width: 46px; height: 54px; border-radius: var(--raza-mica); }
-.figura *, .figura-mica * {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+/* Ilustrațiile sunt fișiere SVG (ilustratii/, vezi figuri.js); aici doar rama și încadrarea. */
+.figura-corp { display: block; }
+.figura-ilustratie { overflow: hidden; }
+.figura-ilustratie img { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; -webkit-user-select: none; }
+.figura-mica.figura-ilustratie { background: #20262E; }
+.ilustratie-mare {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  margin-bottom: var(--s3);
+  border-radius: var(--raza);
+  background: radial-gradient(120% 90% at 50% 40%, #222830 0%, #14171C 100%);
+  border: 1px solid var(--bordura);
 }
-.figura circle, .figura-mica circle { stroke-width: 4; }
-.figura .bara-ex, .figura-mica .bara-ex { stroke-width: 4; stroke: var(--accent); }
-.figura .sol, .figura-mica .sol { stroke-width: 2; stroke: var(--bordura-tare); }
+.ilustratie-mare.figura-lipsa { display: none; }
 
 .fig-card { display: flex; gap: var(--s3); align-items: flex-start; }
 .fig-text { flex: 1; min-width: 0; }
@@ -786,6 +790,84 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .toast.iese { opacity: 0; transform: translateY(-6px); transition: opacity 180ms, transform 180ms; }
 @keyframes toast-intra { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: none; } }
 
+/* ---------- Biblioteca ---------- */
+.filtre-selecturi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s2); }
+.filtre-selecturi select { font-size: 14px; padding-left: 10px; padding-right: 28px; background-position: right 6px center; }
+#biblio-filtre .rand.aliniat { gap: var(--s2); }
+#biblio-filtre .rand.aliniat .nota { flex: 1; }
+.chip-icon { display: inline-flex; align-items: center; gap: 6px; }
+.chip-mic { min-height: 34px; padding: 0 11px; font-size: 13px; }
+#biblio-grupe { gap: 6px; }
+.lista-exercitii-biblio { padding: var(--s1) var(--s3); }
+.lista-titlu {
+  margin: var(--s3) var(--s1) var(--s1);
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent);
+}
+.rand-biblio { display: flex; align-items: center; gap: var(--s1); border-top: 1px solid var(--bordura); }
+.lista-titlu + .rand-biblio { border-top: 0; }
+.rand-biblio-principal {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: var(--s3);
+  min-height: 64px; padding: var(--s2) var(--s1);
+  background: none; border: 0; text-align: left; cursor: pointer; border-radius: var(--raza-mica);
+}
+.rand-biblio-principal:active { background: var(--suprafata-2); }
+.rand-biblio-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.rand-biblio-text strong { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.rand-biblio-text .nota { margin: 0; font-size: 13px; }
+.figura-generica { display: grid; place-items: center; color: var(--discret); }
+.figura-generica .iconita { width: 22px; height: 22px; }
+.figura.figura-generica .iconita { width: 36px; height: 36px; }
+.favorit .iconita { color: var(--discret); }
+.favorit.activ .iconita { color: var(--record); fill: var(--record); }
+.stea-mica { color: var(--record); fill: var(--record); }
+
+.card-atentie { border-color: rgba(255, 181, 71, 0.4); background: linear-gradient(0deg, rgba(255, 181, 71, 0.05), rgba(255, 181, 71, 0.05)), var(--suprafata); }
+.rand-vechi { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: var(--s3); align-items: center; padding: var(--s2) 0; border-top: 1px solid var(--bordura); }
+.rand-vechi span { overflow-wrap: anywhere; }
+
+.detaliu-cap { display: flex; align-items: flex-start; gap: var(--s3); margin-bottom: var(--s3); }
+.detaliu-etichete { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; }
+.detaliu-lista { margin-bottom: var(--s2); }
+.detaliu-rand { display: flex; justify-content: space-between; gap: var(--s3); padding: var(--s2) 0; border-top: 1px solid var(--bordura); font-size: 14px; }
+.detaliu-rand span { color: var(--discret); flex: 0 0 auto; }
+.detaliu-rand strong { font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.detaliu-titlu { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--discret); margin: var(--s4) 0 var(--s1); }
+.detaliu-alternative { display: grid; gap: var(--s2); margin-bottom: var(--s3); }
+.alternativa {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  padding: var(--s3); min-height: 52px;
+  background: var(--suprafata-2); border: 1px solid var(--bordura); border-radius: var(--raza);
+  text-align: left; cursor: pointer;
+}
+.alternativa span { color: var(--discret); font-size: 13px; }
+.alternativa:active { background: var(--suprafata-3); }
+
+.formular-exercitiu .rand { align-items: stretch; }
+.formular-exercitiu .rand > .camp { flex: 1; }
+.formular-exercitiu .chipuri { gap: 6px; }
+
+.dialog.dialog-inalt { height: 85dvh; display: flex; flex-direction: column; }
+.dialog-inalt .selector { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--s3); margin-bottom: var(--s3); }
+.selector .chipuri-defilare { margin-left: 0; margin-right: 0; padding: 0; flex: 0 0 auto; }
+.selector-lista { flex: 1; min-height: 0; overflow-y: auto; margin: 0 calc(-1 * var(--s2)); padding: 0 var(--s2); -webkit-overflow-scrolling: touch; }
+.selector-rand {
+  width: 100%; display: flex; align-items: center; gap: var(--s3);
+  min-height: 60px; padding: var(--s2) var(--s1);
+  background: none; border: 0; border-top: 1px solid var(--bordura); border-radius: 0;
+  text-align: left; cursor: pointer;
+}
+.selector-rand:first-child { border-top: 0; }
+.selector-rand:disabled { opacity: 0.45; cursor: default; }
+.selector-rand.ales { background: rgba(183, 243, 74, 0.08); }
+.selector-bifa { display: grid; place-items: center; flex: 0 0 auto; width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--bordura-tare); }
+.selector-rand.ales .selector-bifa { background: var(--accent); border-color: var(--accent); color: var(--pe-accent); }
+.selector-rand.ales .selector-bifa .iconita { stroke-width: 3; }
+.selector-gol { padding: var(--s4) var(--s1); text-align: center; }
+
+.nota-personala { display: flex; gap: 6px; align-items: flex-start; margin: 0 0 var(--s3); padding: var(--s2) var(--s3); border-radius: var(--raza-mica); background: rgba(160, 140, 255, 0.10); color: #CFC6FF; font-size: 13px; }
+.nota-personala .iconita { margin-top: 1px; }
+
 /* ---------- Meniu (foaie de jos) ---------- */
 .meniu-lista { display: flex; flex-direction: column; margin: 0 calc(-1 * var(--s2)) var(--s3); }
 .meniu-optiune {
@@ -835,7 +917,16 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .dialog-text { color: var(--text-2); font-size: 15px; line-height: 1.5; margin-bottom: var(--s4); }
 .dialog .camp { margin-bottom: var(--s4); }
 .dialog-butoane { display: flex; flex-wrap: wrap; gap: var(--s2); }
-.dialog-butoane .btn { flex: 1 1 0; min-width: 96px; min-height: 48px; padding: 0 var(--s3); }
+/* Butoanele dialogului rămân vizibile jos când conținutul e lung și se derulează */
+.dialog { padding-bottom: 0; }
+.dialog > .dialog-butoane {
+  position: sticky; bottom: 0; z-index: 1;
+  margin: var(--s2) calc(-1 * var(--s5)) 0;
+  padding: var(--s3) var(--s5) var(--s5);
+  background: linear-gradient(180deg, rgba(21, 25, 31, 0) 0, var(--suprafata) 14px);
+}
+.detaliu-etichete .eticheta-grupa { margin-top: 0; }
+.dialog-butoane .btn { flex: 1 1 0; min-width: 96px; min-height: 48px; padding: 0 var(--s3); white-space: normal; line-height: 1.15; text-align: center; }
 .dialog-butoane .btn-pericol { background: var(--pericol); border-color: var(--pericol); color: #fff; }
 @keyframes apare { from { opacity: 0; } to { opacity: 1; } }
 @media (min-width: 600px) {
@@ -953,6 +1044,7 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
   .navigatie button:hover:not(.activ) { color: var(--text-2); }
   .acasa-grupa:hover, .rand-sesiune:hover, .pas:not(.gata):hover { background: var(--suprafata-2); }
   .meniu-optiune:hover:not(:disabled) { background: var(--suprafata-2); }
+  .rand-biblio-principal:hover, .selector-rand:hover:not(:disabled), .alternativa:hover { background: var(--suprafata-2); }
   .serie-bifa:hover { color: var(--text); border-color: var(--discret); }
   .serie-numar:hover { color: var(--text); }
 }
@@ -974,6 +1066,9 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
   .bara-rand { grid-template-columns: 72px 1fr 28px; }
   .bara-procent { grid-template-columns: 72px 1fr 60px; }
   .navigatie button { font-size: 10px; }
+  .filtre-selecturi { grid-template-columns: 1fr 1fr; }
+  .filtre-selecturi select:last-child { grid-column: span 2; }
+  .rand-vechi { grid-template-columns: 1fr; gap: var(--s1); }
   .chipuri-defilare { margin-left: calc(-1 * var(--s3)); margin-right: calc(-1 * var(--s3)); padding: 0 var(--s3); }
 }
 

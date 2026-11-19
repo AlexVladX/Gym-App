@@ -53,6 +53,9 @@ const ICONITE = {
   nota: 'M5 4h10l4 4v12H5V4zM15 4v4h4M8 12h8M8 16h5',
   legatura: 'M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1',
   tip: 'M4 6h16M4 12h10M4 18h6',
+  schimba: 'M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7',
+  stea: 'M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9L12 3z',
+  filtru: 'M4 5h16l-6 8v5l-4 2v-7L4 5z',
 };
 
 function iconita(nume, clasa = 'iconita') {
@@ -122,6 +125,7 @@ function deschideDialog({ titlu, text, continut, butoane, laAnulare }) {
     if (e.key === 'Escape') { e.preventDefault(); ctrl.inchide(laAnulare); }
   };
   const ctrl = {
+    caseta,
     inchide(actiune) {
       if (dialogDeschis !== ctrl) return;
       dialogDeschis = null;
@@ -136,8 +140,9 @@ function deschideDialog({ titlu, text, continut, butoane, laAnulare }) {
   document.addEventListener('keydown', tasta);
   document.body.append(fundal);
   dialogDeschis = ctrl;
+  // Focus fără derulare: dialogul începe mereu de sus (titlul și primele informații vizibile).
   const focus = caseta.querySelector('input, select') || caseta.querySelector('.btn-principal, .btn-pericol');
-  if (focus) setTimeout(() => focus.focus(), 30);
+  if (focus) setTimeout(() => { focus.focus({ preventScroll: true }); caseta.scrollTop = 0; }, 30);
   return ctrl;
 }
 

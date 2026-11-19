@@ -13,9 +13,9 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
   <title>Jurnal de antrenament</title>
-  <link rel="stylesheet" href="styles.css?v=13">
+  <link rel="stylesheet" href="styles.css?v=16">
 </head>
-<body class="se-incarca" data-versiune="13">
+<body class="se-incarca" data-versiune="16">
   <header class="topbar">
     <div class="topbar-interior">
       <div class="marca">
@@ -67,6 +67,9 @@
         <p class="sectiune-eticheta">Adaugă exercițiu</p>
         <div class="rand">
           <input id="exercitiu-nume" type="text" placeholder="Ex. Împins cu bara pe bancă" list="biblioteca" autocomplete="off" enterkeyhint="done" aria-label="Numele exercițiului">
+          <button id="btn-alege-exercitii" class="btn btn-secundar btn-icon" type="button" aria-label="Alege din bibliotecă">
+            <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5zM4 19a2 2 0 0 1 2-2h13M9 7h6"/></svg>
+          </button>
           <button id="btn-exercitiu" class="btn btn-principal btn-icon" type="button" aria-label="Adaugă exercițiul">
             <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
           </button>
@@ -95,15 +98,24 @@
         <button id="tab-exercitii" class="activ" type="button" role="tab" aria-selected="true">Exerciții</button>
         <button id="tab-antrenamente" type="button" role="tab" aria-selected="false">Rutine</button>
       </div>
+      <div id="biblio-vechi" hidden></div>
       <div id="biblio-filtre" class="card">
         <div class="cautare">
-          <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4"/></svg>
-          <input id="biblio-cautare" type="search" placeholder="Caută exercițiu sau mușchi" autocomplete="off" aria-label="Caută exercițiu">
+          <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4"/></svg>
+          <input id="biblio-cautare" type="search" placeholder="Caută exercițiu, mușchi sau echipament" autocomplete="off" aria-label="Caută exercițiu">
         </div>
         <div id="biblio-grupe" class="chipuri mt"></div>
-        <div class="rand aliniat mt">
+        <div class="filtre-selecturi mt">
           <select id="biblio-echipament" aria-label="Echipament"></select>
+          <select id="biblio-nivel" aria-label="Dificultate"></select>
+          <select id="biblio-categorie" aria-label="Categorie"></select>
+        </div>
+        <div class="rand aliniat mt">
           <span id="biblio-numar" class="nota"></span>
+          <button id="btn-sterge-filtre" class="btn btn-fantoma btn-mic" type="button" hidden>Șterge filtrele</button>
+          <button id="btn-exercitiu-nou" class="btn btn-secundar btn-mic" type="button">
+            <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span>Exercițiu nou</span>
+          </button>
         </div>
       </div>
       <div id="biblio-lista"></div>
@@ -273,7 +285,7 @@
         <button id="btn-sterge-tot" class="btn btn-pericol btn-lat" type="button">Șterge toate datele</button>
       </div>
 
-      <p class="versiune">Jurnal de antrenament · versiunea 1.3 (etapa 3)</p>
+      <p class="versiune">Jurnal de antrenament · versiunea 1.5 (etapa 4, figuri noi)</p>
     </section>
   </main>
 
@@ -317,21 +329,23 @@
     </button>
   </nav>
 
-  <script src="db.js?v=13"></script>
-  <script src="validare.js?v=13"></script>
-  <script src="exercitii.js?v=13"></script>
-  <script src="analiza.js?v=13"></script>
-  <script src="ui.js?v=13"></script>
-  <script src="grafice.js?v=13"></script>
-  <script src="setari.js?v=13"></script>
-  <script src="timer.js?v=13"></script>
-  <script src="sesiune.js?v=13"></script>
-  <script src="corp.js?v=13"></script>
-  <script src="progres.js?v=13"></script>
-  <script src="istoric.js?v=13"></script>
-  <script src="biblioteca.js?v=13"></script>
-  <script src="backup.js?v=13"></script>
-  <script src="acasa.js?v=13"></script>
-  <script src="main.js?v=13"></script>
+  <script src="db.js?v=16"></script>
+  <script src="validare.js?v=16"></script>
+  <script src="exercitii.js?v=16"></script>
+  <script src="analiza.js?v=16"></script>
+  <script src="catalog.js?v=16"></script>
+  <script src="figuri.js?v=16"></script>
+  <script src="ui.js?v=16"></script>
+  <script src="grafice.js?v=16"></script>
+  <script src="setari.js?v=16"></script>
+  <script src="timer.js?v=16"></script>
+  <script src="sesiune.js?v=16"></script>
+  <script src="corp.js?v=16"></script>
+  <script src="progres.js?v=16"></script>
+  <script src="istoric.js?v=16"></script>
+  <script src="biblioteca.js?v=16"></script>
+  <script src="backup.js?v=16"></script>
+  <script src="acasa.js?v=16"></script>
+  <script src="main.js?v=16"></script>
 </body>
 </html>

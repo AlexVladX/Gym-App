@@ -34,6 +34,7 @@ function arataEcran(id) {
 
   // Ecranele cu date se reîncarcă la fiecare deschidere (graficele au nevoie de dimensiunea reală).
   if (id === 'ecran-acasa') randeazaAcasa();
+  if (id === 'ecran-biblioteca') { deseneazaFiltre(); randeazaBiblioteca(); }
   if (id === 'ecran-progres') arataFilaProgres($('progres-istoric').hidden ? 'grafice' : 'istoric');
   if (id === 'ecran-masuratori') reincarcaMasuratori();
   if (id === 'ecran-setari') {
@@ -72,6 +73,8 @@ async function initializeaza() {
   }
   await incarcaCiorna();
   deseneazaGrupe();
+  deseneazaFiltre();
+  randeazaBiblioteca();
   deseneazaExercitii();
   tineEcranulAprins();
   // Cu un antrenament în curs, aplicația se deschide direct pe el (în sală contează fiecare secundă).

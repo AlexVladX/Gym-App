@@ -95,7 +95,8 @@ function deseneazaVolumGrupe(sesiuni) {
   const dinSaptamana = sesiuni.filter(s => luniaSaptamanii(s.data) === saptamana);
   const serii = seriiPeGrupa(dinSaptamana, grupaExercitiu);
 
-  const randuri = [...GRUPE];
+  // Grupele de acum, apoi grupa veche „Picioare" (exerciții proprii încă nereîncadrate) și „Nealocat", dacă au serii.
+  const randuri = [...GRUPE, ...Object.keys(serii).filter(g => !GRUPE.includes(g) && g !== 'Nealocat')];
   if (serii.Nealocat) randuri.push('Nealocat');
   const scala = Math.max(SERII_MAX + 4, ...Object.values(serii));
 
