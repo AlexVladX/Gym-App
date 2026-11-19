@@ -3,7 +3,7 @@
 
 const LUNI_SCURT = ['ian', 'feb', 'mar', 'apr', 'mai', 'iun', 'iul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 const INITIALE_ZILE = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-const ETICHETE_PR = { greutate: 'Greutate maximă', forta: '1RM estimat', repetari: 'Repetări' };
+const ETICHETE_PR = { greutate: 'Greutate maximă', forta: '1RM estimat', repetari: 'Repetări', durata: 'Timp', distanta: 'Distanță' };
 
 let modActivitate = 'antrenamente'; // 'antrenamente' | 'volum' | 'serii'
 let perioadaGrupe = 30;             // 7 | 30 zile
@@ -61,7 +61,7 @@ function cardAzi(azi, sesiuni) {
     );
   } else if (deAzi.length > 0) {
     const st = totaluri(deAzi);
-    const durata = deAzi.reduce((t, s) => t + (s.inceput && s.sfarsit ? Math.max(0, s.sfarsit - s.inceput) : 0), 0);
+    const durata = deAzi.reduce((t, s) => t + (durataSesiuneMin(s) || 0) * 60000, 0);
     const exercitii = deAzi.reduce((t, s) => t + s.exercitii.length, 0);
     copii.push(
       el('div', { class: 'acasa-stare gata' }, [
@@ -84,8 +84,8 @@ function cardAzi(azi, sesiuni) {
 }
 
 function textInCurs(serii) {
-  const durata = stare.inceput !== null ? formatDurata((Date.now() - stare.inceput) / 1000) : '0:00';
-  return `${durata} · ${plural(stare.exercitii.length, 'exercițiu', 'exerciții')} · ${plural(serii, 'serie completă', 'serii complete')}`;
+  const durata = formatDurata(durataCurentaMs() / 1000);
+  return `${pePauza() ? 'pe pauză · ' : ''}${durata} · ${plural(stare.exercitii.length, 'exercițiu', 'exerciții')} · ${plural(serii, 'serie bifată', 'serii bifate')}`;
 }
 
 function incepeAntrenament() {
@@ -223,6 +223,8 @@ function cardGrupe(azi, sesiuni) {
 function textRecord(e) {
   if (e.tip === 'greutate') return `${formatNumar(e.kg)} kg × ${e.repetari}`;
   if (e.tip === 'forta') return `${formatNumar(e.e1rm)} kg (${formatNumar(e.kg)} × ${e.repetari})`;
+  if (e.tip === 'durata') return `${formatNumar(e.durataSec)} s`;
+  if (e.tip === 'distanta') return `${formatNumar(e.distantaM)} m`;
   return `${e.repetari} repetări`;
 }
 
@@ -264,7 +266,7 @@ function cardRecente(sesiuni) {
     titluCard('Ultimele antrenamente', buton({ text: 'Tot istoricul', tip: 'fantoma', mic: true, onclick: deschideIstoricul })),
     ...ultimele.map(s => {
       const st = statisticiSesiune(s);
-      const durata = s.inceput && s.sfarsit ? Math.max(1, Math.round((s.sfarsit - s.inceput) / 60000)) : null;
+      const durata = durataSesiuneMin(s);
       return el('button', { class: 'rand-sesiune', type: 'button', onclick: deschideIstoricul,
         'aria-label': `${ziuaSaptamanii(s.data)}, ${afiseazaData(s.data)}. Deschide istoricul` }, [
         el('div', { class: 'rand-sesiune-data' }, [el('strong', { text: String(Number(s.data.slice(8))) }), el('span', { text: LUNI_SCURT[Number(s.data.slice(5, 7)) - 1] })]),

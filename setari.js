@@ -1,7 +1,7 @@
 // Setările aplicației. Se țin în localStorage (citire sincronă la pornire)
 // și se includ în backup, ca să nu se piardă la mutarea pe alt telefon.
 
-const SETARI_IMPLICITE = { minRep: 8, maxRep: 12, pasKg: 2.5, ecranAprins: true, pauzaSec: 90 };
+const SETARI_IMPLICITE = { minRep: 8, maxRep: 12, pasKg: 2.5, ecranAprins: true, pauzaSec: 90, pauzaAutomata: true, semnal: true };
 const setari = { ...SETARI_IMPLICITE };
 
 // Corectează valorile venite din stocare sau dintr-un backup; ce nu e valid revine la implicit.
@@ -13,6 +13,8 @@ function curataSetari(sursa) {
   if (rez.minRep && rez.maxRep && rez.minRep > rez.maxRep) { delete rez.minRep; delete rez.maxRep; }
   if (typeof sursa.pasKg === 'number' && sursa.pasKg > 0 && sursa.pasKg <= 20) rez.pasKg = sursa.pasKg;
   if (typeof sursa.ecranAprins === 'boolean') rez.ecranAprins = sursa.ecranAprins;
+  if (typeof sursa.pauzaAutomata === 'boolean') rez.pauzaAutomata = sursa.pauzaAutomata;
+  if (typeof sursa.semnal === 'boolean') rez.semnal = sursa.semnal;
   if (intreg(sursa.pauzaSec, 10, 600)) rez.pauzaSec = sursa.pauzaSec;
   return rez;
 }
@@ -50,6 +52,8 @@ function afiseazaSetari() {
   $('set-pas-kg').value = setari.pasKg;
   $('set-ecran').checked = setari.ecranAprins;
   $('set-pauza').value = setari.pauzaSec;
+  $('set-pauza-auto').checked = setari.pauzaAutomata;
+  $('set-semnal').checked = setari.semnal;
 }
 
 function citesteCampuriSetari() {
@@ -68,6 +72,8 @@ function citesteCampuriSetari() {
   if (pauza >= 10 && pauza <= 600) setari.pauzaSec = pauza;
   else notifica('Pauza trebuie să fie între 10 și 600 de secunde.', 'eroare');
   setari.ecranAprins = $('set-ecran').checked;
+  setari.pauzaAutomata = $('set-pauza-auto').checked;
+  setari.semnal = $('set-semnal').checked;
   if (!setari.ecranAprins) elibereazaEcranul(); else tineEcranulAprins();
   salveazaSetari();
   afiseazaSetari();
@@ -75,7 +81,7 @@ function citesteCampuriSetari() {
 }
 
 function initSetari() {
-  ['set-min-rep', 'set-max-rep', 'set-pas-kg', 'set-ecran', 'set-pauza'].forEach(id =>
+  ['set-min-rep', 'set-max-rep', 'set-pas-kg', 'set-ecran', 'set-pauza', 'set-pauza-auto', 'set-semnal'].forEach(id =>
     $(id).addEventListener('change', citesteCampuriSetari));
   // Butoanele rapide pentru pauză
   document.querySelectorAll('[data-pauza]').forEach(b => b.addEventListener('click', () => {

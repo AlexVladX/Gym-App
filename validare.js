@@ -34,7 +34,16 @@ function curataSerie(s) {
   const kg = numarOri(s.kg, 0);
   const repetari = numarOri(s.repetari, 0);
   if (kg < 0 || kg > 2000 || repetari < 0 || repetari > 1000) return null;
-  return { ...s, kg, repetari: Math.round(repetari) };
+  const rez = { ...s, kg, repetari: Math.round(repetari) };
+  // Câmpurile de la etapa 3: timp, distanță, tipul seriei.
+  for (const [camp, max] of [['durataSec', 86400], ['distantaM', 1000000]]) {
+    if (!(camp in s)) continue;
+    const v = numarOri(s[camp], NaN);
+    if (Number.isFinite(v) && v >= 0 && v <= max) rez[camp] = v; else delete rez[camp];
+  }
+  if ('tip' in s && !['incalzire', 'drop', 'esec', 'normal'].includes(s.tip)) delete rez.tip;
+  delete rez.facut;
+  return rez;
 }
 
 function curataSesiune(s) {
@@ -47,7 +56,9 @@ function curataSesiune(s) {
   }
   const rezultat = { ...s, exercitii };
   rezultat.grupe = Array.isArray(s.grupe) ? s.grupe.filter(textNevid) : [];
-  for (const camp of ['inceput', 'sfarsit']) {
+  if ('nota' in s && typeof s.nota !== 'string') delete rezultat.nota;
+  if ('pauze' in s && !Array.isArray(s.pauze)) delete rezultat.pauze;
+  for (const camp of ['inceput', 'sfarsit', 'durataActivaMs', 'volum', 'serii']) {
     if (s[camp] !== undefined && s[camp] !== null && !Number.isFinite(s[camp])) delete rezultat[camp];
   }
   return rezultat;

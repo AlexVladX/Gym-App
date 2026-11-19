@@ -18,8 +18,9 @@ function copieSesiune(s) {
   return { ...s, exercitii: s.exercitii.map(ex => ({ ...ex, serii: ex.serii.map(se => ({ ...se })) })) };
 }
 
-function volumSesiune(s) {
-  return s.exercitii.reduce((t, ex) => t + ex.serii.reduce((v, se) => v + se.kg * se.repetari, 0), 0);
+// Câmpurile editabile ale unei serii, după tipul exercițiului (vezi TIPURI_EXERCITIU în sesiune.js).
+function campuriEditare(ex) {
+  return (TIPURI_EXERCITIU[ex.tip] || TIPURI_EXERCITIU.greutate).campuri;
 }
 
 function randeazaIstoric() {
@@ -46,8 +47,8 @@ function randeazaIstoric() {
 }
 
 function cardSesiune(s) {
-  const durata = s.inceput && s.sfarsit ? Math.max(1, Math.round((s.sfarsit - s.inceput) / 60000)) : null;
-  const serii = s.exercitii.reduce((t, ex) => t + ex.serii.length, 0);
+  const durata = durataSesiuneMin(s);
+  const st = statisticiSesiune(s);
 
   return el('article', { class: 'card sesiune-istoric' }, [
     el('div', { class: 'card-cap' }, [
@@ -62,11 +63,19 @@ function cardSesiune(s) {
     ]),
     el('div', { class: 'mini-statistici' }, [
       durata ? el('span', {}, [iconita('ceas', 'iconita mica'), el('span', { text: `${durata} min` })]) : null,
-      el('span', {}, [iconita('lista', 'iconita mica'), el('span', { text: plural(serii, 'serie', 'serii') })]),
-      el('span', {}, [iconita('gantera', 'iconita mica'), el('span', { text: `${formatMare(volumSesiune(s))} kg` })]),
+      el('span', {}, [iconita('lista', 'iconita mica'), el('span', { text: plural(st.serii, 'serie', 'serii') })]),
+      el('span', {}, [iconita('gantera', 'iconita mica'), el('span', { text: `${formatMare(st.volum)} kg` })]),
     ]),
+    s.nota ? el('p', { class: 'nota-sesiune', text: s.nota }) : null,
     el('ul', { class: 'lista-exercitii' }, s.exercitii.map(ex =>
-      el('li', {}, [el('span', { text: ex.nume }), el('span', { class: 'valoare', text: rezumatSerii(ex.serii) })]))),
+      el('li', {}, [
+        el('span', {}, [
+          ex.superset ? el('span', { class: 'eticheta-superset', text: ex.superset }) : null,
+          el('span', { text: ex.nume }),
+          ex.nota ? el('small', { class: 'nota-ex', text: ex.nota }) : null,
+        ]),
+        el('span', { class: 'valoare', text: rezumatSerii(ex.serii) }),
+      ]))),
     buton({
       text: 'Salvează ca rutină', icon: 'lista', tip: 'fantoma', mic: true,
       onclick: () => salveazaCaRutina(s.exercitii.map(e => e.nume),
@@ -84,23 +93,24 @@ function cardEditare(original) {
       el('strong', { text: ex.nume }),
       buton({ text: 'Scoate', tip: 'fantoma', mic: true, onclick: () => { c.exercitii.splice(iEx, 1); randeazaIstoric(); } }),
     ]),
-    ...ex.serii.map((se, i) => el('div', { class: 'serie' }, [
-      el('span', { class: 'serie-numar', text: String(i + 1) }),
-      el('input', {
-        type: 'number', inputmode: 'decimal', min: '0', step: 'any', placeholder: 'kg', value: se.kg,
-        'aria-label': `kg, seria ${i + 1}`,
-        onchange: e => { se.kg = Math.max(0, parseFloat(e.target.value) || 0); },
-      }),
-      el('input', {
-        type: 'number', inputmode: 'numeric', min: '0', step: '1', placeholder: 'rep.', value: se.repetari,
-        'aria-label': `repetări, seria ${i + 1}`,
-        onchange: e => { se.repetari = Math.max(0, parseInt(e.target.value, 10) || 0); },
-      }),
-      buton({
-        icon: 'x', tip: 'fantoma', eticheta: `Șterge seria ${i + 1}`, clasa: 'serie-sterge',
-        onclick: () => { ex.serii.splice(i, 1); randeazaIstoric(); },
-      }),
-    ])),
+    ...ex.serii.map((se, i) => {
+      const campuri = campuriEditare(ex);
+      return el('div', { class: `serie serie-editare serie-${campuri.length}` + (se.tip ? ` tip-${se.tip}` : '') }, [
+        el('span', { class: 'serie-numar', text: TIPURI_SERIE[se.tip]?.semn || String(i + 1), title: TIPURI_SERIE[se.tip]?.nume || 'Serie normală' }),
+        ...campuri.map(c => el('input', {
+          type: 'number', inputmode: c.mod, min: '0', step: c.mod === 'decimal' ? 'any' : '1', placeholder: c.eticheta,
+          value: se[c.cheie] ?? '', 'aria-label': `${c.eticheta}, seria ${i + 1}`,
+          onchange: e => {
+            const v = c.cheie === 'repetari' ? parseInt(e.target.value, 10) : parseFloat(e.target.value);
+            se[c.cheie] = Math.max(0, Number.isFinite(v) ? v : 0);
+          },
+        })),
+        buton({
+          icon: 'x', tip: 'fantoma', eticheta: `Șterge seria ${i + 1}`, clasa: 'serie-sterge',
+          onclick: () => { ex.serii.splice(i, 1); randeazaIstoric(); },
+        }),
+      ]);
+    }),
   ]));
 
   return el('article', { class: 'card sesiune-istoric editare' }, [
@@ -129,9 +139,12 @@ async function salveazaEditarea(id) {
   const curatat = {
     ...c,
     exercitii: c.exercitii
-      .map(ex => ({ ...ex, serii: ex.serii.filter(se => se.repetari > 0 || se.kg > 0) }))
+      .map(ex => ({ ...ex, serii: ex.serii.filter(serieValida) }))
       .filter(ex => ex.serii.length > 0),
   };
+  const st = statisticiSesiune(curatat);
+  curatat.serii = st.serii;
+  curatat.volum = st.volum;
 
   if (curatat.exercitii.length === 0) {
     const original = istoric.find(s => s.id === id);

@@ -45,6 +45,14 @@ const ICONITE = {
   flacara: 'M12 22a7 7 0 0 0 7-7c0-4-3-6-4-9-1 2-2 3-3 3 0-2-1-4-3-6 0 4-4 7-4 12a7 7 0 0 0 7 7z',
   sageata: 'M9 6l6 6-6 6',
   minus: 'M5 12h14',
+  play: 'M7 5l12 7-12 7V5z',
+  pauza: 'M8 5v14M16 5v14',
+  puncte: 'M5 12h.01M12 12h.01M19 12h.01',
+  sus: 'M12 19V5M6 11l6-6 6 6',
+  jos: 'M12 5v14M6 13l6 6 6-6',
+  nota: 'M5 4h10l4 4v12H5V4zM15 4v4h4M8 12h8M8 16h5',
+  legatura: 'M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1',
+  tip: 'M4 6h16M4 12h10M4 18h6',
 };
 
 function iconita(nume, clasa = 'iconita') {
@@ -145,6 +153,25 @@ function confirma({ titlu, text, ok = 'Confirmă', anulare = 'Renunță', perico
       ],
     });
   });
+}
+
+// Listă de opțiuni (meniu ca foaie de jos). Fiecare opțiune: { text, icon, detaliu, activ, pericol, dezactivat, actiune }.
+// Alegerea închide meniul și rulează acțiunea.
+function alegeDinLista({ titlu, text, optiuni }) {
+  const lista = el('div', { class: 'meniu-lista', role: 'menu' }, optiuni.map(o => el('button', {
+    class: 'meniu-optiune' + (o.pericol ? ' pericol' : '') + (o.activ ? ' activ' : ''),
+    type: 'button', role: 'menuitem', disabled: o.dezactivat || false,
+    onclick: () => d.inchide(o.actiune),
+  }, [
+    o.icon ? iconita(o.icon) : el('span', { class: 'meniu-gol' }),
+    el('span', { class: 'meniu-text' }, [el('span', { text: o.text }), o.detaliu ? el('small', { text: o.detaliu }) : null]),
+    o.activ ? iconita('bifa', 'iconita mica') : null,
+  ])));
+  const d = deschideDialog({
+    titlu, text, continut: lista,
+    butoane: [buton({ text: 'Închide', tip: 'fantoma', onclick: () => d.inchide() })],
+  });
+  return d;
 }
 
 // Câmp de text: întoarce Promise<string|null> (null = anulat).

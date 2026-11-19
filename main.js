@@ -58,24 +58,26 @@ async function initializeaza() {
   initBiblioteca();
   initBackup();
 
-  await incarcaCiorna();
+  // Biblioteca întâi: ciorna are nevoie de tipurile exercițiilor alese de tine.
+  try {
+    await reincarcaBiblioteca();
+  } catch (err) {
+    console.warn('Biblioteca nu a putut fi citită', err);
+  }
   try {
     await reincarcaIstoric();
   } catch (err) {
     console.warn('Istoricul nu a putut fi citit', err);
     notifica('Istoricul nu a putut fi citit. Dacă problema persistă, restaurează un backup.', 'eroare');
   }
-  try {
-    await reincarcaBiblioteca();
-  } catch (err) {
-    console.warn('Biblioteca nu a putut fi citită', err);
-  }
+  await incarcaCiorna();
   deseneazaGrupe();
   deseneazaExercitii();
   tineEcranulAprins();
   // Cu un antrenament în curs, aplicația se deschide direct pe el (în sală contează fiecare secundă).
   arataEcran(stare.exercitii.length > 0 ? 'ecran-sesiune' : 'ecran-acasa');
   document.body.classList.remove('se-incarca');
+  verificaAntrenamentNeterminat();
 
   // În fundal, fără să întârzie afișarea:
   cerePersistenta();

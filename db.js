@@ -114,6 +114,23 @@ async function adaugaInBiblioteca(nume, grupa) {
   });
 }
 
+// Modifică un exercițiu din biblioteca proprie (ex. { tip: 'timp' }), creându-l dacă lipsește.
+async function seteazaInBiblioteca(nume, modificari) {
+  const bd = await baza();
+  return new Promise((rezolva, respinge) => {
+    const tranzactie = bd.transaction('exercitii', 'readwrite');
+    const st = tranzactie.objectStore('exercitii');
+    const citire = st.get(nume);
+    citire.onsuccess = () => {
+      const existent = citire.result || { nume, grupa: null };
+      st.put({ ...existent, ...modificari, nume });
+    };
+    tranzactie.oncomplete = () => rezolva();
+    tranzactie.onerror = () => respinge(tranzactie.error);
+    tranzactie.onabort = () => respinge(tranzactie.error);
+  });
+}
+
 async function bibliotecaExercitii() {
   const lista = await cere('exercitii', 'readonly', st => st.getAll());
   return lista.filter(e => e && typeof e.nume === 'string');

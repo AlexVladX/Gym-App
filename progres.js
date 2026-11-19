@@ -39,8 +39,8 @@ function deseneazaProgresExercitiu(sesiuni) {
     let bestEpley = 0;
     let totalVolum = 0;
     for (const se of ex.serii) {
-      if (se.repetari > 0) bestEpley = Math.max(bestEpley, e1rm(se.kg, se.repetari));
-      totalVolum += se.kg * se.repetari;
+      if (serieDeLucru(se) && se.repetari > 0) bestEpley = Math.max(bestEpley, e1rm(se.kg, se.repetari));
+      totalVolum += volumSerie(se);
     }
     forta.push({ x: t, y: Math.round(bestEpley * 10) / 10, data: s.data });
     volum.push({ x: t, y: Math.round(totalVolum), data: s.data });
@@ -67,7 +67,9 @@ function deseneazaRecorduri(r) {
       placuta('1RM estimat', `${formatNumar(r.e1rm)} kg`, `${formatNumar(r.e1rmKg)}×${r.e1rmRepetari} · ${afiseazaData(r.e1rmData)}`),
       placuta('Volum / sesiune', `${formatMare(r.volum)} kg`, afiseazaData(r.volumData)),
     ]
-    : [placuta('Repetări maxime', String(r.repetari), afiseazaData(r.repetariData))];
+    : r.repetari > 0 ? [placuta('Repetări maxime', String(r.repetari), afiseazaData(r.repetariData))]
+      : r.durata > 0 ? [placuta('Cel mai lung timp', `${formatNumar(r.durata)} s`, afiseazaData(r.durataData))]
+        : r.distanta > 0 ? [placuta('Cea mai mare distanță', `${formatNumar(r.distanta)} m`, afiseazaData(r.distantaData))] : [];
   $('progres-recorduri').replaceChildren(...placute);
 }
 

@@ -234,9 +234,9 @@ async function stergeTot() {
 
 // Reîncarcă toate ecranele după o schimbare mare a datelor (restaurare, ștergere).
 async function reincarcaTot() {
-  await incarcaCiorna();
-  await reincarcaIstoric().catch(err => console.warn(err));
   await reincarcaBiblioteca().catch(err => console.warn(err));
+  await reincarcaIstoric().catch(err => console.warn(err));
+  await incarcaCiorna();
   await reincarcaMasuratori();
   deseneazaGrupe();
   deseneazaExercitii();

@@ -6,12 +6,32 @@ function e1rm(kg, repetari) {
   return repetari > 0 ? kg * (1 + repetari / 30) : 0;
 }
 
+// O serie e „validă" dacă are ceva făcut: repetări, timp sau distanță.
+// Câmpurile durataSec și distantaM apar doar la exercițiile pe timp sau distanță (din etapa 3).
 function serieValida(s) {
-  return s.repetari > 0 && s.kg >= 0;
+  return s.kg >= 0 && (s.repetari > 0 || s.durataSec > 0 || s.distantaM > 0);
+}
+
+// Tipul seriei: 'normal' (implicit, și pentru datele vechi), 'incalzire', 'drop', 'esec'.
+function tipSerie(s) {
+  return s.tip === 'incalzire' || s.tip === 'drop' || s.tip === 'esec' ? s.tip : 'normal';
+}
+
+// Seriile de lucru: valide și care nu sunt de încălzire.
+// Încălzirea nu contează la recorduri, la numărul de serii și la sugestii; volumul o include.
+function serieDeLucru(s) {
+  return serieValida(s) && tipSerie(s) !== 'incalzire';
+}
+
+// Volumul unei serii: kg × repetări (seriile pe timp sau distanță dau 0).
+function volumSerie(s) {
+  return serieValida(s) && s.repetari > 0 ? s.kg * s.repetari : 0;
 }
 
 // Recordurile pe fiecare exercițiu, cheie: numele cu litere mici.
-// { kg, kgRepetari, kgData, e1rm, e1rmKg, e1rmRepetari, e1rmData, repetari, repetariData, volum, volumData }
+// { kg, kgRepetari, kgData, e1rm, e1rmKg, e1rmRepetari, e1rmData, repetari, repetariData, volum, volumData,
+//   durata, durataData, distanta, distantaData }
+// Se iau în calcul doar seriile de lucru (fără încălzire).
 function recorduriDin(sesiuni) {
   const rec = new Map();
   for (const s of sesiuni) actualizeazaRecorduri(rec, s);
@@ -25,13 +45,17 @@ function actualizeazaRecorduri(rec, s) {
     let r = rec.get(cheie);
     if (!r) {
       r = { nume: ex.nume, kg: 0, kgRepetari: 0, kgData: null, e1rm: 0, e1rmKg: 0, e1rmRepetari: 0,
-        e1rmData: null, repetari: 0, repetariData: null, volum: 0, volumData: null };
+        e1rmData: null, repetari: 0, repetariData: null, volum: 0, volumData: null,
+        durata: 0, durataData: null, distanta: 0, distantaData: null };
       rec.set(cheie, r);
     }
     let volum = 0;
     for (const se of ex.serii) {
-      if (!serieValida(se)) continue;
-      volum += se.kg * se.repetari;
+      if (!serieDeLucru(se)) continue;
+      volum += volumSerie(se);
+      if (se.durataSec > r.durata) { r.durata = se.durataSec; r.durataData = s.data; }
+      if (se.distantaM > r.distanta) { r.distanta = se.distantaM; r.distantaData = s.data; }
+      if (!(se.repetari > 0)) continue;
       if (se.kg > r.kg || (se.kg === r.kg && se.repetari > r.kgRepetari)) {
         r.kg = se.kg; r.kgRepetari = se.repetari; r.kgData = s.data;
       }
@@ -61,6 +85,18 @@ function esteRecord(recorduri, nume, kg, repetari) {
   return null;
 }
 
+// Tipul de record pentru o serie (obiect), sau null. Încălzirea nu poate fi record.
+// Serii cu repetări: ca esteRecord. Serii pe timp: durata mai lungă. Pe distanță: distanța mai mare.
+function recordPentruSerie(recorduri, nume, s) {
+  if (!serieValida(s) || tipSerie(s) === 'incalzire') return null;
+  if (s.repetari > 0) return esteRecord(recorduri, nume, s.kg, s.repetari);
+  const r = recorduri.get(nume.toLowerCase());
+  if (!r) return null;
+  if (s.durataSec > 0) return r.durata > 0 && s.durataSec > r.durata ? 'durata' : null;
+  if (s.distantaM > 0) return r.distanta > 0 && s.distantaM > r.distanta ? 'distanta' : null;
+  return null;
+}
+
 // Ultima sesiune în care apare exercițiul: { data, serii } sau null.
 function ultimaSesiuneCu(sesiuni, nume) {
   const cautat = nume.toLowerCase();
@@ -80,7 +116,8 @@ function rotunjeste(kg, pas) {
 // Întoarce { kg, repetari, numarSerii, crestere, text } sau null.
 function sugestieProgresie(ultima, setari) {
   if (!ultima) return null;
-  const valide = ultima.serii.filter(serieValida);
+  // Doar seriile de lucru cu repetări (fără încălzire, fără serii pe timp sau distanță).
+  const valide = ultima.serii.filter(s => serieDeLucru(s) && s.repetari > 0);
   if (valide.length === 0) return null;
 
   const top = Math.max(...valide.map(s => s.kg));
@@ -109,16 +146,27 @@ function fmt(kg) {
   return (Math.round(kg * 100) / 100).toString();
 }
 
-// Rezumat scurt al seriilor: "3×8 @ 80 kg" sau "80×8, 85×6".
+// O serie ca text scurt: „80×8", „+10×8" (corp cu greutate), „45 s", „30 kg × 40 m".
+function formatSerie(s) {
+  if (s.durataSec > 0) return `${fmt(s.durataSec)} s` + (s.kg > 0 ? ` @ ${fmt(s.kg)} kg` : '');
+  if (s.distantaM > 0) return s.kg > 0 ? `${fmt(s.kg)} kg × ${fmt(s.distantaM)} m` : `${fmt(s.distantaM)} m`;
+  return s.kg > 0 ? `${fmt(s.kg)}×${s.repetari}` : `${s.repetari}`;
+}
+
+// Rezumat scurt al seriilor de lucru: "3×8 @ 80 kg" sau "80×8, 85×6". Încălzirea se notează separat.
 function rezumatSerii(serii) {
-  const valide = serii.filter(serieValida);
-  if (valide.length === 0) return '—';
-  const toateLaFel = valide.every(s => s.kg === valide[0].kg && s.repetari === valide[0].repetari);
-  if (toateLaFel) {
+  const valide = serii.filter(serieDeLucru);
+  const incalzire = serii.filter(s => serieValida(s) && tipSerie(s) === 'incalzire').length;
+  const sufix = incalzire ? ` (+${incalzire} încălz.)` : '';
+  if (valide.length === 0) return incalzire ? `${incalzire} încălz.` : '—';
+  const cheie = s => formatSerie(s);
+  const toateLaFel = valide.every(s => cheie(s) === cheie(valide[0]));
+  if (toateLaFel && valide.length > 1) {
     const s = valide[0];
-    return s.kg > 0 ? `${valide.length}×${s.repetari} @ ${fmt(s.kg)} kg` : `${valide.length}×${s.repetari}`;
+    if (s.repetari > 0) return (s.kg > 0 ? `${valide.length}×${s.repetari} @ ${fmt(s.kg)} kg` : `${valide.length}×${s.repetari}`) + sufix;
+    return `${valide.length} × ${formatSerie(s)}` + sufix;
   }
-  return valide.map(s => s.kg > 0 ? `${fmt(s.kg)}×${s.repetari}` : `${s.repetari}`).join(', ');
+  return valide.map(formatSerie).join(', ') + sufix;
 }
 
 // Numărul de serii pe grupă musculară, din sesiunile date (de obicei o săptămână).
@@ -128,7 +176,7 @@ function seriiPeGrupa(sesiuni, grupaDe) {
   const rezultat = {};
   for (const s of sesiuni) {
     for (const ex of s.exercitii) {
-      const n = ex.serii.filter(serieValida).length;
+      const n = ex.serii.filter(serieDeLucru).length;
       if (n === 0) continue;
       const g = grupaDe(ex.nume) || 'Nealocat';
       rezultat[g] = (rezultat[g] || 0) + n;
@@ -199,8 +247,8 @@ function statisticiSesiune(s) {
   for (const ex of s.exercitii) {
     for (const se of ex.serii) {
       if (!serieValida(se)) continue;
-      serii++;
-      volum += se.kg * se.repetari;
+      volum += volumSerie(se);
+      if (tipSerie(se) !== 'incalzire') serii++;
     }
   }
   return { serii, volum };
@@ -272,17 +320,19 @@ function sesiuniRecente(sesiuni, azi, zile) {
 function recorduriNoi(sesiuni) {
   const rec = new Map();
   const evenimente = [];
-  const prioritate = { greutate: 3, forta: 2, repetari: 1 };
+  const prioritate = { greutate: 3, forta: 2, repetari: 1, durata: 1, distanta: 1 };
   for (const s of sesiuni) {
     for (const ex of s.exercitii) {
       let cel = null;
       for (const se of ex.serii) {
-        if (!serieValida(se)) continue;
-        const tip = esteRecord(rec, ex.nume, se.kg, se.repetari);
+        const tip = recordPentruSerie(rec, ex.nume, se);
         if (!tip) continue;
-        const candidat = { data: s.data, nume: ex.nume, tip, kg: se.kg, repetari: se.repetari, e1rm: e1rm(se.kg, se.repetari) };
+        const candidat = { data: s.data, nume: ex.nume, tip, kg: se.kg, repetari: se.repetari, e1rm: e1rm(se.kg, se.repetari),
+          durataSec: se.durataSec || 0, distantaM: se.distantaM || 0 };
         if (!cel || prioritate[tip] > prioritate[cel.tip] ||
-          (tip === cel.tip && (tip === 'greutate' ? se.kg > cel.kg : tip === 'forta' ? candidat.e1rm > cel.e1rm : se.repetari > cel.repetari))) {
+          (tip === cel.tip && (tip === 'greutate' ? se.kg > cel.kg : tip === 'forta' ? candidat.e1rm > cel.e1rm
+            : tip === 'durata' ? se.durataSec > cel.durataSec : tip === 'distanta' ? se.distantaM > cel.distantaM
+              : se.repetari > cel.repetari))) {
           cel = candidat;
         }
       }
@@ -323,7 +373,7 @@ function urmatorulAntrenament(rutine, sesiuni, grupaDe, azi) {
     const ultima = new Map();
     for (const s of sesiuni) {
       for (const ex of s.exercitii) {
-        if (!ex.serii.some(serieValida)) continue;
+        if (!ex.serii.some(serieDeLucru)) continue;
         const g = grupaDe(ex.nume);
         if (g && (!ultima.has(g) || s.data > ultima.get(g))) ultima.set(g, s.data);
       }
@@ -349,9 +399,32 @@ function schimbareGreutate(masuratori, azi, zile = 30) {
   return { de: prima.valoare, dela: prima.data, la: ultima.valoare, ladata: ultima.data, diferenta: ultima.valoare - prima.valoare };
 }
 
+// Durata activă a unui antrenament, în ms: de la început până la `sfarsit`, fără pauze.
+// pauze: [{ start, sfarsit }]; pauzaStart: începutul unei pauze în curs (sau null).
+function durataActiva(inceput, sfarsit, pauze = [], pauzaStart = null) {
+  if (!Number.isFinite(inceput) || !Number.isFinite(sfarsit)) return 0;
+  let pe = 0;
+  for (const p of pauze || []) {
+    if (!p || !Number.isFinite(p.start)) continue;
+    const a = Math.max(p.start, inceput);
+    const b = Math.min(Number.isFinite(p.sfarsit) ? p.sfarsit : sfarsit, sfarsit);
+    if (b > a) pe += b - a;
+  }
+  if (Number.isFinite(pauzaStart) && pauzaStart < sfarsit) pe += sfarsit - Math.max(pauzaStart, inceput);
+  return Math.max(0, sfarsit - inceput - pe);
+}
+
+// Durata unei sesiuni salvate, în minute (activă dacă e salvată, altfel sfârșit − început). null dacă lipsește.
+function durataSesiuneMin(s) {
+  if (Number.isFinite(s.durataActivaMs)) return Math.max(1, Math.round(s.durataActivaMs / 60000));
+  if (Number.isFinite(s.inceput) && Number.isFinite(s.sfarsit) && s.sfarsit > s.inceput) return Math.max(1, Math.round((s.sfarsit - s.inceput) / 60000));
+  return null;
+}
+
 if (typeof module !== 'undefined') {
   module.exports = { e1rm, recorduriDin, esteRecord, ultimaSesiuneCu, sugestieProgresie, rezumatSerii,
     seriiPeGrupa, tendintaGreutate, actualizeazaRecorduri, ziDinData, dataDinZi, cheieSaptamana, statisticiSesiune,
     totaluri, rezumatSaptamani, serieSaptamani, zileActiveSaptamana, sesiuniRecente, recorduriNoi, urmatorulAntrenament,
-    schimbareGreutate };
+    schimbareGreutate, serieValida, tipSerie, serieDeLucru, volumSerie, recordPentruSerie, formatSerie,
+    durataActiva, durataSesiuneMin };
 }

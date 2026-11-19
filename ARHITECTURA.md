@@ -33,7 +33,10 @@ Regula: fișierele definesc funcții; singurul cod care rulează la încărcare 
 Baza `jurnal-antrenament`, versiunea 4:
 
 - `sesiuni` `{ id, data: 'AAAA-LL-ZZ', inceput, sfarsit, grupe[], exercitii: [{ nume, serii: [{ kg, repetari }] }] }`
-- `exercitii` (cheie: `nume`) `{ nume, grupa }` — grupa aleasă pentru exercițiile proprii
+  Din etapa 3 (`versiune: 2`), opțional: `durataActivaMs`, `pauze[{start, sfarsit}]`, `nota`, `serii` (nr. serii de lucru),
+  `volum`; pe exercițiu `tip` ('corp' | 'timp' | 'distanta'; lipsă = greutate), `nota`, `superset` ('A', 'B'…);
+  pe serie `tip` ('incalzire' | 'drop' | 'esec'; lipsă = normală), `durataSec`, `distantaM`.
+- `exercitii` (cheie: `nume`) `{ nume, grupa, tip? }` — grupa și tipul alese de tine
 - `masuratori` `{ id, data, tip, valoare, creat }`
 - `rutine` `{ id, nume, grupe[], exercitii[], creat }`
 - `ciorna` (cheia `curenta`) — antrenamentul în curs
@@ -59,9 +62,20 @@ Se pot importa și backupurile v1/v2. La restaurare:
 
 ## Reguli de calcul
 
+- **Serie validă**: are repetări, secunde sau metri > 0. **Serie de lucru**: validă și nu e încălzire.
+- **Încălzirea** nu contează la recorduri, la numărul de serii, la seriile pe grupă și la sugestii; volumul o include.
 - **1RM estimat** (Epley): `kg × (1 + repetări / 30)`. Mai puțin precis peste 10–12 repetări.
-- **Volum**: `kg × repetări`, adunat pe serii. Exercițiile cu greutatea corpului au volum 0 (de revăzut în etapa 5).
-- **Serii pe grupă**: seriile cu repetări > 0, pe grupa principală a exercițiului.
+- **Volum**: `kg × repetări`, adunat pe serii. Seriile pe timp/distanță și exercițiile cu greutatea corpului fără lest dau 0 (de revăzut în etapa 5).
+- **Recorduri**: greutate maximă, 1RM estimat, repetări (corp fără lest), timp (exerciții pe timp), distanță.
+- **Durata**: durata activă = de la început la final, minus pauzele antrenamentului.
+
+## Antrenamentul în curs (etapa 3)
+
+- Se salvează doar seriile **bifate ✓**. Bifarea unei serii goale o completează cu valorile de data trecută.
+- Ciorna (`versiune: 2`) păstrează și bifele, notițele, pauzele și momentul ultimei modificări.
+  Ciornele vechi (fără versiune): seriile completate se consideră bifate, ca înainte.
+- După 3 ore fără activitate, la pornire se întreabă: Continuă (intervalul nu se numără), Salvează (se încheie la ultima activitate) sau Renunță.
+- Pauza automată după o serie bifată (setare); într-un superset pornește doar după ultimul exercițiu din grup.
 
 ## Panoul Acasă
 
