@@ -11,6 +11,8 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `validare.js` | Validarea și curățarea backupurilor (fără DOM, testabil în Node) |
 | `exercitii.js` | Biblioteca de 118 exerciții, șabloane de antrenament, siluete SVG |
 | `analiza.js` | Calcule: 1RM, recorduri, sugestii de progresie, serii pe grupă, tendința greutății (fără DOM) |
+| `figuri.js` | Ilustrațiile exercițiilor: alege fișierul SVG din `ilustratii/` (generat de `tools/ilustratii/`) |
+| `catalog.js` | Biblioteca unificată: catalog + exercițiile și preferințele tale, grupe, alternative, validarea exercițiilor proprii |
 | `ui.js` | Componente comune: `el`, iconițe, butoane, notificări, dialoguri, stări goale, formatări |
 | `grafice.js` | Grafice pe canvas, cu redesenare la redimensionare și valoare la atingere |
 | `setari.js` | Setările (localStorage + incluse în backup) și ecranul Setări |
@@ -19,7 +21,7 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `corp.js` | Greutate corporală și măsurători |
 | `progres.js` | Graficele de progres și seriile pe săptămână |
 | `istoric.js` | Istoricul sesiunilor, editare și ștergere |
-| `biblioteca.js` | Ecranul Exerciții (bibliotecă și rutine) |
+| `biblioteca.js` | Ecranul Exerciții: listă, filtre, detalii, formular, reîncadrarea grupei vechi, selectorul rapid, rutine |
 | `backup.js` | Export, restaurare, copii automate, stare stocare, ștergerea datelor |
 | `acasa.js` | Ecranul Acasă (panoul): doar afișare; calculele sunt în `analiza.js` |
 | `main.js` | Navigarea și pornirea aplicației (se încarcă ultimul) |
@@ -36,7 +38,9 @@ Baza `jurnal-antrenament`, versiunea 4:
   Din etapa 3 (`versiune: 2`), opțional: `durataActivaMs`, `pauze[{start, sfarsit}]`, `nota`, `serii` (nr. serii de lucru),
   `volum`; pe exercițiu `tip` ('corp' | 'timp' | 'distanta'; lipsă = greutate), `nota`, `superset` ('A', 'B'…);
   pe serie `tip` ('incalzire' | 'drop' | 'esec'; lipsă = normală), `durataSec`, `distantaM`.
-- `exercitii` (cheie: `nume`) `{ nume, grupa, tip? }` — grupa și tipul alese de tine
+- `exercitii` (cheie: `nume`) — pentru un exercițiu din catalog doar ce ai schimbat `{ nume, grupa?, tip?, favorit?, nota? }`;
+  pentru unul propriu tot: `{ nume, grupa, secundari[], echipament, categorie, nivel, tip, instructiuni, favorit, nota, creat }`.
+  Înregistrările care diferă doar prin litere mari/mici se unesc la citire (prima are prioritate).
 - `masuratori` `{ id, data, tip, valoare, creat }`
 - `rutine` `{ id, nume, grupe[], exercitii[], creat }`
 - `ciorna` (cheia `curenta`) — antrenamentul în curs
@@ -76,6 +80,39 @@ Se pot importa și backupurile v1/v2. La restaurare:
   Ciornele vechi (fără versiune): seriile completate se consideră bifate, ca înainte.
 - După 3 ore fără activitate, la pornire se întreabă: Continuă (intervalul nu se numără), Salvează (se încheie la ultima activitate) sau Renunță.
 - Pauza automată după o serie bifată (setare); într-un superset pornește doar după ultimul exercițiu din grup.
+
+## Biblioteca (etapa 4)
+
+- **11 grupe**: Piept, Spate, Umeri, Biceps, Triceps, Antebrațe, Cvadricepși, Femurali, Fese, Gambe, Abdomen.
+  Cele 19 exerciții „Picioare" din catalog au fost împărțite (14 Cvadricepși, 5 Femurali). Exercițiile proprii cu
+  grupa veche „Picioare" o păstrează până o alegi tu în Exerciții; istoricul nu se rescrie (grupa se citește din bibliotecă).
+- **Categorie** (Compus/Izolare) pusă manual pentru toate cele 118 exerciții.
+- **Mușchi secundari** = mușchii exercițiului minus cei ai grupei principale.
+- **Alternative**: aceeași grupă; scor = mușchi secundari comuni (×2) + aceeași categorie (3) + același tip (1)
+  + alt echipament (1) − diferența de dificultate.
+- **Redenumirea** unui exercițiu propriu schimbă numele în bibliotecă, istoric și rutine într-o singură tranzacție,
+  după o copie automată de siguranță; ștergerea îl scoate doar din bibliotecă (istoricul rămâne).
+
+## Ilustrațiile exercițiilor
+
+- Fiecare exercițiu are două fișiere SVG proprii în `ilustratii/`: `<nume>.svg` (poziția de start și cea finală,
+  cu săgeata mișcării, raport 16:10) pentru detalii și `<nume>-mini.svg` (o poziție, raport 46:54) pentru liste.
+  Numele fișierului = numele exercițiului fără diacritice, cu cratime (`numeFisierIlustratie` din figuri.js).
+- Exercițiile create de tine primesc desenul grupei (`ilustratii/grupa-<grupa>…`); fără grupă, iconița generică.
+- Fișierele sunt **generate**, nu desenate de mână: `node tools/ilustratii/genereaza.js` (fără dependențe).
+  - `geom.js`, `pictura.js`: geometrie, degradeuri refolosite, forme cu `<use>` (fișiere mici).
+  - `corp.js`: corpul anatomic în vedere laterală și frontală (din față / din spate), pozat prin unghiuri de articulații;
+    mușchii sunt definiți relativ la profilul fiecărui segment și au zonele din aplicație.
+  - `baza.js`: cinematică inversă (mâna/glezna la un punct dat); `scena.js`, `echipament.js`: bănci, bare, gantere, scripeți, aparate.
+  - `exercitii/*.js`: pozițiile fiecărui exercițiu; `exercitii/grupe.js`: desenele implicite pe grupe.
+  - `--grupa Piept --iesire <dosar> --revizie` scrie o pagină de verificare cu toate desenele unei grupe.
+- Culori: mușchii principali verde-lămâie, cei secundari verde stins, restul gri. Mușchii evidențiați vin din datele
+  exercițiului (aceleași reguli ca în catalog); singura corecție e la aparatul pentru adductori (adductorii principali).
+- Service workerul salvează toate miniaturile la instalare (lista în `ilustratii/lista.json`), iar ilustrațiile
+  (care au versiunea în adresă) se servesc întâi din copia locală. După ce schimbi pozițiile, rulează generatorul
+  și mărește versiunea aplicației.
+- `tests/figuri.test.js`: fiecare exercițiu are ambele fișiere, valide, cu mușchiul principal vizibil; desene diferite
+  pentru exerciții diferite; fișierele din dosar sunt identice cu ce produce generatorul acum.
 
 ## Panoul Acasă
 

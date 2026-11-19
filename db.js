@@ -131,6 +131,77 @@ async function seteazaInBiblioteca(nume, modificari) {
   });
 }
 
+// Înlocuiește complet înregistrarea unui exercițiu din biblioteca ta.
+function scrieInBiblioteca(inregistrare) {
+  return cere('exercitii', 'readwrite', st => st.put(inregistrare));
+}
+
+// Șterge exercițiul din biblioteca ta, inclusiv înregistrările cu același nume scris cu alte litere.
+async function stergeDinBiblioteca(nume) {
+  const bd = await baza();
+  const cheie = nume.toLowerCase();
+  return new Promise((rezolva, respinge) => {
+    const tranzactie = bd.transaction('exercitii', 'readwrite');
+    tranzactie.objectStore('exercitii').openCursor().onsuccess = e => {
+      const c = e.target.result;
+      if (!c) return;
+      if (String(c.key).toLowerCase() === cheie) c.delete();
+      c.continue();
+    };
+    tranzactie.oncomplete = () => rezolva();
+    tranzactie.onerror = () => respinge(tranzactie.error);
+    tranzactie.onabort = () => respinge(tranzactie.error);
+  });
+}
+
+// Redenumește un exercițiu propriu peste tot: în bibliotecă, în istoric și în rutine, într-o singură tranzacție.
+// Dacă ceva eșuează, nu se schimbă nimic. inregistrareNoua: noua înregistrare din bibliotecă (cu numele nou).
+// Întoarce numărul de sesiuni și rutine modificate.
+async function redenumesteExercitiu(numeVechi, inregistrareNoua) {
+  const bd = await baza();
+  const vechi = numeVechi.toLowerCase();
+  const nou = inregistrareNoua.nume;
+  return new Promise((rezolva, respinge) => {
+    const tranzactie = bd.transaction(['exercitii', 'sesiuni', 'rutine'], 'readwrite');
+    const rezultat = { sesiuni: 0, rutine: 0 };
+    // Toate înregistrările vechi (și cele scrise cu alte litere) se șterg, apoi se scrie cea nouă.
+    const lib = tranzactie.objectStore('exercitii');
+    lib.openCursor().onsuccess = e => {
+      const c = e.target.result;
+      if (!c) { lib.put(inregistrareNoua); return; }
+      if (String(c.key).toLowerCase() === vechi) c.delete();
+      c.continue();
+    };
+    const ses = tranzactie.objectStore('sesiuni');
+    ses.openCursor().onsuccess = e => {
+      const c = e.target.result;
+      if (!c) return;
+      const s = c.value;
+      if (s && Array.isArray(s.exercitii) && s.exercitii.some(x => x && typeof x.nume === 'string' && x.nume.toLowerCase() === vechi)) {
+        s.exercitii = s.exercitii.map(x => (x && typeof x.nume === 'string' && x.nume.toLowerCase() === vechi ? { ...x, nume: nou } : x));
+        c.update(s);
+        rezultat.sesiuni++;
+      }
+      c.continue();
+    };
+    const rut = tranzactie.objectStore('rutine');
+    rut.openCursor().onsuccess = e => {
+      const c = e.target.result;
+      if (!c) return;
+      const r = c.value;
+      if (r && Array.isArray(r.exercitii) && r.exercitii.some(x => typeof x === 'string' && x.toLowerCase() === vechi)) {
+        r.exercitii = r.exercitii.map(x => (typeof x === 'string' && x.toLowerCase() === vechi ? nou : x));
+        c.update(r);
+        rezultat.rutine++;
+      }
+      c.continue();
+    };
+    tranzactie.oncomplete = () => rezolva(rezultat);
+    tranzactie.onerror = () => respinge(tranzactie.error);
+    tranzactie.onabort = () => respinge(tranzactie.error);
+  });
+}
+
 async function bibliotecaExercitii() {
   const lista = await cere('exercitii', 'readonly', st => st.getAll());
   return lista.filter(e => e && typeof e.nume === 'string');
