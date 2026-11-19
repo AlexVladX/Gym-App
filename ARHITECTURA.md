@@ -10,7 +10,8 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `db.js` | IndexedDB: deschidere, actualizare de schemă, citire/scriere pe fiecare store, copii automate |
 | `validare.js` | Validarea și curățarea backupurilor (fără DOM, testabil în Node) |
 | `exercitii.js` | Biblioteca de 118 exerciții, șabloane de antrenament, siluete SVG |
-| `analiza.js` | Calcule: 1RM, recorduri, sugestii de progresie, serii pe grupă, tendința greutății (fără DOM) |
+| `analiza.js` | Calcule: 1RM, volum, recorduri, sugestii de progresie, serii pe grupă, tendința greutății (fără DOM) |
+| `statistici.js` | Statistici avansate (etapa 5): perioade, rezumate, evoluție, distribuție pe grupe, progresie, recorduri pe repetări (fără DOM) |
 | `figuri.js` | Ilustrațiile exercițiilor: alege fișierul SVG din `ilustratii/` (generat de `tools/ilustratii/`) |
 | `catalog.js` | Biblioteca unificată: catalog + exercițiile și preferințele tale, grupe, alternative, validarea exercițiilor proprii |
 | `ui.js` | Componente comune: `el`, iconițe, butoane, notificări, dialoguri, stări goale, formatări |
@@ -19,7 +20,7 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `timer.js` | Timerul de pauză și semnalul sonor |
 | `sesiune.js` | Antrenamentul în curs: exerciții, serii, ciornă, recorduri, închidere |
 | `corp.js` | Greutate corporală și măsurători |
-| `progres.js` | Graficele de progres și seriile pe săptămână |
+| `progres.js` | Ecranul Progres → Grafice: afișarea statisticilor (perioadă, rezumat, evoluție, grupe, exercițiu, forță, recorduri) |
 | `istoric.js` | Istoricul sesiunilor, editare și ștergere |
 | `biblioteca.js` | Ecranul Exerciții: listă, filtre, detalii, formular, reîncadrarea grupei vechi, selectorul rapid, rutine |
 | `backup.js` | Export, restaurare, copii automate, stare stocare, ștergerea datelor |
@@ -67,9 +68,37 @@ Se pot importa și backupurile v1/v2. La restaurare:
 ## Reguli de calcul
 
 - **Serie validă**: are repetări, secunde sau metri > 0. **Serie de lucru**: validă și nu e încălzire.
-- **Încălzirea** nu contează la recorduri, la numărul de serii, la seriile pe grupă și la sugestii; volumul o include.
+- **Încălzirea** nu contează nicăieri în statistici: recorduri, număr de serii, serii pe grupă, sugestii și (din etapa 5) volum.
+  Seriile drop și cele până la eșec sunt serii de lucru obișnuite (fiecare cu greutatea ei, deci fără volum dublat).
 - **1RM estimat** (Epley): `kg × (1 + repetări / 30)`. Mai puțin precis peste 10–12 repetări.
-- **Volum**: `kg × repetări`, adunat pe serii. Seriile pe timp/distanță și exercițiile cu greutatea corpului fără lest dau 0 (de revăzut în etapa 5).
+- **Volum** (din etapa 5): adunat pe seriile de lucru cu repetări.
+  - greutate: `kg × repetări`;
+  - greutatea corpului: `(greutatea corporală la data sesiunii + kg în plus) × repetări`. Greutatea corporală =
+    ultima cântărire din Corp din ziua aceea sau dinainte; dacă nu există, prima de după; fără cântăriri, 0.
+    Tipul exercițiului: cel salvat în sesiune (din etapa 3; lipsa = greutate), iar la sesiunile mai vechi cel din bibliotecă;
+  - seriile pe timp sau distanță: 0 (au recordurile lor: timp, distanță).
+  - Câmpul `volum` salvat în sesiuni e doar informativ; afișarea recalculează mereu din serii (după regulile de acum).
+- **Același exercițiu de două ori** într-o sesiune se unește la calcul (o singură sesiune, toate seriile).
+- Toate statisticile se calculează din sesiunile salvate la fiecare afișare: editarea sau ștergerea unei sesiuni
+  le actualizează imediat. Antrenamentul în curs (ciorna) nu intră. Unitatea e mereu kg.
+
+## Statistici avansate (etapa 5)
+
+- **Perioade**: 4 săptămâni (28 de zile), 3 luni (91), 6 luni (182), 1 an (365), Tot (de la primul antrenament), toate
+  până azi inclusiv. **Comparația** se face cu perioada de aceeași lungime de dinainte, doar dacă ai antrenamente înainte.
+- **Rezumat**: antrenamente, serii de lucru, volum, timp activ (durata activă salvată, altfel sfârșit − început),
+  antrenamente pe săptămână = antrenamente / (zile / 7), recorduri noi (aceleași reguli ca insigna din antrenament).
+- **Evoluție**: săptămâni (de luni) sau luni calendaristice, continue (și cele fără antrenament); volum, serii,
+  antrenamente sau timp. Media = totalul / numărul de săptămâni sau luni din perioadă.
+- **Grupe musculare**: serii de lucru pe grupa principală a exercițiului (din bibliotecă), procent din total.
+- **Progres pe exercițiu**, un punct pe sesiune: 1RM estimat (cea mai bună serie), greutate maximă, volum,
+  repetări maxime (sau timp / distanță). Schimbarea = ultima sesiune față de prima din perioadă.
+- **Cea mai mare greutate pe număr de repetări**: pentru N = 1, 3, 5, 8, 10, 12, greutatea maximă ridicată de cel puțin N ori.
+- **Forță pe exercițiile principale**: exercițiile cu greutate făcute cel mai des în perioadă (max. 6), 1RM estimat
+  la prima și la ultima sesiune din perioadă, plus recordul absolut.
+- **Recorduri personale**: pentru fiecare exercițiu, 1RM estimat și greutatea maximă (sau repetări / timp / distanță),
+  cele mai recente întâi.
+- Teste: `tests/statistici.test.js` (valori calculate de mână).
 - **Recorduri**: greutate maximă, 1RM estimat, repetări (corp fără lest), timp (exerciții pe timp), distanță.
 - **Durata**: durata activă = de la început la final, minus pauzele antrenamentului.
 

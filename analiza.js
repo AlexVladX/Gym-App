@@ -9,7 +9,7 @@ function e1rm(kg, repetari) {
 // O serie e „validă" dacă are ceva făcut: repetări, timp sau distanță.
 // Câmpurile durataSec și distantaM apar doar la exercițiile pe timp sau distanță (din etapa 3).
 function serieValida(s) {
-  return s.kg >= 0 && (s.repetari > 0 || s.durataSec > 0 || s.distantaM > 0);
+  return !!s && s.kg >= 0 && (s.repetari > 0 || s.durataSec > 0 || s.distantaM > 0);
 }
 
 // Tipul seriei: 'normal' (implicit, și pentru datele vechi), 'incalzire', 'drop', 'esec'.
@@ -18,14 +18,64 @@ function tipSerie(s) {
 }
 
 // Seriile de lucru: valide și care nu sunt de încălzire.
-// Încălzirea nu contează la recorduri, la numărul de serii și la sugestii; volumul o include.
+// Încălzirea nu contează la recorduri, la numărul de serii, la sugestii și (din etapa 5) la volum.
 function serieDeLucru(s) {
   return serieValida(s) && tipSerie(s) !== 'incalzire';
 }
 
-// Volumul unei serii: kg × repetări (seriile pe timp sau distanță dau 0).
-function volumSerie(s) {
-  return serieValida(s) && s.repetari > 0 ? s.kg * s.repetari : 0;
+// ---------- Contextul calculelor de volum ----------
+// Volumul exercițiilor cu greutatea corpului folosește greutatea ta din Corp de la data antrenamentului.
+// Aplicația îl setează la încărcarea istoricului (configureazaCalcul); fără el, greutatea corpului contează 0.
+//   greutateCorpLa(data) → kg sau null; tipExercitiu(nume) → 'greutate' | 'corp' | 'timp' | 'distanta' | null
+const contextCalcul = { greutateCorpLa: null, tipExercitiu: null };
+function configureazaCalcul(c) { Object.assign(contextCalcul, c); }
+
+// Funcție care dă greutatea corporală la o dată: ultima cântărire din ziua aceea sau dinainte;
+// dacă nu există niciuna înainte, prima de după. null dacă nu ai nicio cântărire.
+function functieGreutateCorp(masuratori) {
+  const g = masuratori.filter(m => m.tip === 'Greutate' && Number.isFinite(m.valoare) && m.valoare > 0 && typeof m.data === 'string')
+    .sort((a, b) => a.data.localeCompare(b.data) || (a.creat || 0) - (b.creat || 0));
+  if (!g.length) return () => null;
+  return data => {
+    let lo = 0, hi = g.length - 1, gasit = -1;
+    while (lo <= hi) { const m = (lo + hi) >> 1; if (g[m].data <= data) { gasit = m; lo = m + 1; } else hi = m - 1; }
+    return g[gasit >= 0 ? gasit : 0].valoare;
+  };
+}
+
+// Tipul exercițiului într-o sesiune. Din etapa 3 (versiune 2) tipul e salvat (lipsa = greutate);
+// în sesiunile mai vechi se ia din bibliotecă.
+function tipEfectiv(ex, s) {
+  if (ex && ex.tip) return ex.tip;
+  if (s && s.versiune >= 2) return 'greutate';
+  return (ex && contextCalcul.tipExercitiu && contextCalcul.tipExercitiu(ex.nume)) || 'greutate';
+}
+
+// Volumul unei serii (etapa 5): doar seriile de lucru cu repetări (fără încălzire).
+// Greutate: kg × repetări. Greutatea corpului: (greutatea corpului la data sesiunii + kg în plus) × repetări.
+// Seriile pe timp sau distanță dau 0. ex și s sunt opționale (fără ele: kg × repetări).
+function volumSerie(se, ex = null, data = null, s = null) {
+  if (!serieDeLucru(se) || !(se.repetari > 0)) return 0;
+  const kg = Number.isFinite(se.kg) && se.kg > 0 ? se.kg : 0;
+  if (ex && tipEfectiv(ex, s) === 'corp') {
+    const corp = data && contextCalcul.greutateCorpLa ? contextCalcul.greutateCorpLa(data) : null;
+    return ((corp || 0) + kg) * se.repetari;
+  }
+  return kg * se.repetari;
+}
+
+// Exercițiile unei sesiuni, cu intrările care au același nume unite într-una singură
+// (un exercițiu adăugat de două ori în același antrenament se numără o dată, cu toate seriile).
+function exercitiiUnite(s) {
+  const m = new Map();
+  for (const ex of s.exercitii || []) {
+    if (!ex || typeof ex.nume !== 'string' || !Array.isArray(ex.serii)) continue;
+    const cheie = ex.nume.toLowerCase();
+    const u = m.get(cheie);
+    if (u) u.serii = u.serii.concat(ex.serii);
+    else m.set(cheie, { ...ex, serii: ex.serii.slice() });
+  }
+  return [...m.values()];
 }
 
 // Recordurile pe fiecare exercițiu, cheie: numele cu litere mici.
@@ -40,7 +90,7 @@ function recorduriDin(sesiuni) {
 
 // Adaugă o sesiune la recordurile existente (folosit și pentru reluarea istoricului pas cu pas).
 function actualizeazaRecorduri(rec, s) {
-  for (const ex of s.exercitii) {
+  for (const ex of exercitiiUnite(s)) {
     const cheie = ex.nume.toLowerCase();
     let r = rec.get(cheie);
     if (!r) {
@@ -52,7 +102,7 @@ function actualizeazaRecorduri(rec, s) {
     let volum = 0;
     for (const se of ex.serii) {
       if (!serieDeLucru(se)) continue;
-      volum += volumSerie(se);
+      volum += volumSerie(se, ex, s.data, s);
       if (se.durataSec > r.durata) { r.durata = se.durataSec; r.durataData = s.data; }
       if (se.distantaM > r.distanta) { r.distanta = se.distantaM; r.distantaData = s.data; }
       if (!(se.repetari > 0)) continue;
@@ -222,7 +272,7 @@ function tendintaGreutate(masuratori) {
 
 
 // ================= Panou (Acasă) =================
-// Reguli: o serie „completă" are repetări > 0. Volum = kg × repetări (exercițiile cu greutatea corpului dau 0).
+// Reguli: o serie „completă" are repetări > 0. Volumul: vezi volumSerie (doar serii de lucru; corp = greutatea ta + lest).
 // Datele sunt șiruri „AAAA-LL-ZZ" (ziua locală); calculele pe zile folosesc UTC ca să nu depindă de fusul orar.
 
 function ziDinData(data) {
@@ -244,10 +294,10 @@ function cheieSaptamana(data) {
 function statisticiSesiune(s) {
   let serii = 0;
   let volum = 0;
-  for (const ex of s.exercitii) {
+  for (const ex of exercitiiUnite(s)) {
     for (const se of ex.serii) {
       if (!serieValida(se)) continue;
-      volum += volumSerie(se);
+      volum += volumSerie(se, ex, s.data, s);
       if (tipSerie(se) !== 'incalzire') serii++;
     }
   }
@@ -322,7 +372,7 @@ function recorduriNoi(sesiuni) {
   const evenimente = [];
   const prioritate = { greutate: 3, forta: 2, repetari: 1, durata: 1, distanta: 1 };
   for (const s of sesiuni) {
-    for (const ex of s.exercitii) {
+    for (const ex of exercitiiUnite(s)) {
       let cel = null;
       for (const se of ex.serii) {
         const tip = recordPentruSerie(rec, ex.nume, se);
@@ -426,5 +476,5 @@ if (typeof module !== 'undefined') {
     seriiPeGrupa, tendintaGreutate, actualizeazaRecorduri, ziDinData, dataDinZi, cheieSaptamana, statisticiSesiune,
     totaluri, rezumatSaptamani, serieSaptamani, zileActiveSaptamana, sesiuniRecente, recorduriNoi, urmatorulAntrenament,
     schimbareGreutate, serieValida, tipSerie, serieDeLucru, volumSerie, recordPentruSerie, formatSerie,
-    durataActiva, durataSesiuneMin };
+    durataActiva, durataSesiuneMin, configureazaCalcul, functieGreutateCorp, tipEfectiv, exercitiiUnite };
 }

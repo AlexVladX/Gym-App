@@ -5,11 +5,11 @@ const a = require('../analiza.js');
 
 const ses = (data, exercitii) => ({ data, exercitii });
 
-test('încălzirea nu contează la recorduri, serii și sugestii, dar intră în volum', () => {
+test('încălzirea nu contează la recorduri, serii, sugestii și volum (etapa 5)', () => {
   const s = ses('2026-11-10', [{ nume: 'Împins', serii: [
     { kg: 40, repetari: 10, tip: 'incalzire' }, { kg: 60, repetari: 8 }, { kg: 60, repetari: 8 },
   ] }]);
-  assert.deepEqual(a.statisticiSesiune(s), { serii: 2, volum: 400 + 960 });
+  assert.deepEqual(a.statisticiSesiune(s), { serii: 2, volum: 960 });
   const r = a.recorduriDin([s]).get('împins');
   assert.equal(r.kg, 60);
   assert.equal(r.volum, 960);

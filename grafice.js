@@ -220,6 +220,10 @@ function deseneazaBareIntern(canvas, g) {
   ctx.stroke();
 
   ctx.textAlign = 'center';
+  // când barele sunt multe, etichetele se răresc (numărate de la ultima bară, care rămâne mereu etichetată)
+  ctx.font = '11px Inter, system-ui, sans-serif';
+  const latEticheta = Math.max(0, ...bare.map(b => ctx.measureText(b.eticheta || '').width)) + 8;
+  const pasEtichete = Math.max(1, Math.ceil(latEticheta / pas));
   bare.forEach((b, i) => {
     const cx = g.pozitii[i];
     const h = max > 0 ? Math.max(b.valoare > 0 ? 4 : 0, b.valoare / max * areaI) : 0;
@@ -237,7 +241,7 @@ function deseneazaBareIntern(canvas, g) {
     }
     ctx.fillStyle = b.evidentiata ? '#FFFFFF' : CULORI_GRAFIC.text;
     ctx.font = (b.evidentiata ? '600 ' : '') + '11px Inter, system-ui, sans-serif';
-    ctx.fillText(b.eticheta, cx, inaltime - 8);
+    if ((bare.length - 1 - i) % pasEtichete === 0) ctx.fillText(b.eticheta, cx, inaltime - 8);
   });
   ctx.textAlign = 'left';
 

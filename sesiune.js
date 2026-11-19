@@ -42,7 +42,13 @@ let istoric = [];
 let recorduri = new Map();
 
 async function reincarcaIstoric() {
-  istoric = await toateSesiunile();
+  const [sesiuni, masuratori] = await Promise.all([toateSesiunile(), toateMasuratorile().catch(() => [])]);
+  // volumul exercițiilor cu greutatea corpului folosește greutatea din Corp (vezi volumSerie în analiza.js)
+  configureazaCalcul({
+    greutateCorpLa: functieGreutateCorp(masuratori),
+    tipExercitiu: nume => (typeof exercitiuDupaNume === 'function' ? exercitiuDupaNume(nume)?.tip : null) || null,
+  });
+  istoric = sesiuni;
   recorduri = recorduriDin(istoric);
 }
 
@@ -167,15 +173,16 @@ function valoriSerie(s) {
   };
 }
 
-// Seriile bifate și volumul lor (volumul include încălzirea).
+// Seriile bifate și volumul lor (aceleași reguli ca la istoric: fără încălzire; corp = greutatea ta + lest).
 function seriiCompletate() {
   let serii = 0;
   let volum = 0;
+  const azi = dataLocala();
   for (const ex of stare.exercitii) {
     for (const s of ex.serii) {
       if (!s.facut) continue;
       const v = valoriSerie(s);
-      volum += volumSerie(v);
+      volum += volumSerie(v, ex, azi, { versiune: 2 });
       if (serieDeLucru(v)) serii++;
     }
   }

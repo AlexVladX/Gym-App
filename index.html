@@ -13,9 +13,9 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
   <title>Jurnal de antrenament</title>
-  <link rel="stylesheet" href="styles.css?v=16">
+  <link rel="stylesheet" href="styles.css?v=17">
 </head>
-<body class="se-incarca" data-versiune="16">
+<body class="se-incarca" data-versiune="17">
   <header class="topbar">
     <div class="topbar-interior">
       <div class="marca">
@@ -141,24 +141,74 @@
           </div>
         </div>
         <div id="progres-continut">
+          <div id="progres-perioada" class="chipuri chipuri-defilare perioade" role="group" aria-label="Perioada analizată"></div>
+
           <div class="card">
+            <div class="card-cap"><h2>Rezumat</h2><span id="rezumat-interval" class="nota"></span></div>
+            <div id="progres-rezumat" class="placute"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-cap">
+              <h2>Evoluție</h2>
+              <div id="evolutie-pas" class="chipuri chipuri-mici" role="group" aria-label="Grupare"></div>
+            </div>
+            <div id="evolutie-metrica" class="chipuri chipuri-mici" role="group" aria-label="Ce arată graficul"></div>
+            <canvas id="grafic-evolutie" class="grafic mt" aria-label="Graficul evoluției pe săptămâni sau luni"></canvas>
+            <p id="evolutie-nota" class="nota"></p>
+          </div>
+
+          <div class="card">
+            <h2>Grupe musculare</h2>
+            <p class="nota">Serii de lucru pe grupa principală a fiecărui exercițiu, în perioada aleasă.</p>
+            <div id="distributie-grupe" class="mt"></div>
+          </div>
+
+          <div class="card" id="card-progres-exercitiu">
             <h2>Progres pe exercițiu</h2>
             <select id="progres-exercitiu" aria-label="Exercițiul afișat"></select>
-            <div id="progres-recorduri" class="placute mt"></div>
-            <p class="sectiune-eticheta">1RM estimat (formula Epley), kg</p>
-            <canvas id="grafic-forta" class="grafic" aria-label="Graficul forței estimate"></canvas>
-            <p class="sectiune-eticheta">Volum pe sesiune (kg × repetări)</p>
-            <canvas id="grafic-volum" class="grafic" aria-label="Graficul volumului pe sesiune"></canvas>
+            <p class="sectiune-eticheta">Recorduri (din toate timpurile)</p>
+            <div id="progres-recorduri" class="placute"></div>
+            <div id="progres-metrica" class="chipuri chipuri-mici" role="group" aria-label="Ce arată graficul exercițiului"></div>
+            <canvas id="grafic-forta" class="grafic mt" aria-label="Graficul progresului pe exercițiu"></canvas>
             <p id="progres-sumar" class="nota"></p>
-            <p class="nota">1RM estimat = greutate × (1 + repetări / 30). E o estimare, mai puțin precisă peste 10–12 repetări.</p>
+            <div id="progres-repetari-bloc">
+              <p class="sectiune-eticheta">Cea mai mare greutate pe număr de repetări</p>
+              <div id="progres-repetari" class="tabel-repetari"></div>
+            </div>
+            <p class="sectiune-eticheta">Sesiunile tale cu acest exercițiu</p>
+            <div id="progres-sesiuni" class="lista-simpla"></div>
+          </div>
+
+          <div class="card">
+            <h2>Forță pe exercițiile principale</h2>
+            <p class="nota">Exercițiile cu greutate făcute cel mai des în perioadă: 1RM estimat la prima și la ultima sesiune.</p>
+            <div id="forta-principale" class="lista-simpla mt"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-cap"><h2>Recorduri personale</h2><span id="recorduri-numar" class="nota"></span></div>
+            <div id="lista-recorduri" class="lista-simpla"></div>
           </div>
 
           <div class="card">
             <h2>Serii pe săptămână, pe grupă</h2>
             <select id="saptamana" aria-label="Săptămâna afișată"></select>
             <div id="volum-grupe" class="mt"></div>
-            <p class="nota">Se numără seriile cu repetări, pe grupa principală a fiecărui exercițiu. Banda deschisă marchează 10–20 de serii pe săptămână, intervalul recomandat de obicei pentru creștere musculară.</p>
+            <p class="nota">Se numără seriile de lucru, pe grupa principală a fiecărui exercițiu. Banda deschisă marchează 10–20 de serii pe săptămână, intervalul recomandat de obicei pentru creștere musculară.</p>
           </div>
+
+          <details class="card calcule">
+            <summary><h2>Cum se calculează</h2></summary>
+            <ul class="nota">
+              <li><b>Serie de lucru</b>: o serie salvată (bifată) cu repetări, secunde sau metri, care nu e de încălzire. Seriile drop și cele până la eșec sunt serii de lucru.</li>
+              <li><b>Volum</b> = greutate × repetări, adunat pe seriile de lucru. La exercițiile cu greutatea corpului: (greutatea ta din Corp la data antrenamentului + greutatea în plus) × repetări. Seriile pe timp sau distanță nu intră în volum.</li>
+              <li><b>1RM estimat</b> (Epley) = greutate × (1 + repetări / 30), cea mai bună serie din sesiune. E o estimare, mai puțin precisă peste 10–12 repetări.</li>
+              <li><b>Greutate pe număr de repetări</b>: cea mai mare greutate ridicată de cel puțin atâtea ori.</li>
+              <li><b>Recorduri</b>: greutatea maximă și 1RM estimat (repetări, timp sau distanță la exercițiile fără greutate). Prima sesiune cu un exercițiu nu e record nou.</li>
+              <li><b>Comparația</b> se face cu perioada de aceeași lungime de dinainte. Se numără doar antrenamentele încheiate; cel în curs nu intră.</li>
+            </ul>
+          </details>
         </div>
       </div>
     </section>
@@ -329,23 +379,24 @@
     </button>
   </nav>
 
-  <script src="db.js?v=16"></script>
-  <script src="validare.js?v=16"></script>
-  <script src="exercitii.js?v=16"></script>
-  <script src="analiza.js?v=16"></script>
-  <script src="catalog.js?v=16"></script>
-  <script src="figuri.js?v=16"></script>
-  <script src="ui.js?v=16"></script>
-  <script src="grafice.js?v=16"></script>
-  <script src="setari.js?v=16"></script>
-  <script src="timer.js?v=16"></script>
-  <script src="sesiune.js?v=16"></script>
-  <script src="corp.js?v=16"></script>
-  <script src="progres.js?v=16"></script>
-  <script src="istoric.js?v=16"></script>
-  <script src="biblioteca.js?v=16"></script>
-  <script src="backup.js?v=16"></script>
-  <script src="acasa.js?v=16"></script>
-  <script src="main.js?v=16"></script>
+  <script src="db.js?v=17"></script>
+  <script src="validare.js?v=17"></script>
+  <script src="exercitii.js?v=17"></script>
+  <script src="analiza.js?v=17"></script>
+  <script src="statistici.js?v=17"></script>
+  <script src="catalog.js?v=17"></script>
+  <script src="figuri.js?v=17"></script>
+  <script src="ui.js?v=17"></script>
+  <script src="grafice.js?v=17"></script>
+  <script src="setari.js?v=17"></script>
+  <script src="timer.js?v=17"></script>
+  <script src="sesiune.js?v=17"></script>
+  <script src="corp.js?v=17"></script>
+  <script src="progres.js?v=17"></script>
+  <script src="istoric.js?v=17"></script>
+  <script src="biblioteca.js?v=17"></script>
+  <script src="backup.js?v=17"></script>
+  <script src="acasa.js?v=17"></script>
+  <script src="main.js?v=17"></script>
 </body>
 </html>
