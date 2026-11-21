@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "19";
+  --versiune-css: "20";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -1193,4 +1193,27 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .punct-obiectiv.facut { background: var(--accent); }
 .punct-obiectiv.facut.extra { background: rgba(183, 243, 74, 0.5); }
 .urmatoarea-insigna { display: flex; align-items: center; gap: var(--s3); margin-top: var(--s3); padding: 10px var(--s3); border-radius: var(--raza); background: var(--suprafata-2); }
+
+/* ---------- Siguranța datelor (etapa 8) ---------- */
+.toast-actiune {
+  margin-left: auto; flex: 0 0 auto; align-self: center; min-height: 34px; padding: 0 12px; border-radius: 999px;
+  border: 0; background: var(--accent); color: var(--pe-accent); font: inherit; font-weight: 700; font-size: 13px; cursor: pointer;
+}
+.rand-cos { display: flex; align-items: center; gap: var(--s2); }
+.rand-cos .rand-lista-text { flex: 1; }
+.tabel-compara-rand.verificare { grid-template-columns: 1.6fr 0.6fr 1fr; }
+.text-avertizare { color: var(--avertizare); font-weight: 600; }
+.card-memento { border-color: rgba(183, 243, 74, 0.35); }
+.rand-memento { display: flex; gap: var(--s3); align-items: flex-start; margin-bottom: var(--s3); }
+.rand-memento > .iconita { flex: 0 0 auto; width: 26px; height: 26px; color: var(--accent); margin-top: 2px; }
+.rand-memento h2 { margin-bottom: 4px; }
+.rand-memento .nota { margin: 0; }
+.banda-avertizare {
+  position: sticky; top: 0; z-index: 60; display: flex; align-items: center; gap: var(--s2);
+  padding: 10px var(--s3); background: #3A2E10; color: #FFE2A0; font-size: 13.5px; line-height: 1.35;
+  border-bottom: 1px solid rgba(255, 200, 80, 0.35);
+}
+.banda-avertizare > .iconita { flex: 0 0 auto; width: 20px; height: 20px; }
+.banda-avertizare > span { flex: 1; }
+.banda-avertizare .btn { color: inherit; }
 

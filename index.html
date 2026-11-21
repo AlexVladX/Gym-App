@@ -13,9 +13,9 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
   <title>Jurnal de antrenament</title>
-  <link rel="stylesheet" href="styles.css?v=19">
+  <link rel="stylesheet" href="styles.css?v=20">
 </head>
-<body class="se-incarca" data-versiune="19">
+<body class="se-incarca" data-versiune="20">
   <header class="topbar">
     <div class="topbar-interior">
       <div class="marca">
@@ -404,14 +404,31 @@
       </div>
 
       <div class="card">
+        <h2>Exportă ca tabel</h2>
+        <p class="nota">Fișiere CSV pentru Excel sau Google Sheets (nu se pot restaura în aplicație; pentru asta folosește backupul).</p>
+        <div class="rand-butoane">
+          <button id="btn-csv-antrenamente" class="btn btn-secundar" type="button">Antrenamente</button>
+          <button id="btn-csv-masuratori" class="btn btn-secundar" type="button">Măsurători</button>
+        </div>
+      </div>
+
+      <div class="card">
         <h2>Copii automate</h2>
         <p class="nota">Ultimele 5 copii, păstrate pe acest telefon. Le poți descărca sau restaura.</p>
         <div id="instantanee-lista"></div>
       </div>
 
+      <div class="card" id="card-cos">
+        <h2>Șterse recent</h2>
+        <p class="nota">Antrenamentele, măsurătorile, pozele și rutinele șterse stau aici 30 de zile. Le poți pune înapoi.</p>
+        <div id="cos-lista" class="lista-simpla"></div>
+      </div>
+
       <div class="card">
         <h2>Stocare</h2>
         <p id="stocare-info" class="nota"></p>
+        <button id="btn-verifica" class="btn btn-secundar btn-lat mt" type="button">Verifică datele</button>
+        <div id="verificare-rezultat"></div>
       </div>
 
       <div class="card card-pericol">
@@ -420,7 +437,7 @@
         <button id="btn-sterge-tot" class="btn btn-pericol btn-lat" type="button">Șterge toate datele</button>
       </div>
 
-      <p class="versiune">Jurnal de antrenament · versiunea 1.5 (etapa 4, figuri noi)</p>
+      <p class="versiune">Jurnal de antrenament · versiunea 2.0 (etapele 1–8)</p>
     </section>
   </main>
 
@@ -464,27 +481,28 @@
     </button>
   </nav>
 
-  <script src="db.js?v=19"></script>
-  <script src="validare.js?v=19"></script>
-  <script src="exercitii.js?v=19"></script>
-  <script src="analiza.js?v=19"></script>
-  <script src="statistici.js?v=19"></script>
-  <script src="corp-calcul.js?v=19"></script>
-  <script src="realizari.js?v=19"></script>
-  <script src="catalog.js?v=19"></script>
-  <script src="figuri.js?v=19"></script>
-  <script src="ui.js?v=19"></script>
-  <script src="grafice.js?v=19"></script>
-  <script src="setari.js?v=19"></script>
-  <script src="timer.js?v=19"></script>
-  <script src="sesiune.js?v=19"></script>
-  <script src="corp.js?v=19"></script>
-  <script src="progres.js?v=19"></script>
-  <script src="realizari-ui.js?v=19"></script>
-  <script src="istoric.js?v=19"></script>
-  <script src="biblioteca.js?v=19"></script>
-  <script src="backup.js?v=19"></script>
-  <script src="acasa.js?v=19"></script>
-  <script src="main.js?v=19"></script>
+  <script src="db.js?v=20"></script>
+  <script src="validare.js?v=20"></script>
+  <script src="exercitii.js?v=20"></script>
+  <script src="analiza.js?v=20"></script>
+  <script src="statistici.js?v=20"></script>
+  <script src="corp-calcul.js?v=20"></script>
+  <script src="realizari.js?v=20"></script>
+  <script src="catalog.js?v=20"></script>
+  <script src="figuri.js?v=20"></script>
+  <script src="ui.js?v=20"></script>
+  <script src="grafice.js?v=20"></script>
+  <script src="setari.js?v=20"></script>
+  <script src="timer.js?v=20"></script>
+  <script src="sesiune.js?v=20"></script>
+  <script src="corp.js?v=20"></script>
+  <script src="progres.js?v=20"></script>
+  <script src="realizari-ui.js?v=20"></script>
+  <script src="istoric.js?v=20"></script>
+  <script src="biblioteca.js?v=20"></script>
+  <script src="backup.js?v=20"></script>
+  <script src="siguranta.js?v=20"></script>
+  <script src="acasa.js?v=20"></script>
+  <script src="main.js?v=20"></script>
 </body>
 </html>

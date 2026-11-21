@@ -115,7 +115,7 @@ async function salveazaGreutatea() {
     await salveazaMasuratoare({ data: dataLocala(), tip: 'Greutate', valoare, creat: Date.now() });
   } catch (err) {
     console.error(err);
-    notifica('Greutatea nu a putut fi salvată.', 'eroare');
+    notifica(mesajEroareSalvare(err, 'Greutatea nu a putut fi salvată.'), 'eroare');
     return;
   }
   $('greutate-valoare').value = '';
@@ -260,15 +260,17 @@ async function stergeIntrarea(m) {
     ok: 'Șterge', pericol: true,
   });
   if (!da) return;
+  let idCos;
   try {
-    await stergeMasuratoare(m.id);
+    idCos = await stergeMasuratoare(m.id);
   } catch (err) {
     console.error(err);
     notifica('Înregistrarea nu a putut fi ștearsă.', 'eroare');
     return;
   }
   await reincarcaMasuratori();
-  notifica('Înregistrare ștearsă.', 'succes');
+  deseneazaCos().catch(() => {});
+  notificaStergere('Înregistrare ștearsă.', idCos, () => dupaRestaurareDinCos('masuratori'));
 }
 
 // Corectarea valorii sau a datei unei înregistrări.
@@ -325,7 +327,7 @@ async function salveazaMasuratoarea() {
     await salveazaMasuratoare({ data, tip, valoare, creat: Date.now() });
   } catch (err) {
     console.error(err);
-    notifica('Măsurătoarea nu a putut fi salvată.', 'eroare');
+    notifica(mesajEroareSalvare(err, 'Măsurătoarea nu a putut fi salvată.'), 'eroare');
     return;
   }
   $('masuratoare-valoare').value = '';
@@ -372,7 +374,7 @@ function deschideMasurareaCompleta() {
           for (const m of deSalvat) await salveazaMasuratoare(m);
         } catch (err) {
           console.error(err);
-          notifica('Măsurătorile nu au putut fi salvate.', 'eroare');
+          notifica(mesajEroareSalvare(err, 'Măsurătorile nu au putut fi salvate.'), 'eroare');
           await reincarcaMasuratori();
           return;
         }
@@ -486,11 +488,13 @@ function arataPoza(p) {
     butoane: [
       buton({ text: 'Șterge', icon: 'cos', tip: 'pericol', onclick: () => d.inchide(async () => {
         URL.revokeObjectURL(url);
-        const da = await confirma({ titlu: 'Ștergi poza?', text: `Poza ${numeUnghi(p.unghi).toLowerCase()} din ${afiseazaData(p.data)} se șterge definitiv (o poți recupera doar dintr-un backup).`, ok: 'Șterge', pericol: true });
+        const da = await confirma({ titlu: 'Ștergi poza?', text: `Poza ${numeUnghi(p.unghi).toLowerCase()} din ${afiseazaData(p.data)} se mută în „Șterse recent" (Setări), unde rămâne 30 de zile.`, ok: 'Șterge', pericol: true });
         if (!da) return;
-        try { await stergePoza(p.id); } catch (err) { console.error(err); notifica('Poza nu a putut fi ștearsă.', 'eroare'); return; }
+        let idCos;
+        try { idCos = await stergePoza(p.id, `${numeUnghi(p.unghi).toLowerCase()} din ${afiseazaData(p.data)}`); } catch (err) { console.error(err); notifica('Poza nu a putut fi ștearsă.', 'eroare'); return; }
         await reincarcaPoze();
-        notifica('Poză ștearsă.', 'succes');
+        deseneazaCos().catch(() => {});
+        notificaStergere('Poză ștearsă.', idCos, () => dupaRestaurareDinCos('poze'));
       }) }),
       buton({ text: 'Închide', tip: 'principal', onclick: () => d.inchide(() => URL.revokeObjectURL(url)) }),
     ],
@@ -560,7 +564,7 @@ async function pozaAleasa(e) {
     await salveazaPoza({ data: info.data, unghi: info.unghi, imagine: rez.blob, latime: rez.latime, inaltime: rez.inaltime, creat: Date.now() });
   } catch (err) {
     console.error(err);
-    notifica('Poza nu a putut fi salvată (poate nu mai e spațiu pe telefon).', 'eroare');
+    notifica(mesajEroareSalvare(err, 'Poza nu a putut fi salvată.'), 'eroare');
     return;
   }
   await reincarcaPoze();

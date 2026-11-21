@@ -367,7 +367,7 @@ async function randeazaAcasa() {
 
   const azi = dataLocala();
   const sesiuni = istoric;
-  const carduri = [cardAzi(azi, sesiuni), cardPrimiiPasi(sesiuni, masuratori)];
+  const carduri = [cardAzi(azi, sesiuni), cardMementoBackup(sesiuni), cardPrimiiPasi(sesiuni, masuratori)];
   if (sesiuni.length > 0) {
     const saptamani = rezumatSaptamani(sesiuni, azi, 8);
     carduri.push(

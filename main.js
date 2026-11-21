@@ -58,6 +58,7 @@ async function initializeaza() {
   initIstoric();
   initBiblioteca();
   initBackup();
+  initSiguranta();
 
   // Biblioteca întâi: ciorna are nevoie de tipurile exercițiilor alese de tine.
   try {

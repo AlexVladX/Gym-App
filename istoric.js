@@ -167,12 +167,13 @@ async function salveazaEditarea(id) {
 async function stergeSesiuneaIstoric(s) {
   const da = await confirma({
     titlu: 'Ștergi sesiunea?',
-    text: `Sesiunea din ${afiseazaData(s.data)} se șterge definitiv. O poți recupera doar dintr-un backup.`,
-    ok: 'Șterge definitiv', pericol: true,
+    text: `Sesiunea din ${afiseazaData(s.data)} se mută în „Șterse recent" (Setări), unde rămâne 30 de zile.`,
+    ok: 'Șterge', pericol: true,
   });
   if (!da) return;
+  let idCos;
   try {
-    await stergeSesiune(s.id);
+    idCos = await stergeSesiune(s.id, `din ${afiseazaData(s.data)}`);
     await reincarcaIstoric();
   } catch (err) {
     console.error(err);
@@ -183,7 +184,8 @@ async function stergeSesiuneaIstoric(s) {
   ciorne.delete(s.id);
   randeazaIstoric();
   deseneazaExercitii();
-  notifica('Sesiune ștearsă.', 'succes');
+  deseneazaCos().catch(() => {});
+  notificaStergere('Sesiune ștearsă.', idCos, () => dupaRestaurareDinCos('sesiuni'));
 }
 
 // ---------- File în ecranul Progres ----------

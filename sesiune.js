@@ -816,7 +816,7 @@ async function inchideSesiunea(sfarsitFortat = null) {
     await stergeCiorna();
   } catch (err) {
     console.error(err);
-    notifica('Antrenamentul nu a putut fi salvat. Încearcă din nou; datele introduse sunt păstrate.', 'eroare');
+    notifica(mesajEroareSalvare(err, 'Antrenamentul nu a putut fi salvat. Încearcă din nou; datele introduse sunt păstrate.') + (err && err.name === 'QuotaExceededError' ? ' Antrenamentul rămâne deschis.' : ''), 'eroare');
     return;
   }
 

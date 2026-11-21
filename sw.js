@@ -4,13 +4,13 @@
 //
 // La fiecare publicare: mărește VERSIUNE aici, în index.html (?v=… și data-versiune)
 // și în styles.css (--versiune-css). Toate trei trebuie să fie egale.
-const VERSIUNE = '19';
+const VERSIUNE = '20';
 const CACHE = `jurnal-v${VERSIUNE}`;
 const FISIERE_FIXE = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 const FISIERE_VERSIONATE = [
   'styles.css', 'db.js', 'validare.js', 'exercitii.js', 'analiza.js', 'statistici.js', 'corp-calcul.js', 'realizari.js', 'catalog.js', 'figuri.js', 'ui.js', 'grafice.js',
   'setari.js', 'timer.js', 'sesiune.js', 'corp.js', 'progres.js', 'realizari-ui.js', 'istoric.js',
-  'biblioteca.js', 'backup.js', 'acasa.js', 'main.js',
+  'biblioteca.js', 'backup.js', 'siguranta.js', 'acasa.js', 'main.js',
 ].map(f => `./${f}?v=${VERSIUNE}`);
 const LIMITA_RETEA_MS = 3000;
 

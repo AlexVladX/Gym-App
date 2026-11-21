@@ -562,17 +562,19 @@ function cardRutina(r) {
 }
 
 async function stergeRutinaConfirmat(r) {
-  const da = await confirma({ titlu: 'Ștergi rutina?', text: `Rutina „${r.nume}" se șterge. Istoricul antrenamentelor nu se schimbă.`, ok: 'Șterge', pericol: true });
+  const da = await confirma({ titlu: 'Ștergi rutina?', text: `Rutina „${r.nume}" se mută în „Șterse recent" (Setări), unde rămâne 30 de zile. Istoricul antrenamentelor nu se schimbă.`, ok: 'Șterge', pericol: true });
   if (!da) return;
+  let idCos;
   try {
-    await stergeRutina(r.id);
+    idCos = await stergeRutina(r.id, `„${r.nume}"`);
   } catch (err) {
     console.error(err);
     notifica('Rutina nu a putut fi ștearsă.', 'eroare');
     return;
   }
   randeazaBiblioteca();
-  notifica('Rutină ștearsă.', 'succes');
+  deseneazaCos().catch(() => {});
+  notificaStergere('Rutină ștearsă.', idCos, () => dupaRestaurareDinCos('rutine'));
 }
 
 // ---------- Adăugarea în antrenament ----------

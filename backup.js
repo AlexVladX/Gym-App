@@ -79,10 +79,13 @@ async function exportaBackup() {
   try {
     await salveazaCiornaAcum();
     const date = await construiesteBackup();
-    descarcaJson(date, `jurnal-backup-${dataLocala()}.json`);
+    const blob = new Blob([JSON.stringify(date, null, 2)], { type: 'application/json' });
+    // pe telefon: meniul de partajare (Fișiere, Drive, e-mail); altfel descărcare
+    const rezultat = await trimiteFisier(blob, `jurnal-backup-${dataLocala()}.json`);
+    if (rezultat === 'anulat') { notifica('Exportul a fost anulat; backupul nu a fost salvat nicăieri.', 'info'); return; }
     try { localStorage.setItem(CHEIE_ULTIM_BACKUP, new Date().toISOString()); } catch (_) { /* ignorat */ }
     actualizeazaInfoBackup();
-    notifica('Backup exportat. Salvează fișierul în Fișiere, pe Drive sau trimite-l pe e-mail.', 'succes');
+    notifica(rezultat === 'partajat' ? 'Backup trimis.' : 'Backup exportat. Salvează fișierul în Fișiere, pe Drive sau trimite-l pe e-mail.', 'succes');
   } catch (err) {
     console.error(err);
     notifica('Exportul a eșuat. Datele de pe telefon nu au fost modificate.', 'eroare');
@@ -239,18 +242,23 @@ async function deseneazaStareStocare() {
     } catch (_) { /* ignorat */ }
   }
   info.classList.toggle('nota-avertizare', persistent === false);
-  info.textContent = persistent === true
+  // iPhone: în Safari (fără „Adaugă pe ecranul principal") datele site-urilor nefolosite pot fi șterse după câteva săptămâni
+  const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const instalata = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  const sfatIos = ios && !instalata ? ' Pe iPhone, folosește aplicația de pe ecranul principal (Partajează → Adaugă pe ecranul principal): în Safari, datele pot fi șterse dacă nu deschizi site-ul câteva săptămâni.' : '';
+  info.textContent = (persistent === true
     ? `Stocare protejată: browserul nu va șterge datele aplicației.${folosit}`
     : persistent === false
       ? `Stocarea nu e protejată: browserul poate șterge datele dacă rămâne fără spațiu. Pe iPhone, adaugă aplicația pe ecranul principal (Partajează → Adaugă pe ecranul principal). Exportă backupuri regulat.${folosit}`
-      : `Browserul nu spune dacă stocarea e protejată. Exportă backupuri regulat.${folosit}`;
+      : `Browserul nu spune dacă stocarea e protejată. Exportă backupuri regulat.${folosit}`) + sfatIos;
+  if (sfatIos) info.classList.add('nota-avertizare');
 }
 
 // ---------- Ștergerea tuturor datelor ----------
 async function stergeTot() {
   const text = await cereText({
     titlu: 'Ștergi toate datele?',
-    text: 'Se șterg definitiv toate antrenamentele, măsurătorile, pozele, rutinele, antrenamentul în curs și copiile automate de pe acest telefon. Exportă întâi un backup dacă vrei să le păstrezi. Scrie ȘTERGE ca să confirmi.',
+    text: 'Se șterg definitiv toate antrenamentele, măsurătorile, pozele, rutinele, antrenamentul în curs, copiile automate și „Șterse recent” de pe acest telefon. Exportă întâi un backup dacă vrei să le păstrezi. Scrie ȘTERGE ca să confirmi.',
     eticheta: 'Confirmare',
     ok: 'Șterge tot', pericol: true, confirmareExacta: 'ȘTERGE',
   });
@@ -276,6 +284,7 @@ async function reincarcaTot() {
   await incarcaCiorna();
   await reincarcaMasuratori();
   await reincarcaPoze().catch(err => console.warn(err));
+  await deseneazaCos().catch(err => console.warn(err));
   deseneazaGrupe();
   deseneazaExercitii();
   randeazaBiblioteca();

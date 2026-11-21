@@ -88,7 +88,8 @@ function buton({ text, icon, tip = 'secundar', mic = false, lat = false, etichet
 // tip: 'info' | 'succes' | 'eroare' | 'record'. Maximum 3 vizibile o dată.
 const ICON_TOAST = { info: 'info', succes: 'bifa', eroare: 'avertizare', record: 'trofeu' };
 
-function notifica(text, tip = 'info', durataMs = 3500) {
+// actiune (opțional): { text, onclick } — un buton în mesaj (ex. „Anulează" după o ștergere); mesajul stă mai mult.
+function notifica(text, tip = 'info', durataMs = 3500, actiune = null) {
   let zona = $('toasturi');
   if (!zona) {
     zona = el('div', { id: 'toasturi', class: 'toasturi', role: 'status', 'aria-live': 'polite' });
@@ -99,10 +100,27 @@ function notifica(text, tip = 'info', durataMs = 3500) {
     t.classList.add('iese');
     setTimeout(() => t.remove(), 200);
   };
+  if (actiune) {
+    t.append(el('button', { type: 'button', class: 'toast-actiune', text: actiune.text, onclick: e => {
+      e.stopPropagation();
+      inchide();
+      actiune.onclick();
+    } }));
+    durataMs = Math.max(durataMs, 8000);
+  }
   t.addEventListener('click', inchide);
   zona.append(t);
   while (zona.children.length > 3) zona.firstElementChild.remove();
   setTimeout(inchide, tip === 'eroare' ? Math.max(durataMs, 5000) : durataMs);
+}
+
+// Mesajul pentru o salvare eșuată: spațiul plin are o explicație proprie.
+function mesajEroareSalvare(err, implicit) {
+  const nume = err && (err.name || (err.inner && err.inner.name));
+  if (nume === 'QuotaExceededError' || /quota/i.test(String(err && err.message))) {
+    return 'Nu mai e spațiu de stocare pentru aplicație. Exportă un backup, apoi eliberează spațiu pe telefon sau șterge poze vechi.';
+  }
+  return implicit;
 }
 
 // ---------- Dialoguri ----------

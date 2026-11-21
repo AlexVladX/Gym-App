@@ -21,6 +21,7 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `sesiune.js` | Antrenamentul în curs: exerciții, serii, ciornă, recorduri, închidere |
 | `corp-calcul.js` | Calcule pentru Corp (etapa 6): tipuri și unități, media pe 7 zile, IMC, obiectiv, comparare (fără DOM) |
 | `corp.js` | Ecranul Corp: greutate, profil și obiectiv, măsurători, corectare, comparare, poze de progres |
+| `siguranta.js` | Siguranța datelor (etapa 8): Șterse recent cu anulare, verificarea datelor, export CSV, partajarea fișierelor, memento backup, avertizarea pentru două file |
 | `realizari.js` | Realizări (etapa 7): nivel, obiectivul săptămânal, insigne cu trepte (fără DOM) |
 | `realizari-ui.js` | Fila Progres → Realizări, cardul de pe Acasă, sărbătorirea de la finalul antrenamentului |
 | `progres.js` | Ecranul Progres → Grafice: afișarea statisticilor (perioadă, rezumat, evoluție, grupe, exercițiu, forță, recorduri) |
@@ -36,7 +37,7 @@ Regula: fișierele definesc funcții; singurul cod care rulează la încărcare 
 
 ## Date
 
-Baza `jurnal-antrenament`, versiunea 5:
+Baza `jurnal-antrenament`, versiunea 6:
 
 - `sesiuni` `{ id, data: 'AAAA-LL-ZZ', inceput, sfarsit, grupe[], exercitii: [{ nume, serii: [{ kg, repetari }] }] }`
   Din etapa 3 (`versiune: 2`), opțional: `durataActivaMs`, `pauze[{start, sfarsit}]`, `nota`, `serii` (nr. serii de lucru),
@@ -50,6 +51,7 @@ Baza `jurnal-antrenament`, versiunea 5:
 - `ciorna` (cheia `curenta`) — antrenamentul în curs
 - `instantanee` (v4) `{ id, creat, motiv, continut }` — ultimele 5 copii automate
 - `meta` (v4) — ex. `ultimaCopieAutomata`
+- `cos` (v6) „Șterse recent": `{ id, tip (store-ul de origine), inregistrare, sters (ms), eticheta }`, 30 de zile; nu intră în backup
 - `poze` (v5) `{ id, data, unghi: 'fata' | 'lateral' | 'spate', imagine: Blob JPEG (max. 1280 px), latime, inaltime, creat }`
 - Setări noi (etapa 6, în localStorage și în backup): `inaltimeCm`, `obiectiv: { tinta, start, dela }`.
 
@@ -89,6 +91,26 @@ Se pot importa și backupurile v1/v2. La restaurare:
 - **Același exercițiu de două ori** într-o sesiune se unește la calcul (o singură sesiune, toate seriile).
 - Toate statisticile se calculează din sesiunile salvate la fiecare afișare: editarea sau ștergerea unei sesiuni
   le actualizează imediat. Antrenamentul în curs (ciorna) nu intră. Unitatea e mereu kg.
+
+## Siguranța datelor (etapa 8)
+
+- **Ștergerea nu e definitivă**: antrenamentele, măsurătorile, pozele și rutinele șterse se mută (în aceeași tranzacție)
+  în store-ul `cos`. Mesajul de după ștergere are „Anulează"; Setări → Șterse recent le arată cu zilele rămase,
+  cu restaurare și ștergere definitivă (cu confirmare). La pornire se șterg definitiv cele mai vechi de 30 de zile.
+  Restaurarea păstrează id-ul original, iar dacă e ocupat (după o restaurare de backup) primește unul nou.
+  „Șterge toate datele" golește și coșul. Coșul nu intră în backup.
+- **Backup**: exportul trimite fișierul prin meniul de partajare al telefonului (Fișiere, Drive, e-mail) când există
+  (`navigator.share` cu fișiere, ecran tactil), altfel îl descarcă. Anularea partajării nu se numără ca backup.
+  Pe Acasă apare un memento dacă ai cel puțin 3 antrenamente și nu ai exportat niciodată sau de 14+ zile.
+- **CSV** (Excel / Google Sheets): antrenamentele câte un rând pe serie validă (data, nr. antrenamentului, exercițiu,
+  grupă, nr. seriei, tip, kg, repetări, secunde, metri, volumul aplicației, supraset, notă) și măsurătorile cu unitate.
+  Separator „;", virgulă zecimală, UTF-8 cu BOM. CSV-ul nu se poate restaura; pentru asta e backupul JSON.
+- **Verifică datele**: numără înregistrările din fiecare store și pe cele care se pot afișa. Cele deteriorate nu se
+  șterg niciodată automat: rămân în bază și intră în backup (validarea de la restaurare le ignoră).
+- **Două file**: un `BroadcastChannel` anunță celelalte file; ambele arată o avertizare (antrenamentul în curs e salvat
+  de fiecare filă și s-ar putea suprascrie).
+- **Spațiu plin** (`QuotaExceededError`): mesaj explicit; antrenamentul în curs rămâne deschis.
+- Stocarea: se cere stocare persistentă; pe iPhone, în Safari (nu de pe ecranul principal), se arată sfatul de a instala aplicația.
 
 ## Realizări (etapa 7)
 
