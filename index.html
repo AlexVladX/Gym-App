@@ -13,9 +13,9 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
   <title>Jurnal de antrenament</title>
-  <link rel="stylesheet" href="styles.css?v=17">
+  <link rel="stylesheet" href="styles.css?v=18">
 </head>
-<body class="se-incarca" data-versiune="17">
+<body class="se-incarca" data-versiune="18">
   <header class="topbar">
     <div class="topbar-interior">
       <div class="marca">
@@ -215,11 +215,17 @@
 
     <!-- ================= Corp ================= -->
     <section id="ecran-masuratori" class="ecran" aria-labelledby="titlu-ecran">
-      <div class="card">
+      <div class="card" id="card-greutate">
         <div class="card-cap">
           <h2>Greutate corporală</h2>
         </div>
         <div id="greutate-info"></div>
+        <div id="greutate-obiectiv"></div>
+        <div id="greutate-grafic-bloc">
+          <div id="greutate-perioada" class="chipuri chipuri-mici" role="group" aria-label="Perioada graficului"></div>
+          <canvas id="grafic-greutate" class="grafic mt" aria-label="Graficul greutății: media pe 7 zile și cântăririle"></canvas>
+          <p class="nota">Linia: media pe 7 zile. Punctele: fiecare cântărire.</p>
+        </div>
         <div class="rand mt">
           <input id="greutate-valoare" type="number" inputmode="decimal" step="0.1" min="20" max="300" placeholder="Greutatea de azi (kg)" aria-label="Greutatea de azi, în kg" enterkeyhint="done">
           <button id="btn-greutate" class="btn btn-principal" type="button">Salvează</button>
@@ -227,7 +233,31 @@
       </div>
 
       <div class="card">
-        <h2>Adaugă măsurătoare</h2>
+        <h2>Profil și obiectiv</h2>
+        <div class="rand">
+          <label class="camp">
+            <span class="camp-eticheta">Înălțime (cm)</span>
+            <input id="profil-inaltime" type="number" inputmode="decimal" step="0.5" min="100" max="250" placeholder="ex. 178">
+          </label>
+          <label class="camp">
+            <span class="camp-eticheta">Greutate țintă (kg)</span>
+            <input id="profil-tinta" type="number" inputmode="decimal" step="0.1" min="20" max="300" placeholder="ex. 80">
+          </label>
+        </div>
+        <button id="btn-profil" class="btn btn-secundar btn-lat" type="button">Salvează profilul</button>
+        <p id="profil-nota" class="nota"></p>
+      </div>
+
+      <div class="card">
+        <div class="card-cap">
+          <h2>Măsurători</h2>
+          <button id="btn-masurare-completa" class="btn btn-secundar btn-mic" type="button">Măsurare completă</button>
+        </div>
+        <div id="masuratori-rezumat" class="grila-masuratori"></div>
+      </div>
+
+      <div class="card">
+        <h2>Adaugă o valoare</h2>
         <label class="camp">
           <span class="camp-eticheta">Tip</span>
           <input id="masuratoare-tip" type="text" list="tipuri" placeholder="Ex. Talie, Braț, Piept" autocomplete="off">
@@ -235,8 +265,8 @@
         <datalist id="tipuri"></datalist>
         <div class="rand">
           <label class="camp">
-            <span class="camp-eticheta">Valoare</span>
-            <input id="masuratoare-valoare" type="number" inputmode="decimal" step="any" placeholder="cm sau kg">
+            <span class="camp-eticheta">Valoare <span id="masuratoare-unitate"></span></span>
+            <input id="masuratoare-valoare" type="number" inputmode="decimal" step="any" placeholder="cm, kg sau %">
           </label>
           <label class="camp">
             <span class="camp-eticheta">Data</span>
@@ -246,11 +276,41 @@
         <button id="btn-masuratoare" class="btn btn-principal btn-lat" type="button">Salvează măsurătoarea</button>
       </div>
 
-      <div class="card">
+      <div class="card" id="card-evolutie-corp">
         <h2>Evoluție</h2>
         <select id="masuratoare-grafic-tip" aria-label="Tipul de măsurătoare afișat"></select>
         <canvas id="grafic-masuratori" class="grafic mt" aria-label="Graficul măsurătorii"></canvas>
-        <div id="masuratori-lista"></div>
+        <p id="masuratoare-sumar" class="nota"></p>
+        <div id="masuratori-lista" class="lista-simpla"></div>
+      </div>
+
+      <div class="card">
+        <h2>Compară două date</h2>
+        <div class="rand">
+          <label class="camp"><span class="camp-eticheta">De la</span><select id="compara-a" aria-label="Prima dată"></select></label>
+          <label class="camp"><span class="camp-eticheta">Până la</span><select id="compara-b" aria-label="A doua dată"></select></label>
+        </div>
+        <div id="compara-rezultat"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-cap">
+          <h2>Poze de progres</h2>
+          <button id="btn-poza" class="btn btn-secundar btn-mic" type="button">Adaugă poză</button>
+        </div>
+        <input id="fisier-poza" type="file" accept="image/*" hidden>
+        <div id="poze-compara-bloc" hidden>
+          <p class="sectiune-eticheta">Compară</p>
+          <div class="rand">
+            <select id="poze-a" aria-label="Prima dată"></select>
+            <select id="poze-b" aria-label="A doua dată"></select>
+          </div>
+          <div id="poze-unghi" class="chipuri chipuri-mici mt" role="group" aria-label="Unghiul pozei"></div>
+          <div id="poze-compara" class="poze-alaturate mt"></div>
+        </div>
+        <p class="sectiune-eticheta">Toate pozele</p>
+        <div id="poze-galerie"></div>
+        <p class="nota">Pozele rămân doar pe telefonul tău (micșorate la cel mult 1280 px) și intră în backup.</p>
       </div>
     </section>
 
@@ -379,24 +439,25 @@
     </button>
   </nav>
 
-  <script src="db.js?v=17"></script>
-  <script src="validare.js?v=17"></script>
-  <script src="exercitii.js?v=17"></script>
-  <script src="analiza.js?v=17"></script>
-  <script src="statistici.js?v=17"></script>
-  <script src="catalog.js?v=17"></script>
-  <script src="figuri.js?v=17"></script>
-  <script src="ui.js?v=17"></script>
-  <script src="grafice.js?v=17"></script>
-  <script src="setari.js?v=17"></script>
-  <script src="timer.js?v=17"></script>
-  <script src="sesiune.js?v=17"></script>
-  <script src="corp.js?v=17"></script>
-  <script src="progres.js?v=17"></script>
-  <script src="istoric.js?v=17"></script>
-  <script src="biblioteca.js?v=17"></script>
-  <script src="backup.js?v=17"></script>
-  <script src="acasa.js?v=17"></script>
-  <script src="main.js?v=17"></script>
+  <script src="db.js?v=18"></script>
+  <script src="validare.js?v=18"></script>
+  <script src="exercitii.js?v=18"></script>
+  <script src="analiza.js?v=18"></script>
+  <script src="statistici.js?v=18"></script>
+  <script src="corp-calcul.js?v=18"></script>
+  <script src="catalog.js?v=18"></script>
+  <script src="figuri.js?v=18"></script>
+  <script src="ui.js?v=18"></script>
+  <script src="grafice.js?v=18"></script>
+  <script src="setari.js?v=18"></script>
+  <script src="timer.js?v=18"></script>
+  <script src="sesiune.js?v=18"></script>
+  <script src="corp.js?v=18"></script>
+  <script src="progres.js?v=18"></script>
+  <script src="istoric.js?v=18"></script>
+  <script src="biblioteca.js?v=18"></script>
+  <script src="backup.js?v=18"></script>
+  <script src="acasa.js?v=18"></script>
+  <script src="main.js?v=18"></script>
 </body>
 </html>

@@ -7,7 +7,7 @@ const path = require('node:path');
 
 test('niciun nume global declarat în două fișiere', () => {
   const R = path.join(__dirname, '..');
-  const fisiere = fs.readFileSync(path.join(R, 'index.html'), 'utf8').match(/src="([a-z]+\.js)/g).map(x => x.slice(5));
+  const fisiere = fs.readFileSync(path.join(R, 'index.html'), 'utf8').match(/src="([a-z-]+\.js)/g).map(x => x.slice(5));
   const vazute = new Map();
   const dubluri = [];
   for (const f of fisiere) {

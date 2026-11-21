@@ -19,7 +19,8 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `setari.js` | Setările (localStorage + incluse în backup) și ecranul Setări |
 | `timer.js` | Timerul de pauză și semnalul sonor |
 | `sesiune.js` | Antrenamentul în curs: exerciții, serii, ciornă, recorduri, închidere |
-| `corp.js` | Greutate corporală și măsurători |
+| `corp-calcul.js` | Calcule pentru Corp (etapa 6): tipuri și unități, media pe 7 zile, IMC, obiectiv, comparare (fără DOM) |
+| `corp.js` | Ecranul Corp: greutate, profil și obiectiv, măsurători, corectare, comparare, poze de progres |
 | `progres.js` | Ecranul Progres → Grafice: afișarea statisticilor (perioadă, rezumat, evoluție, grupe, exercițiu, forță, recorduri) |
 | `istoric.js` | Istoricul sesiunilor, editare și ștergere |
 | `biblioteca.js` | Ecranul Exerciții: listă, filtre, detalii, formular, reîncadrarea grupei vechi, selectorul rapid, rutine |
@@ -33,7 +34,7 @@ Regula: fișierele definesc funcții; singurul cod care rulează la încărcare 
 
 ## Date
 
-Baza `jurnal-antrenament`, versiunea 4:
+Baza `jurnal-antrenament`, versiunea 5:
 
 - `sesiuni` `{ id, data: 'AAAA-LL-ZZ', inceput, sfarsit, grupe[], exercitii: [{ nume, serii: [{ kg, repetari }] }] }`
   Din etapa 3 (`versiune: 2`), opțional: `durataActivaMs`, `pauze[{start, sfarsit}]`, `nota`, `serii` (nr. serii de lucru),
@@ -47,6 +48,8 @@ Baza `jurnal-antrenament`, versiunea 4:
 - `ciorna` (cheia `curenta`) — antrenamentul în curs
 - `instantanee` (v4) `{ id, creat, motiv, continut }` — ultimele 5 copii automate
 - `meta` (v4) — ex. `ultimaCopieAutomata`
+- `poze` (v5) `{ id, data, unghi: 'fata' | 'lateral' | 'spate', imagine: Blob JPEG (max. 1280 px), latime, inaltime, creat }`
+- Setări noi (etapa 6, în localStorage și în backup): `inaltimeCm`, `obiectiv: { tinta, start, dela }`.
 
 ### Reguli de compatibilitate
 
@@ -57,7 +60,10 @@ Baza `jurnal-antrenament`, versiunea 4:
 
 ## Backup
 
-Format v3: `{ aplicatie, versiune: 3, schema, exportat, setari, sesiuni, exercitii, masuratori, rutine }`.
+Format v3: `{ aplicatie, versiune: 3, schema, exportat, setari, sesiuni, exercitii, masuratori, rutine, poze? }`.
+Pozele (etapa 6) sunt în fișier ca data-URL JPEG; o versiune mai veche a aplicației le ignoră. Copia automată săptămânală
+nu include pozele; copia dinainte de restaurare le include doar dacă backupul restaurat are poze. Un backup fără poze
+nu atinge pozele de pe telefon.
 Se pot importa și backupurile v1/v2. La restaurare:
 
 1. fișierul e validat și curățat (`valideazaBackup`);
@@ -81,6 +87,19 @@ Se pot importa și backupurile v1/v2. La restaurare:
 - **Același exercițiu de două ori** într-o sesiune se unește la calcul (o singură sesiune, toate seriile).
 - Toate statisticile se calculează din sesiunile salvate la fiecare afișare: editarea sau ștergerea unei sesiuni
   le actualizează imediat. Antrenamentul în curs (ciorna) nu intră. Unitatea e mereu kg.
+
+## Corp (etapa 6)
+
+- **Tipuri standard** cu unități: greutate (kg), grăsime corporală (%), gât, umeri, piept, talie, șolduri, braț, antebraț,
+  coapsă, gambă (cm). Tipurile scrise de tine rămân, fără unitate. La salvare, tipul se potrivește cu unul existent
+  fără să conteze literele mari/mici sau diacriticele; valorile neplauzibile (ex. talie 8,8 cm) sunt refuzate.
+- **Valoarea zilei** = media înregistrărilor din ziua aceea. **Media pe 7 zile** (graficul) = media cântăririlor din ultimele
+  7 zile până la fiecare cântărire. Tendința (kg/săpt.) și media de 7 zile din plăcuțe sunt cele de dinainte (`tendintaGreutate`).
+- **IMC** = kg / (m²), din media pe 7 zile; categorii OMS (< 18,5 / < 25 / < 30 / ≥ 30). Nu ține cont de masa musculară.
+- **Obiectiv**: pornește de la media pe 7 zile din ziua setării. Progres = cât ai mers spre țintă / distanța totală (0–100%).
+  Estimarea = (țintă − acum) / tendință, doar dacă tendința merge spre țintă cu cel puțin 0,05 kg/săpt. și durează max. 2 ani.
+- **Comparare**: valorile din cele două date; greutatea din cântărirea cea mai apropiată (max. 3 zile).
+- **Poze**: micșorate în browser la cel mult 1280 px, JPEG calitate 0,82 (de obicei 100–300 KB).
 
 ## Statistici avansate (etapa 5)
 

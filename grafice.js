@@ -76,7 +76,8 @@ function deseneazaEticheta(ctx, text, px, py, latime) {
 // optiuni: { inaltime } (implicit 190 px)
 function deseneazaGrafic(canvas, puncte, formateazaY = formatNumar, optiuni = {}) {
   ataseazaInteractiune(canvas);
-  const g = { tip: 'linie', puncte, formateazaY, selectat: null, latime: 0, inaltime: optiuni.inaltime || 190 };
+  // optiuni.brute: valori individuale afișate ca puncte discrete sub linie (ex. cântăririle, sub media pe 7 zile)
+  const g = { tip: 'linie', puncte, formateazaY, selectat: null, latime: 0, inaltime: optiuni.inaltime || 190, brute: optiuni.brute || [] };
   graficeActive.set(canvas, g);
   deseneaza(canvas, g);
 }
@@ -97,8 +98,9 @@ function deseneaza(canvas, g) {
   const pad = { l: 44, r: 14, t: 16, b: 26 };
   const xMin = puncte[0].x;
   const xMax = puncte[puncte.length - 1].x;
-  let yMin = Math.min(...puncte.map(p => p.y));
-  let yMax = Math.max(...puncte.map(p => p.y));
+  const toateY = [...puncte, ...(g.brute || [])].map(p => p.y);
+  let yMin = Math.min(...toateY);
+  let yMax = Math.max(...toateY);
   if (yMin === yMax) { const d = Math.max(1, Math.abs(yMin) * 0.05); yMin -= d; yMax += d; }
   const marjaY = (yMax - yMin) * 0.12;
   yMin -= marjaY;
@@ -137,6 +139,15 @@ function deseneaza(canvas, g) {
   ctx.closePath();
   ctx.fillStyle = degrade;
   ctx.fill();
+
+  // Valorile individuale, discret
+  for (const p of g.brute || []) {
+    if (p.x < xMin || p.x > xMax) continue;
+    ctx.beginPath();
+    ctx.arc(X(p.x), Y(p.y), 2.2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(200,208,218,0.45)';
+    ctx.fill();
+  }
 
   // Linia
   ctx.strokeStyle = CULORI_GRAFIC.accent;

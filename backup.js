@@ -3,10 +3,40 @@
 const CHEIE_ULTIM_BACKUP = 'ultimBackup';
 const ZILE_COPIE_AUTOMATA = 7;
 
-// Obiectul complet de backup (format v3): datele din bază plus setările.
-async function construiesteBackup() {
+// ---------- Pozele în backup ----------
+// În bază pozele sunt Blob-uri; în fișier, text (data-URL), ca backupul să rămână un singur JSON.
+function blobInText(blob) {
+  return new Promise((rezolva, respinge) => {
+    const r = new FileReader();
+    r.onload = () => rezolva(r.result);
+    r.onerror = () => respinge(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+function textInBlob(dataUrl) {
+  const [antet, b64] = dataUrl.split(',');
+  const tip = antet.slice(5, antet.indexOf(';'));
+  const bin = atob(b64);
+  const octeti = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) octeti[i] = bin.charCodeAt(i);
+  return new Blob([octeti], { type: tip });
+}
+async function pozePentruBackup() {
+  const poze = await exportaPoze();
+  const rez = [];
+  for (const p of poze) {
+    if (!(p && p.imagine instanceof Blob)) continue;
+    const { imagine, ...rest } = p;
+    rez.push({ ...rest, imagine: await blobInText(imagine) });
+  }
+  return rez;
+}
+
+// Obiectul complet de backup (format v3): datele din bază plus setările și (implicit) pozele.
+// cuPoze: false pentru copia automată săptămânală (pozele nu se schimbă des și ar umple spațiul).
+async function construiesteBackup({ cuPoze = true } = {}) {
   const date = await exportaDate();
-  return {
+  const backup = {
     aplicatie: 'jurnal-antrenament',
     versiune: VERSIUNE_BACKUP,
     schema: DB_VERSIUNE,
@@ -14,6 +44,8 @@ async function construiesteBackup() {
     setari: setariPentruBackup(),
     ...date,
   };
+  if (cuPoze) backup.poze = await pozePentruBackup();
+  return backup;
 }
 
 function descarcaJson(obiect, numeFisier) {
@@ -61,6 +93,7 @@ async function exportaBackup() {
 function textRezumat(r) {
   const parti = [plural(r.sesiuni, 'sesiune', 'sesiuni'), plural(r.masuratori, 'măsurătoare', 'măsurători')];
   if (r.rutine !== null) parti.push(plural(r.rutine, 'rutină', 'rutine'));
+  if (r.poze) parti.push(plural(r.poze, 'poză', 'poze'));
   return parti.join(', ');
 }
 
@@ -85,9 +118,10 @@ async function restaureaza(brut, sursa) {
   if (!da) return false;
 
   // Copia de siguranță e obligatorie: dacă nu reușește, nu atingem datele.
+  // Pozele intră în copie doar dacă restaurarea le înlocuiește (backupul are poze).
   try {
     await salveazaCiornaAcum();
-    await salveazaInstantaneu('Înainte de restaurare', await construiesteBackup());
+    await salveazaInstantaneu('Înainte de restaurare', await construiesteBackup({ cuPoze: Array.isArray(date.poze) }));
   } catch (err) {
     console.error(err);
     notifica('Nu s-a putut face copia de siguranță, așa că restaurarea a fost oprită. Datele actuale nu au fost modificate.', 'eroare');
@@ -95,7 +129,10 @@ async function restaureaza(brut, sursa) {
   }
 
   try {
-    await inlocuiesteToate(date);
+    const deScris = Array.isArray(date.poze)
+      ? { ...date, poze: date.poze.map(p => ({ ...p, imagine: textInBlob(p.imagine) })) }
+      : date;
+    await inlocuiesteToate(deScris);
   } catch (err) {
     console.error(err);
     notifica('Restaurarea a eșuat. Datele actuale nu au fost modificate.', 'eroare');
@@ -112,8 +149,8 @@ async function importaFisier(e) {
   const fisier = e.target.files[0];
   e.target.value = '';
   if (!fisier) return;
-  if (fisier.size > 50 * 1024 * 1024) {
-    notifica('Fișierul e prea mare pentru un backup al jurnalului (peste 50 MB).', 'eroare');
+  if (fisier.size > 300 * 1024 * 1024) {
+    notifica('Fișierul e prea mare pentru un backup al jurnalului (peste 300 MB).', 'eroare');
     return;
   }
   let brut;
@@ -169,7 +206,7 @@ async function copieAutomataSaptamanala() {
   try {
     const ultima = await citesteMeta('ultimaCopieAutomata');
     if (ultima && Date.now() - ultima < ZILE_COPIE_AUTOMATA * 86400000) return;
-    const date = await construiesteBackup();
+    const date = await construiesteBackup({ cuPoze: false });
     if (date.sesiuni.length === 0 && date.masuratori.length === 0) return; // nimic de protejat încă
     await salveazaInstantaneu('Copie săptămânală', date);
     await scrieMeta('ultimaCopieAutomata', Date.now());
@@ -213,7 +250,7 @@ async function deseneazaStareStocare() {
 async function stergeTot() {
   const text = await cereText({
     titlu: 'Ștergi toate datele?',
-    text: 'Se șterg definitiv toate antrenamentele, măsurătorile, rutinele, antrenamentul în curs și copiile automate de pe acest telefon. Exportă întâi un backup dacă vrei să le păstrezi. Scrie ȘTERGE ca să confirmi.',
+    text: 'Se șterg definitiv toate antrenamentele, măsurătorile, pozele, rutinele, antrenamentul în curs și copiile automate de pe acest telefon. Exportă întâi un backup dacă vrei să le păstrezi. Scrie ȘTERGE ca să confirmi.',
     eticheta: 'Confirmare',
     ok: 'Șterge tot', pericol: true, confirmareExacta: 'ȘTERGE',
   });
@@ -238,6 +275,7 @@ async function reincarcaTot() {
   await reincarcaIstoric().catch(err => console.warn(err));
   await incarcaCiorna();
   await reincarcaMasuratori();
+  await reincarcaPoze().catch(err => console.warn(err));
   deseneazaGrupe();
   deseneazaExercitii();
   randeazaBiblioteca();

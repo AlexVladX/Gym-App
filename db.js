@@ -7,12 +7,13 @@
 //   rutine       — rutinele salvate de tine (id automat)
 //   instantanee  — (v4) copii automate ale datelor, făcute înainte de restaurare și săptămânal
 //   meta         — (v4) informații interne (ex. data ultimei copii automate)
+//   poze         — (v5) poze de progres { id, data, unghi, imagine (Blob JPEG), latime, inaltime, creat }
 //
 // Regula de compatibilitate: înregistrările vechi nu se rescriu niciodată la actualizare.
 // Câmpurile noi sunt opționale și primesc valori implicite la citire.
 
 const DB_NUME = 'jurnal-antrenament';
-const DB_VERSIUNE = 4;
+const DB_VERSIUNE = 5;
 const STORES_DATE = ['sesiuni', 'exercitii', 'masuratori', 'rutine'];
 const MAX_INSTANTANEE = 5;
 
@@ -34,6 +35,7 @@ function deschideBaza() {
       creeaza('rutine', { keyPath: 'id', autoIncrement: true });
       creeaza('instantanee', { keyPath: 'id', autoIncrement: true });
       creeaza('meta');
+      creeaza('poze', { keyPath: 'id', autoIncrement: true });
     };
     cerere.onsuccess = () => {
       const bd = cerere.result;
@@ -231,6 +233,26 @@ async function toateMasuratorile() {
   return lista.filter(m => m && typeof m.data === 'string' && typeof m.tip === 'string' && Number.isFinite(m.valoare));
 }
 
+// Corectarea unei înregistrări (valoare sau dată); păstrează celelalte câmpuri.
+function actualizeazaMasuratoare(m) {
+  return cere('masuratori', 'readwrite', st => st.put(m));
+}
+
+// ----- Poze de progres (v5) -----
+function salveazaPoza(p) {
+  return cere('poze', 'readwrite', st => st.add(p));
+}
+
+// Pozele lizibile (cu dată și imagine), fără să le ștergem pe celelalte.
+async function toatePozele() {
+  const lista = await cere('poze', 'readonly', st => st.getAll());
+  return lista.filter(p => p && typeof p.data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p.data) && p.imagine instanceof Blob);
+}
+
+function stergePoza(id) {
+  return cere('poze', 'readwrite', st => st.delete(id));
+}
+
 function stergeMasuratoare(id) {
   return cere('masuratori', 'readwrite', st => st.delete(id));
 }
@@ -266,13 +288,20 @@ async function exportaDate() {
   return { sesiuni, exercitii, masuratori, rutine };
 }
 
+// Pozele, așa cum sunt în bază (cu imaginea ca Blob); backup.js le transformă în text pentru fișier.
+function exportaPoze() {
+  return cere('poze', 'readonly', st => st.getAll());
+}
+
 // Înlocuiește conținutul stores-urilor de date, într-o singură tranzacție.
-// Dacă ceva eșuează, nimic nu se schimbă. Un backup fără rutine nu șterge rutinele existente.
+// Dacă ceva eșuează, nimic nu se schimbă. Un backup fără rutine nu șterge rutinele existente;
+// la fel, un backup fără poze (date.poze lipsă) nu atinge pozele.
 async function inlocuiesteToate(date) {
   const bd = await baza();
+  const stores = Array.isArray(date.poze) ? [...STORES_DATE, 'poze'] : STORES_DATE;
   return new Promise((rezolva, respinge) => {
-    const tranzactie = bd.transaction(STORES_DATE, 'readwrite');
-    for (const nume of STORES_DATE) {
+    const tranzactie = bd.transaction(stores, 'readwrite');
+    for (const nume of stores) {
       if (!Array.isArray(date[nume])) continue;
       const st = tranzactie.objectStore(nume);
       st.clear();
@@ -315,7 +344,7 @@ function citesteInstantaneu(id) {
 // ----- Ștergerea tuturor datelor -----
 async function stergeToateDatele() {
   const bd = await baza();
-  const toate = [...STORES_DATE, 'ciorna', 'instantanee', 'meta'];
+  const toate = [...STORES_DATE, 'ciorna', 'instantanee', 'meta', 'poze'];
   return new Promise((rezolva, respinge) => {
     const tranzactie = bd.transaction(toate, 'readwrite');
     for (const nume of toate) tranzactie.objectStore(nume).clear();

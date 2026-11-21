@@ -4,6 +4,8 @@
 // Formatul backupului:
 //   v1/v2 (versiunile vechi): { versiune, exportat, sesiuni, exercitii, masuratori, rutine? }
 //   v3 (de acum):             la fel, plus { aplicatie, schema, setari }
+//                             și, din etapa 6, opțional poze: [{ id, data, unghi, imagine: 'data:image/jpeg;base64,…', latime, inaltime, creat }]
+//                             (o versiune mai veche a aplicației ignoră pozele, restul se citește la fel)
 // Câmpurile necunoscute ale fiecărei înregistrări se păstrează (compatibilitate înainte).
 
 const VERSIUNE_BACKUP = 3;
@@ -76,6 +78,17 @@ function curataMasuratoare(m) {
   return { ...m, tip: m.tip.trim(), valoare };
 }
 
+// Poza: dată validă, imaginea ca data-URL JPEG/PNG/WebP (max. ~10 MB de text), unghi cunoscut (altfel „fata").
+const UNGHIURI_VALIDE = ['fata', 'lateral', 'spate'];
+const IMAGINE_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+function curataPoza(p) {
+  if (!p || typeof p !== 'object' || !dataValida(p.data)) return null;
+  if (typeof p.imagine !== 'string' || p.imagine.length > 10 * 1024 * 1024 || !IMAGINE_RE.test(p.imagine)) return null;
+  const rez = { ...p, unghi: UNGHIURI_VALIDE.includes(p.unghi) ? p.unghi : 'fata' };
+  for (const camp of ['latime', 'inaltime', 'creat']) if (camp in p && !Number.isFinite(p[camp])) delete rez[camp];
+  return rez;
+}
+
 function curataRutina(r) {
   if (!r || !textNevid(r.nume) || !Array.isArray(r.exercitii)) return null;
   const exercitii = r.exercitii.filter(textNevid);
@@ -105,7 +118,7 @@ function unicDupaNume(lista) {
 
 // Verifică și curăță un obiect de backup.
 // Întoarce { ok: true, date, ignorate, rezumat } sau { ok: false, eroare }.
-//   date:     { sesiuni, exercitii, masuratori, rutine?, setari? } — gata de scris în bază
+//   date:     { sesiuni, exercitii, masuratori, rutine?, poze?, setari? } — gata de scris în bază (pozele încă ca text)
 //   ignorate: numărul înregistrărilor care nu au putut fi citite
 function valideazaBackup(brut) {
   if (!brut || typeof brut !== 'object' || Array.isArray(brut)) {
@@ -134,10 +147,11 @@ function valideazaBackup(brut) {
     masuratori: curataIduri(curata(brut.masuratori, curataMasuratoare)),
   };
   if (Array.isArray(brut.rutine)) date.rutine = curataIduri(curata(brut.rutine, curataRutina));
+  if (Array.isArray(brut.poze)) date.poze = curataIduri(curata(brut.poze, curataPoza));
   if (brut.setari && typeof brut.setari === 'object' && !Array.isArray(brut.setari)) date.setari = brut.setari;
 
   const total = brut.sesiuni.length + brut.exercitii.length + brut.masuratori.length +
-    (Array.isArray(brut.rutine) ? brut.rutine.length : 0);
+    (Array.isArray(brut.rutine) ? brut.rutine.length : 0) + (Array.isArray(brut.poze) ? brut.poze.length : 0);
   if (total > 0 && ignorate === total) {
     return { ok: false, eroare: 'Nicio înregistrare din fișier nu a putut fi citită. Fișierul pare deteriorat.' };
   }
@@ -150,6 +164,7 @@ function valideazaBackup(brut) {
       sesiuni: date.sesiuni.length,
       masuratori: date.masuratori.length,
       rutine: date.rutine ? date.rutine.length : null,
+      poze: date.poze ? date.poze.length : null,
       exportat: typeof brut.exportat === 'string' ? brut.exportat : null,
     },
   };

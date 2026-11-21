@@ -1,7 +1,9 @@
 // Setările aplicației. Se țin în localStorage (citire sincronă la pornire)
 // și se includ în backup, ca să nu se piardă la mutarea pe alt telefon.
 
-const SETARI_IMPLICITE = { minRep: 8, maxRep: 12, pasKg: 2.5, ecranAprins: true, pauzaSec: 90, pauzaAutomata: true, semnal: true };
+// inaltimeCm și obiectiv (greutatea țintă) vin din ecranul Corp (etapa 6); obiectiv: { tinta, start, dela }.
+const SETARI_IMPLICITE = { minRep: 8, maxRep: 12, pasKg: 2.5, ecranAprins: true, pauzaSec: 90, pauzaAutomata: true, semnal: true,
+  inaltimeCm: null, obiectiv: null };
 const setari = { ...SETARI_IMPLICITE };
 
 // Corectează valorile venite din stocare sau dintr-un backup; ce nu e valid revine la implicit.
@@ -16,6 +18,12 @@ function curataSetari(sursa) {
   if (typeof sursa.pauzaAutomata === 'boolean') rez.pauzaAutomata = sursa.pauzaAutomata;
   if (typeof sursa.semnal === 'boolean') rez.semnal = sursa.semnal;
   if (intreg(sursa.pauzaSec, 10, 600)) rez.pauzaSec = sursa.pauzaSec;
+  const numar = (v, min, max) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
+  if (numar(sursa.inaltimeCm, 100, 250)) rez.inaltimeCm = sursa.inaltimeCm;
+  const o = sursa.obiectiv;
+  if (o && typeof o === 'object' && numar(o.tinta, 20, 300) && numar(o.start, 20, 300) && typeof o.dela === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.dela)) {
+    rez.obiectiv = { tinta: o.tinta, start: o.start, dela: o.dela };
+  }
   return rez;
 }
 
