@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "20";
+  --versiune-css: "21";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -790,7 +790,7 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
   left: 0; right: 0; bottom: 0;
   z-index: 16;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   padding: 0 var(--dreapta) var(--jos) var(--stanga);
   background: rgba(21, 25, 31, 0.92);
   -webkit-backdrop-filter: saturate(160%) blur(16px);
@@ -1125,7 +1125,7 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 /* ---------- Ecrane mai late ---------- */
 @media (min-width: 600px) {
   main { padding-left: var(--s5); padding-right: var(--s5); }
-  .navigatie { grid-template-columns: repeat(5, 112px); justify-content: center; }
+  .navigatie { grid-template-columns: repeat(6, 104px); justify-content: center; }
 }
 
 /* ---------- Ecrane foarte înguste ---------- */
@@ -1217,3 +1217,130 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .banda-avertizare > span { flex: 1; }
 .banda-avertizare .btn { color: inherit; }
 
+/* =========================================================
+   Nutriție (biblioteca de rețete și alimente)
+   ========================================================= */
+.navigatie button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Cu 6 butoane, „Antrenament” nu încape pe telefoanele înguste: acolo scrie „Sală”. */
+.navigatie .eticheta-scurta { display: none; }
+@media (max-width: 413px) {
+  .navigatie .eticheta-lunga { display: none; }
+  .navigatie .eticheta-scurta { display: inline; }
+}
+.grila-retete { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s3); margin-bottom: var(--s3); }
+.grila-titlu { grid-column: 1 / -1; margin: var(--s2) var(--s1) 0; }
+.card-reteta {
+  position: relative; display: flex; flex-direction: column; min-width: 0;
+  background: var(--suprafata); border: 1px solid var(--bordura); border-radius: var(--raza-mare);
+  overflow: hidden; box-shadow: var(--umbra);
+  animation: apare 220ms ease both;
+}
+.card-reteta-principal {
+  display: flex; flex-direction: column; align-items: stretch; text-align: left;
+  background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; min-width: 0;
+}
+.card-reteta-principal:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--raza-mare); }
+.card-reteta-imagine { aspect-ratio: 4 / 3; background: var(--suprafata-2); overflow: hidden; }
+.reteta-imagine { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform 300ms ease; }
+.card-reteta-principal:active .reteta-imagine { transform: scale(1.03); }
+.card-reteta-text { display: flex; flex-direction: column; gap: 2px; padding: var(--s2) var(--s3) var(--s3); min-width: 0; }
+.card-reteta-text strong { font-size: 14px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card-reteta-text .nota { margin: 0; font-size: 12px; }
+.card-reteta-text .eticheta-tip { align-self: flex-start; margin-top: 4px; }
+.card-reteta-kcal { font-size: 12.5px; color: var(--text-2); }
+.card-reteta-kcal b { color: var(--accent); font-family: var(--font-cifre); font-size: 15px; }
+.card-reteta-stea {
+  position: absolute; top: 6px; right: 6px;
+  background: rgba(11, 13, 16, 0.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  border-radius: 999px;
+}
+.reteta-imagine-mare { aspect-ratio: 4 / 3; border-radius: var(--raza); overflow: hidden; background: var(--suprafata-2); margin-bottom: var(--s3); }
+.reteta-fapte { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s2); margin-top: var(--s2); }
+.reteta-fapte .placuta strong { font-size: 16px; }
+.eticheta-nutri { background: var(--accent-slab); color: var(--accent); }
+
+.nutri-panou { display: flex; flex-direction: column; gap: 6px; padding: var(--s3); border-radius: var(--raza); background: var(--suprafata-2); }
+.nutri-kcal { display: flex; align-items: baseline; gap: 4px; margin-bottom: 2px; }
+.nutri-kcal strong { font-family: var(--font-cifre); font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text); }
+.nutri-kcal span { color: var(--discret); font-size: 13px; }
+.nutri-rand { display: grid; grid-template-columns: 112px 64px 1fr 36px; align-items: center; gap: var(--s2); font-size: 14px; }
+.nutri-rand strong { font-variant-numeric: tabular-nums; text-align: right; }
+.nutri-rand .nota { margin: 0; font-size: 12px; text-align: right; }
+.nutri-nume { display: flex; align-items: center; gap: 6px; color: var(--text-2); }
+.nutri-punct { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+.nutri-bara { height: 6px; border-radius: 3px; background: var(--suprafata-3); overflow: hidden; }
+.nutri-bara i { display: block; height: 100%; border-radius: 3px; }
+.nutri-p { background: #6FC3FF; }
+.nutri-c { background: var(--accent); }
+.nutri-g { background: #FFB547; }
+.nutri-f { background: #C59BFF; }
+.nota-alergeni { margin-top: var(--s2); }
+.nota-alergeni strong { color: var(--text-2); }
+.nota-mica { font-size: 12px; }
+.nota-sursa { font-size: 12px; text-align: center; margin: var(--s3) var(--s2) var(--s5); }
+
+.portii-rand { justify-content: space-between; margin-top: var(--s3); }
+.portii-rand .detaliu-titlu { margin: 0; }
+.stepper { display: flex; align-items: center; gap: var(--s2); }
+.portii-valoare { min-width: 24px; text-align: center; font-family: var(--font-cifre); font-size: 18px; font-variant-numeric: tabular-nums; }
+.lista-ingrediente { list-style: none; margin: var(--s2) 0 0; padding: 0; }
+.lista-ingrediente li {
+  display: grid; grid-template-columns: 1fr auto 64px; gap: var(--s2); align-items: baseline;
+  padding: var(--s2) 0; border-top: 1px solid var(--bordura); font-size: 14px;
+}
+.lista-ingrediente li strong { font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.lista-ingrediente li .nota { margin: 0; text-align: right; font-size: 12px; }
+.ingredient-lipsa { color: var(--avertizare); }
+.pasi-reteta { margin: var(--s2) 0 0; padding-left: 22px; display: flex; flex-direction: column; gap: var(--s2); font-size: 15px; line-height: 1.5; color: var(--text-2); }
+.pasi-reteta li::marker { color: var(--accent); font-weight: 700; }
+.note-sursa { margin-top: var(--s3); }
+.note-sursa summary { cursor: pointer; color: var(--text-2); font-size: 14px; }
+
+.editor-ingrediente { display: flex; flex-direction: column; }
+.rand-ingredient {
+  display: grid; grid-template-columns: minmax(0, 1fr) 92px 58px 36px; align-items: center; gap: var(--s2);
+  padding: 6px 0; border-top: 1px solid var(--bordura);
+}
+.rand-ingredient-nume { font-size: 14px; overflow-wrap: anywhere; }
+.rand-ingredient-grame { display: flex; align-items: center; gap: 4px; }
+.rand-ingredient-grame .nota { margin: 0; }
+.camp-grame { width: 72px; text-align: right; }
+.rand-ingredient > .nota { margin: 0; font-size: 12px; text-align: right; }
+.sugestii-alimente { display: flex; flex-direction: column; gap: 4px; margin: var(--s2) 0; }
+.sugestie-aliment {
+  display: flex; justify-content: space-between; align-items: baseline; gap: var(--s2);
+  padding: 10px var(--s3); border-radius: var(--raza-mica); border: 1px solid var(--bordura);
+  background: var(--suprafata-2); color: var(--text); font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+}
+.sugestie-aliment .nota { margin: 0; font-size: 12px; white-space: nowrap; }
+.editor-rezumat { margin: var(--s2) 0 var(--s3); padding: var(--s3); border-radius: var(--raza); background: var(--suprafata-2); display: flex; flex-direction: column; gap: var(--s2); }
+.editor-rezumat-cifre strong { color: var(--accent); font-family: var(--font-cifre); font-size: 18px; }
+.grila-valori { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s3); }
+
+.rand-aliment {
+  display: flex; align-items: center; gap: var(--s3); width: 100%;
+  min-height: 60px; padding: var(--s2) var(--s1); background: none; border: 0; border-top: 1px solid var(--bordura);
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.rand-aliment:first-child { border-top: 0; }
+.aliment-culoare { width: 12px; height: 12px; border-radius: 50%; flex: 0 0 auto; box-shadow: 0 0 0 2px var(--suprafata-3); }
+.rand-aliment-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rand-aliment-text strong { font-size: 15px; font-weight: 600; }
+.rand-aliment-text .nota { margin: 0; font-size: 12.5px; }
+.rand-aliment-kcal { display: flex; flex-direction: column; align-items: flex-end; flex: 0 0 auto; }
+.rand-aliment-kcal strong { font-family: var(--font-cifre); font-variant-numeric: tabular-nums; }
+.rand-aliment-kcal .nota { margin: 0; font-size: 11px; }
+
+@media (hover: hover) {
+  .card-reteta-principal:hover .reteta-imagine { transform: scale(1.03); }
+  .rand-aliment:hover, .sugestie-aliment:hover { background: var(--suprafata-2); }
+}
+@media (min-width: 600px) {
+  .grila-retete { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 360px) {
+  .nutri-rand { grid-template-columns: 96px 56px 1fr 32px; }
+  .rand-ingredient { grid-template-columns: minmax(0, 1fr) 84px 50px 36px; gap: 6px; }
+  .camp-grame { width: 64px; }
+}
+.editor-reteta .camp .camp-scurt { flex: 0 0 auto !important; width: 96px; }

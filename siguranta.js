@@ -52,7 +52,8 @@ if (typeof module !== 'undefined') {
 }
 
 // ====================== În pagină ======================
-const NUME_TIP_COS = { sesiuni: 'Antrenament', masuratori: 'Măsurătoare', poze: 'Poză', rutine: 'Rutină' };
+const NUME_TIP_COS = { sesiuni: 'Antrenament', masuratori: 'Măsurătoare', poze: 'Poză', rutine: 'Rutină',
+  alimente: 'Aliment', retete: 'Rețetă', pozeRetete: 'Poză de rețetă' };
 
 // După o ștergere: mesaj cu „Anulează" care pune înregistrarea înapoi.
 function notificaStergere(text, idCos, dupaRestaurare) {
@@ -83,6 +84,7 @@ async function dupaRestaurareDinCos(tip) {
   } else if (tip === 'masuratori') await reincarcaMasuratori();
   else if (tip === 'poze') await reincarcaPoze();
   else if (tip === 'rutine') randeazaBiblioteca();
+  else if (tip === 'alimente' || tip === 'retete' || tip === 'pozeRetete') await reincarcaNutritie();
 }
 
 function descriereElementCos(x) {
@@ -120,7 +122,7 @@ async function deseneazaCos() {
         try { await restaureazaDinCos(x.id); } catch (err) { console.error(err); notifica(mesajEroareSalvare(err, 'Nu s-a putut restaura.'), 'eroare'); return; }
         await dupaRestaurareDinCos(x.tip);
         await deseneazaCos();
-        notifica(`${NUME_TIP_COS[x.tip]} restaurat${x.tip === 'masuratori' || x.tip === 'poze' || x.tip === 'rutine' ? 'ă' : ''}.`, 'succes');
+        notifica(`${NUME_TIP_COS[x.tip]} restaurat${['masuratori', 'poze', 'rutine', 'retete', 'pozeRetete'].includes(x.tip) ? 'ă' : ''}.`, 'succes');
       } }),
       buton({ icon: 'cos', tip: 'fantoma', eticheta: `Șterge definitiv: ${NUME_TIP_COS[x.tip]} ${descriereElementCos(x)}`, onclick: async () => {
         const da = await confirma({ titlu: 'Ștergi definitiv?', text: `${NUME_TIP_COS[x.tip]} ${descriereElementCos(x)} nu mai poate fi recuperat(ă) decât dintr-un backup.`, ok: 'Șterge definitiv', pericol: true });
@@ -144,7 +146,8 @@ async function verificaDatele() {
     rez.replaceChildren(el('p', { class: 'nota nota-avertizare', text: 'Baza de date nu a putut fi citită. Reîncarcă aplicația; dacă problema rămâne, restaurează un backup.' }));
     return;
   }
-  const nume = { sesiuni: 'Antrenamente', masuratori: 'Măsurători', rutine: 'Rutine', exercitii: 'Exerciții folosite', poze: 'Poze', cos: 'Șterse recent' };
+  const nume = { sesiuni: 'Antrenamente', masuratori: 'Măsurători', rutine: 'Rutine', exercitii: 'Exerciții folosite', poze: 'Poze',
+    retete: 'Rețetele tale', alimente: 'Alimentele tale', pozeRetete: 'Poze de rețete', cos: 'Șterse recent' };
   const probleme = Object.entries(d).filter(([k, v]) => k !== 'cos' && v.total !== v.lizibile);
   rez.replaceChildren(
     el('div', { class: 'tabel-compara' }, Object.entries(nume).map(([k, n]) => el('div', { class: 'tabel-compara-rand verificare' }, [

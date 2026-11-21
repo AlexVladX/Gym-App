@@ -10,13 +10,16 @@
 //   poze         — (v5) poze de progres { id, data, unghi, imagine (Blob JPEG), latime, inaltime, creat }
 //   cos          — (v6) „Șterse recent": { id, tip (store-ul de origine), inregistrare, sters (ms), eticheta }
 //                  păstrate 30 de zile; nu intră în backup.
+//   alimente     — (v7) alimentele tale (nutriție), cheie: id text „u-…”
+//   retete       — (v7) rețetele tale, cheie: id text „u-…”
+//   pozeRetete   — (v7) poza ta pentru o rețetă (din bibliotecă sau proprie): { id (= id-ul rețetei), imagine Blob, latime, inaltime, creat }
 //
 // Regula de compatibilitate: înregistrările vechi nu se rescriu niciodată la actualizare.
 // Câmpurile noi sunt opționale și primesc valori implicite la citire.
 
 const DB_NUME = 'jurnal-antrenament';
-const DB_VERSIUNE = 6;
-const STORES_DATE = ['sesiuni', 'exercitii', 'masuratori', 'rutine'];
+const DB_VERSIUNE = 7;
+const STORES_DATE = ['sesiuni', 'exercitii', 'masuratori', 'rutine', 'alimente', 'retete'];
 const MAX_INSTANTANEE = 5;
 
 let bazaPromise = null;
@@ -39,6 +42,9 @@ function deschideBaza() {
       creeaza('meta');
       creeaza('poze', { keyPath: 'id', autoIncrement: true });
       creeaza('cos', { keyPath: 'id', autoIncrement: true });
+      creeaza('alimente', { keyPath: 'id' });
+      creeaza('retete', { keyPath: 'id' });
+      creeaza('pozeRetete', { keyPath: 'id' });
     };
     cerere.onsuccess = () => {
       const bd = cerere.result;
@@ -103,7 +109,9 @@ function stergeSesiune(id, eticheta) {
 }
 
 // ----- Șterse recent (v6) -----
-const STORES_CU_COS = ['sesiuni', 'masuratori', 'poze', 'rutine'];
+const STORES_CU_COS = ['sesiuni', 'masuratori', 'poze', 'rutine', 'alimente', 'retete', 'pozeRetete'];
+// Stores cu cheie text (fără numerotare automată): la restaurare, un id ocupat primește un sufix.
+const STORES_CHEIE_TEXT = ['alimente', 'retete', 'pozeRetete'];
 const ZILE_IN_COS = 30;
 
 // Mută o înregistrare în coș. Întoarce id-ul din coș (pentru „Anulează"), sau null dacă nu exista.
@@ -142,7 +150,10 @@ async function restaureazaDinCos(idCos) {
       const rec = { ...element.inregistrare };
       const ocupat = st.get(rec.id);
       ocupat.onsuccess = () => {
-        if (ocupat.result) delete rec.id;
+        if (ocupat.result) {
+          if (STORES_CHEIE_TEXT.includes(element.tip)) rec.id = `${rec.id}-${Date.now().toString(36)}`;
+          else delete rec.id;
+        }
         st.add(rec);
         cos.delete(idCos);
       };
@@ -159,24 +170,44 @@ async function toateDinCos() {
 }
 
 function stergeDinCos(idCos) {
-  return cere('cos', 'readwrite', st => st.delete(idCos));
+  return cere('cos', 'readwrite', st => st.delete(idCos)).then(() => curataPozeReteteOrfane());
+}
+
+// Poza unei rețete proprii șterse definitiv nu mai are cui să aparțină: o ștergem și pe ea.
+// (O rețetă din coș își păstrează poza, ca la restaurare să fie ca înainte.)
+async function curataPozeReteteOrfane() {
+  const [poze, retete, cos] = await Promise.all([
+    cere('pozeRetete', 'readonly', st => st.getAllKeys()),
+    cere('retete', 'readonly', st => st.getAllKeys()),
+    cere('cos', 'readonly', st => st.getAll()),
+  ]);
+  const vii = new Set(retete);
+  for (const x of cos) if (x && x.tip === 'retete' && x.inregistrare) vii.add(x.inregistrare.id);
+  const orfane = poze.filter(id => String(id).startsWith('u-') && !vii.has(id));
+  if (orfane.length) await cere('pozeRetete', 'readwrite', st => { for (const id of orfane) st.delete(id); });
+  return orfane.length;
 }
 
 // Șterge definitiv ce a stat în coș mai mult de ZILE_IN_COS zile. Întoarce câte au fost șterse.
 async function golesteCosulVechi(acum = Date.now()) {
   const lista = await cere('cos', 'readonly', st => st.getAll());
   const vechi = lista.filter(x => !x || !(x.sters > acum - ZILE_IN_COS * 86400000));
-  if (vechi.length) await cere('cos', 'readwrite', st => { for (const x of vechi) st.delete(x.id); });
+  if (vechi.length) {
+    await cere('cos', 'readwrite', st => { for (const x of vechi) st.delete(x.id); });
+    await curataPozeReteteOrfane();
+  }
   return vechi.length;
 }
 
 // Numărul de înregistrări din fiecare store și câte dintre ele se pot afișa (verificarea datelor).
 async function diagnosticBaza() {
   const brut = {};
-  for (const nume of [...STORES_DATE, 'poze', 'cos']) brut[nume] = await cere(nume, 'readonly', st => st.getAll());
-  const [sesiuni, masuratori, rutine, poze] = await Promise.all([toateSesiunile(), toateMasuratorile(), toateRutinele(), toatePozele()]);
+  for (const nume of [...STORES_DATE, 'poze', 'pozeRetete', 'cos']) brut[nume] = await cere(nume, 'readonly', st => st.getAll());
+  const [sesiuni, masuratori, rutine, poze, alimente, retete, pozeRetete] = await Promise.all([toateSesiunile(), toateMasuratorile(),
+    toateRutinele(), toatePozele(), toateAlimenteleMele(), toateReteteleMele(), toatePozeleRetetelor()]);
   const lizibile = { sesiuni: sesiuni.length, masuratori: masuratori.length, rutine: rutine.length, poze: poze.length,
-    exercitii: brut.exercitii.filter(e => e && typeof e.nume === 'string').length, cos: brut.cos.length };
+    exercitii: brut.exercitii.filter(e => e && typeof e.nume === 'string').length, cos: brut.cos.length,
+    alimente: alimente.length, retete: retete.length, pozeRetete: pozeRetete.length };
   return Object.fromEntries(Object.keys(brut).map(k => [k, { total: brut[k].length, lizibile: lizibile[k] }]));
 }
 
@@ -340,6 +371,43 @@ function stergeMasuratoare(id, eticheta) {
 }
 
 // ----- Ciornă -----
+// ----- Nutriție (v7) -----
+// Înregistrările care nu trec validarea (ex. scrise de o versiune viitoare, stricate) nu se afișează,
+// dar rămân în bază și în backup (regula 3).
+function salveazaAlimentMeu(a) {
+  return cere('alimente', 'readwrite', st => st.put(a));
+}
+async function toateAlimenteleMele() {
+  const lista = await cere('alimente', 'readonly', st => st.getAll());
+  return lista.map(curataAliment).filter(Boolean);
+}
+function stergeAlimentMeu(id, eticheta) {
+  return mutaInCos('alimente', id, eticheta);
+}
+function salveazaRetetaMea(r) {
+  return cere('retete', 'readwrite', st => st.put(r));
+}
+async function toateReteteleMele() {
+  const lista = await cere('retete', 'readonly', st => st.getAll());
+  return lista.map(curataReteta).filter(Boolean);
+}
+function stergeRetetaMea(id, eticheta) {
+  return mutaInCos('retete', id, eticheta);
+}
+function salveazaPozaReteta(p) {
+  return cere('pozeRetete', 'readwrite', st => st.put(p));
+}
+async function toatePozeleRetetelor() {
+  const lista = await cere('pozeRetete', 'readonly', st => st.getAll());
+  return lista.filter(p => p && typeof p.id === 'string' && p.imagine instanceof Blob);
+}
+function stergePozaReteta(id, eticheta) {
+  return mutaInCos('pozeRetete', id, eticheta);
+}
+function exportaPozeRetete() {
+  return cere('pozeRetete', 'readonly', st => st.getAll());
+}
+
 function salveazaCiorna(date) {
   return cere('ciorna', 'readwrite', st => st.put(date, 'curenta'));
 }
@@ -365,9 +433,9 @@ function scrieMeta(cheie, valoare) {
 // Datele brute din stores (fără setări). Setările se adaugă în backup.js.
 // Citim direct, nu prin funcțiile filtrate de mai sus, ca backupul să conțină tot ce e în bază.
 async function exportaDate() {
-  const [sesiuni, exercitii, masuratori, rutine] = await Promise.all(
+  const [sesiuni, exercitii, masuratori, rutine, alimente, retete] = await Promise.all(
     STORES_DATE.map(nume => cere(nume, 'readonly', st => st.getAll())));
-  return { sesiuni, exercitii, masuratori, rutine };
+  return { sesiuni, exercitii, masuratori, rutine, alimente, retete };
 }
 
 // Pozele, așa cum sunt în bază (cu imaginea ca Blob); backup.js le transformă în text pentru fișier.
@@ -377,10 +445,13 @@ function exportaPoze() {
 
 // Înlocuiește conținutul stores-urilor de date, într-o singură tranzacție.
 // Dacă ceva eșuează, nimic nu se schimbă. Un backup fără rutine nu șterge rutinele existente;
-// la fel, un backup fără poze (date.poze lipsă) nu atinge pozele.
+// la fel, un backup fără poze (date.poze lipsă) nu atinge pozele, iar unul fără nutriție
+// (alimente, retete, pozeRetete lipsă — ex. făcut înainte de modulul de nutriție) nu atinge nutriția.
 async function inlocuiesteToate(date) {
   const bd = await baza();
-  const stores = Array.isArray(date.poze) ? [...STORES_DATE, 'poze'] : STORES_DATE;
+  const stores = [...STORES_DATE];
+  if (Array.isArray(date.poze)) stores.push('poze');
+  if (Array.isArray(date.pozeRetete)) stores.push('pozeRetete');
   return new Promise((rezolva, respinge) => {
     const tranzactie = bd.transaction(stores, 'readwrite');
     for (const nume of stores) {
@@ -426,7 +497,7 @@ function citesteInstantaneu(id) {
 // ----- Ștergerea tuturor datelor -----
 async function stergeToateDatele() {
   const bd = await baza();
-  const toate = [...STORES_DATE, 'ciorna', 'instantanee', 'meta', 'poze', 'cos'];
+  const toate = [...STORES_DATE, 'ciorna', 'instantanee', 'meta', 'poze', 'pozeRetete', 'cos'];
   return new Promise((rezolva, respinge) => {
     const tranzactie = bd.transaction(toate, 'readwrite');
     for (const nume of toate) tranzactie.objectStore(nume).clear();

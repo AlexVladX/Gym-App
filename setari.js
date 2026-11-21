@@ -2,8 +2,9 @@
 // și se includ în backup, ca să nu se piardă la mutarea pe alt telefon.
 
 // inaltimeCm și obiectiv (greutatea țintă) vin din ecranul Corp (etapa 6); obiectiv: { tinta, start, dela }.
+// retetePreferate: id-urile rețetelor marcate ca favorite (nutriție).
 const SETARI_IMPLICITE = { minRep: 8, maxRep: 12, pasKg: 2.5, ecranAprins: true, pauzaSec: 90, pauzaAutomata: true, semnal: true,
-  inaltimeCm: null, obiectiv: null, obiectivSaptamanal: 3 };
+  inaltimeCm: null, obiectiv: null, obiectivSaptamanal: 3, retetePreferate: [] };
 const setari = { ...SETARI_IMPLICITE };
 
 // Corectează valorile venite din stocare sau dintr-un backup; ce nu e valid revine la implicit.
@@ -24,6 +25,9 @@ function curataSetari(sursa) {
   const o = sursa.obiectiv;
   if (o && typeof o === 'object' && numar(o.tinta, 20, 300) && numar(o.start, 20, 300) && typeof o.dela === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.dela)) {
     rez.obiectiv = { tinta: o.tinta, start: o.start, dela: o.dela };
+  }
+  if (Array.isArray(sursa.retetePreferate)) {
+    rez.retetePreferate = [...new Set(sursa.retetePreferate.filter(x => typeof x === 'string' && x.length > 0 && x.length <= 80))].slice(0, 1000);
   }
   return rez;
 }

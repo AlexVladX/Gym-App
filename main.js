@@ -4,6 +4,7 @@ const TITLURI_ECRANE = {
   'ecran-acasa': 'Acasă',
   'ecran-sesiune': 'Antrenament',
   'ecran-biblioteca': 'Exerciții',
+  'ecran-nutritie': 'Nutriție',
   'ecran-progres': 'Progres',
   'ecran-masuratori': 'Corp',
   'ecran-setari': 'Setări',
@@ -35,6 +36,7 @@ function arataEcran(id) {
   // Ecranele cu date se reîncarcă la fiecare deschidere (graficele au nevoie de dimensiunea reală).
   if (id === 'ecran-acasa') randeazaAcasa();
   if (id === 'ecran-biblioteca') { deseneazaFiltre(); randeazaBiblioteca(); }
+  if (id === 'ecran-nutritie') randeazaNutritie();
   if (id === 'ecran-progres') arataFilaProgres(!$('progres-realizari').hidden ? 'realizari' : $('progres-istoric').hidden ? 'grafice' : 'istoric');
   if (id === 'ecran-masuratori') reincarcaMasuratori();
   if (id === 'ecran-setari') {
@@ -57,6 +59,7 @@ async function initializeaza() {
   initProgres();
   initIstoric();
   initBiblioteca();
+  initNutritie();
   initBackup();
   initSiguranta();
 
@@ -71,6 +74,11 @@ async function initializeaza() {
   } catch (err) {
     console.warn('Istoricul nu a putut fi citit', err);
     notifica('Istoricul nu a putut fi citit. Dacă problema persistă, restaurează un backup.', 'eroare');
+  }
+  try {
+    await reincarcaNutritie();
+  } catch (err) {
+    console.warn('Datele de nutriție nu au putut fi citite', err);
   }
   await incarcaCiorna();
   deseneazaGrupe();

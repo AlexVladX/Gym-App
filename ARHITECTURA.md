@@ -13,6 +13,10 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `analiza.js` | Calcule: 1RM, volum, recorduri, sugestii de progresie, serii pe grupă, tendința greutății (fără DOM) |
 | `statistici.js` | Statistici avansate (etapa 5): perioade, rezumate, evoluție, distribuție pe grupe, progresie, recorduri pe repetări (fără DOM) |
 | `figuri.js` | Ilustrațiile exercițiilor: alege fișierul SVG din `ilustratii/` (generat de `tools/ilustratii/`) |
+| `nutritie-alimente.js` | Nutriție: 165 de alimente cu valori la 100 g din USDA SR28 (generat de `tools/nutritie/genereaza.js`) |
+| `nutritie-retete.js` | Nutriție: 150 de rețete, 30 pe fiecare masă (generat de `tools/nutritie/retete.js` din `tools/nutritie/retete/`) |
+| `nutritie-calcul.js` | Nutriție: calcule (valori din grame, porții, distribuția energiei, etichete, alergeni), fără DOM |
+| `nutritie-ilustratii.js` | Nutriție: ilustrația fiecărei rețete, desenată (SVG) din ingredientele ei |
 | `catalog.js` | Biblioteca unificată: catalog + exercițiile și preferințele tale, grupe, alternative, validarea exercițiilor proprii |
 | `ui.js` | Componente comune: `el`, iconițe, butoane, notificări, dialoguri, stări goale, formatări |
 | `grafice.js` | Grafice pe canvas, cu redesenare la redimensionare și valoare la atingere |
@@ -27,6 +31,7 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `progres.js` | Ecranul Progres → Grafice: afișarea statisticilor (perioadă, rezumat, evoluție, grupe, exercițiu, forță, recorduri) |
 | `istoric.js` | Istoricul sesiunilor, editare și ștergere |
 | `biblioteca.js` | Ecranul Exerciții: listă, filtre, detalii, formular, reîncadrarea grupei vechi, selectorul rapid, rutine |
+| `nutritie.js` | Ecranul Nutriție: rețete și alimente (listă, filtre, detalii, editor, favorite, poza rețetei) |
 | `backup.js` | Export, restaurare, copii automate, stare stocare, ștergerea datelor |
 | `acasa.js` | Ecranul Acasă (panoul): doar afișare; calculele sunt în `analiza.js` |
 | `main.js` | Navigarea și pornirea aplicației (se încarcă ultimul) |
@@ -37,7 +42,7 @@ Regula: fișierele definesc funcții; singurul cod care rulează la încărcare 
 
 ## Date
 
-Baza `jurnal-antrenament`, versiunea 6:
+Baza `jurnal-antrenament`, versiunea 7:
 
 - `sesiuni` `{ id, data: 'AAAA-LL-ZZ', inceput, sfarsit, grupe[], exercitii: [{ nume, serii: [{ kg, repetari }] }] }`
   Din etapa 3 (`versiune: 2`), opțional: `durataActivaMs`, `pauze[{start, sfarsit}]`, `nota`, `serii` (nr. serii de lucru),
@@ -54,6 +59,12 @@ Baza `jurnal-antrenament`, versiunea 6:
 - `cos` (v6) „Șterse recent": `{ id, tip (store-ul de origine), inregistrare, sters (ms), eticheta }`, 30 de zile; nu intră în backup
 - `poze` (v5) `{ id, data, unghi: 'fata' | 'lateral' | 'spate', imagine: Blob JPEG (max. 1280 px), latime, inaltime, creat }`
 - Setări noi (etapa 6, în localStorage și în backup): `inaltimeCm`, `obiectiv: { tinta, start, dela }`.
+- `alimente` (v7, nutriție) — alimentele tale, cheie text `u-…`: `{ id, nume, cat, kcal, proteine, carbohidrati, grasimi, fibre (la 100 g), alergeni[], urme[], animal, aspect, culoare, buc?, creat, modificat }`
+- `retete` (v7) — rețetele tale, cheie text `u-…`: `{ id, nume, masa, descriere, timp, portii, dificultate, vas, etichete[] (doar meal-prep, buget), ingrediente: [[idAliment, grame pentru toată rețeta]], pasi[], sursa? (rețeta duplicată), creat, modificat }`
+- `pozeRetete` (v7) — poza ta pentru o rețetă (din bibliotecă sau proprie): `{ id (= id-ul rețetei), imagine: Blob JPEG (max. 1024 px), latime, inaltime, creat }`
+- Setare nouă: `retetePreferate` — id-urile rețetelor favorite.
+- Alimentele și rețetele din bibliotecă nu stau în bază: sunt fișiere ale aplicației (se actualizează odată cu ea).
+  Id-urile lor nu încep cu `u-`, deci nu se pot amesteca cu ale tale.
 
 ### Reguli de compatibilitate
 
@@ -64,7 +75,9 @@ Baza `jurnal-antrenament`, versiunea 6:
 
 ## Backup
 
-Format v3: `{ aplicatie, versiune: 3, schema, exportat, setari, sesiuni, exercitii, masuratori, rutine, poze? }`.
+Format v3: `{ aplicatie, versiune: 3, schema, exportat, setari, sesiuni, exercitii, masuratori, rutine, poze?, alimente?, retete?, pozeRetete? }`.
+Nutriția (alimente, rețete, pozele rețetelor) e opțională în fișier: un backup fără ea (ex. făcut înainte de modulul de nutriție)
+nu atinge nutriția de pe telefon; o versiune mai veche a aplicației o ignoră. Pozele rețetelor urmează regula pozelor de progres.
 Pozele (etapa 6) sunt în fișier ca data-URL JPEG; o versiune mai veche a aplicației le ignoră. Copia automată săptămânală
 nu include pozele; copia dinainte de restaurare le include doar dacă backupul restaurat are poze. Un backup fără poze
 nu atinge pozele de pe telefon.
@@ -235,3 +248,24 @@ Dacă totuși se întâmplă, `main.js` observă diferența, golește cache-ul �
 
 Iconițele SVG au atributele de desen (`fill="none"`, `stroke="currentColor"`, dimensiuni) direct pe element,
 nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
+
+## Nutriție — reguli de calcul
+
+- **Sursa**: USDA National Nutrient Database for Standard Reference, Release 28 (domeniu public). Fiecare aliment
+  din bibliotecă păstrează codul NDB și descrierea din sursă. Câteva produse românești sunt aproximate cu cel mai apropiat
+  aliment USDA (telemea = feta, cașcaval = gouda, brânză de vaci = cottage 2%); aproximarea e scrisă la aliment și în rețetă.
+- **Carbohidrați** = totali, „prin diferență”, ca în sursă (includ fibrele).
+- **Valorile unei rețete** = Σ (grame × valoarea la 100 g / 100) pentru fiecare ingredient; **pe porție** = total / porții.
+  Nimic nu e scris de mână. Cantitățile sunt ale ingredientelor crude/uscate (orez, paste, linte), cum se cântăresc.
+- Un ingredient care nu mai există (aliment propriu șters) nu se ghicește: e exclus din valori și semnalat.
+  Un aliment propriu folosit într-o rețetă proprie nu se poate șterge.
+- **Distribuția energiei**: proteine×4, carbohidrați×4, grăsimi×9, raportate la suma lor (procentele dau 100).
+- **Etichete calculate** (pe porție): Bogat în proteine ≥25% din energie și ≥20 g (≥12 g la gustări);
+  Puține calorii ≤400 kcal (≤200 la gustări); Bogat în carbohidrați ≥55%; Sărac în carbohidrați ≤20%;
+  Echilibrat P 15–35%, C 35–55%, G 20–35%; Vegetarian fără carne/pește; Vegan fără nicio origine animală (inclusiv miere);
+  Fără gluten / Fără lactate: niciun ingredient care conține sau „poate conține” glutenul/laptele; Rapid ≤15 minute.
+  Dacă lipsește un ingredient, etichetele de dietă și alergeni nu se acordă. **Declarate** de autor: Meal prep, Buget redus.
+- **Alergeni**: cei 14 din Regulamentul UE 1169/2011, pe fiecare aliment („conține” și „poate conține”).
+  Ovăzul obișnuit e tratat ca având gluten.
+- Valorile sunt estimări, nu recomandări medicale.
+

@@ -21,8 +21,8 @@ function textInBlob(dataUrl) {
   for (let i = 0; i < bin.length; i++) octeti[i] = bin.charCodeAt(i);
   return new Blob([octeti], { type: tip });
 }
-async function pozePentruBackup() {
-  const poze = await exportaPoze();
+async function pozePentruBackup(sursa = exportaPoze) {
+  const poze = await sursa();
   const rez = [];
   for (const p of poze) {
     if (!(p && p.imagine instanceof Blob)) continue;
@@ -44,7 +44,10 @@ async function construiesteBackup({ cuPoze = true } = {}) {
     setari: setariPentruBackup(),
     ...date,
   };
-  if (cuPoze) backup.poze = await pozePentruBackup();
+  if (cuPoze) {
+    backup.poze = await pozePentruBackup();
+    backup.pozeRetete = await pozePentruBackup(exportaPozeRetete);
+  }
   return backup;
 }
 
@@ -97,6 +100,9 @@ function textRezumat(r) {
   const parti = [plural(r.sesiuni, 'sesiune', 'sesiuni'), plural(r.masuratori, 'măsurătoare', 'măsurători')];
   if (r.rutine !== null) parti.push(plural(r.rutine, 'rutină', 'rutine'));
   if (r.poze) parti.push(plural(r.poze, 'poză', 'poze'));
+  if (r.retete) parti.push(plural(r.retete, 'rețetă proprie', 'rețete proprii'));
+  if (r.alimente) parti.push(plural(r.alimente, 'aliment propriu', 'alimente proprii'));
+  if (r.pozeRetete) parti.push(plural(r.pozeRetete, 'poză de rețetă', 'poze de rețete'));
   return parti.join(', ');
 }
 
@@ -124,7 +130,7 @@ async function restaureaza(brut, sursa) {
   // Pozele intră în copie doar dacă restaurarea le înlocuiește (backupul are poze).
   try {
     await salveazaCiornaAcum();
-    await salveazaInstantaneu('Înainte de restaurare', await construiesteBackup({ cuPoze: Array.isArray(date.poze) }));
+    await salveazaInstantaneu('Înainte de restaurare', await construiesteBackup({ cuPoze: Array.isArray(date.poze) || Array.isArray(date.pozeRetete) }));
   } catch (err) {
     console.error(err);
     notifica('Nu s-a putut face copia de siguranță, așa că restaurarea a fost oprită. Datele actuale nu au fost modificate.', 'eroare');
@@ -132,9 +138,9 @@ async function restaureaza(brut, sursa) {
   }
 
   try {
-    const deScris = Array.isArray(date.poze)
-      ? { ...date, poze: date.poze.map(p => ({ ...p, imagine: textInBlob(p.imagine) })) }
-      : date;
+    const deScris = { ...date };
+    if (Array.isArray(date.poze)) deScris.poze = date.poze.map(p => ({ ...p, imagine: textInBlob(p.imagine) }));
+    if (Array.isArray(date.pozeRetete)) deScris.pozeRetete = date.pozeRetete.map(p => ({ ...p, imagine: textInBlob(p.imagine) }));
     await inlocuiesteToate(deScris);
   } catch (err) {
     console.error(err);
@@ -258,7 +264,7 @@ async function deseneazaStareStocare() {
 async function stergeTot() {
   const text = await cereText({
     titlu: 'Ștergi toate datele?',
-    text: 'Se șterg definitiv toate antrenamentele, măsurătorile, pozele, rutinele, antrenamentul în curs, copiile automate și „Șterse recent” de pe acest telefon. Exportă întâi un backup dacă vrei să le păstrezi. Scrie ȘTERGE ca să confirmi.',
+    text: 'Se șterg definitiv toate antrenamentele, măsurătorile, pozele, rutinele, rețetele și alimentele tale, antrenamentul în curs, copiile automate și „Șterse recent” de pe acest telefon. Exportă întâi un backup dacă vrei să le păstrezi. Scrie ȘTERGE ca să confirmi.',
     eticheta: 'Confirmare',
     ok: 'Șterge tot', pericol: true, confirmareExacta: 'ȘTERGE',
   });
@@ -285,6 +291,7 @@ async function reincarcaTot() {
   await reincarcaMasuratori();
   await reincarcaPoze().catch(err => console.warn(err));
   await deseneazaCos().catch(err => console.warn(err));
+  await reincarcaNutritie().catch(err => console.warn(err));
   deseneazaGrupe();
   deseneazaExercitii();
   randeazaBiblioteca();

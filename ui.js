@@ -56,6 +56,8 @@ const ICONITE = {
   schimba: 'M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7',
   stea: 'M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9L12 3z',
   filtru: 'M4 5h16l-6 8v5l-4 2v-7L4 5z',
+  copiaza: 'M9 9h11v11H9zM5 15H4V4h11v1',
+  nutritie: 'M12 8c-1.5-1.6-5-2-6.5.5C4 11 5 16 7.5 19c1.4 1.7 2.8 2 4.5 1 1.7 1 3.1.7 4.5-1C19 16 20 11 18.5 8.5 17 6 13.5 6.4 12 8zM12 8c0-2 1-4 3-5',
 };
 
 function iconita(nume, clasa = 'iconita') {
