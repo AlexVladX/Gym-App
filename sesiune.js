@@ -805,6 +805,8 @@ async function inchideSesiunea(sfarsitFortat = null) {
   const sesiune = construiesteSesiunea(sfarsit);
   // Recordurile se numără înainte de salvare, față de istoricul de până acum.
   const numarRecorduri = sesiune.exercitii.filter(ex => ex.serii.some(s => recordPentruSerie(recorduri, ex.nume, s))).length;
+  // Realizările dinainte, ca să știm ce s-a deblocat acum (etapa 7).
+  const realizariInainte = await stareRealizari().catch(err => { console.warn(err); return null; });
 
   try {
     await salveazaSesiune(sesiune);
@@ -824,6 +826,7 @@ async function inchideSesiunea(sfarsitFortat = null) {
   reincarcaBiblioteca().catch(() => {});
   notifica(`Antrenament salvat: ${plural(sesiune.exercitii.length, 'exercițiu', 'exerciții')}, ${plural(sesiune.serii, 'serie', 'serii')}, ${Math.max(1, Math.round(sesiune.durataActivaMs / 60000))} min.`, 'succes');
   if (numarRecorduri) notifica(`Recorduri noi la ${plural(numarRecorduri, 'exercițiu', 'exerciții')}!`, 'record');
+  sarbatoresteRealizari(realizariInainte).catch(err => console.warn(err));
 }
 
 function golesteSesiunea() {

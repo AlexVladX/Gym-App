@@ -188,15 +188,15 @@ async function stergeSesiuneaIstoric(s) {
 
 // ---------- File în ecranul Progres ----------
 function arataFilaProgres(fila) {
-  const grafice = fila === 'grafice';
-  $('tab-grafice').classList.toggle('activ', grafice);
-  $('tab-istoric').classList.toggle('activ', !grafice);
-  $('tab-grafice').setAttribute('aria-selected', String(grafice));
-  $('tab-istoric').setAttribute('aria-selected', String(!grafice));
-  $('progres-grafice').hidden = !grafice;
-  $('progres-istoric').hidden = grafice;
-  if (grafice) {
+  for (const f of ['grafice', 'istoric', 'realizari']) {
+    $(`tab-${f}`).classList.toggle('activ', f === fila);
+    $(`tab-${f}`).setAttribute('aria-selected', String(f === fila));
+    $(`progres-${f}`).hidden = f !== fila;
+  }
+  if (fila === 'grafice') {
     reincarcaProgres().catch(err => { console.error(err); notifica('Graficele nu au putut fi încărcate.', 'eroare'); });
+  } else if (fila === 'realizari') {
+    deseneazaRealizari().catch(err => { console.error(err); notifica('Realizările nu au putut fi încărcate.', 'eroare'); });
   } else {
     if (istoric.length === 0) $('istoric-lista').replaceChildren(stareIncarcare());
     reincarcaIstoric().then(randeazaIstoric).catch(err => { console.error(err); notifica('Istoricul nu a putut fi încărcat.', 'eroare'); });
@@ -206,4 +206,5 @@ function arataFilaProgres(fila) {
 function initIstoric() {
   $('tab-grafice').addEventListener('click', () => arataFilaProgres('grafice'));
   $('tab-istoric').addEventListener('click', () => arataFilaProgres('istoric'));
+  $('tab-realizari').addEventListener('click', () => arataFilaProgres('realizari'));
 }

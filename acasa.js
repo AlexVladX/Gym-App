@@ -162,7 +162,7 @@ function cardTotal(sesiuni) {
       placuta('Serii complete', formatMare(t.serii)),
       placuta('Volum total', `${formatMare(t.volum)} kg`),
     ]),
-    el('p', { class: 'nota', text: 'Volum = kg × repetări pentru fiecare serie cu repetări. Exercițiile cu greutatea corpului nu adaugă volum.' }),
+    el('p', { class: 'nota', text: 'Volum = kg × repetări pe seriile de lucru (fără încălzire). La exercițiile cu greutatea corpului se adună greutatea ta din Corp.' }),
   ]);
 }
 
@@ -353,9 +353,11 @@ async function randeazaAcasa() {
   if (!zona.childElementCount) zona.replaceChildren(stareIncarcare(3));
   let masuratori = [];
   let rutine = [];
+  let ctxRealizari = null;
   try {
     await reincarcaIstoric();
     [masuratori, rutine] = await Promise.all([toateMasuratorile(), toateRutinele()]);
+    ctxRealizari = await contextRealizari().catch(err => { console.warn(err); return null; });
   } catch (err) {
     console.error(err);
     zona.replaceChildren(stareGoala({ icon: 'avertizare', titlu: 'Datele nu au putut fi citite', text: 'Reîncarcă aplicația. Dacă problema persistă, restaurează un backup din Setări.' }));
@@ -371,6 +373,7 @@ async function randeazaAcasa() {
     carduri.push(
       cardUrmator(urmatorulAntrenament(rutine, sesiuni, grupaExercitiu, azi)),
       cardSaptamana(azi, sesiuni, saptamani),
+      ctxRealizari ? cardRealizari(azi, ctxRealizari) : null,
       cardRecorduri(azi, sesiuni),
       cardActivitate(saptamani),
       cardGrupe(azi, sesiuni),

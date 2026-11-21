@@ -35,7 +35,7 @@ function arataEcran(id) {
   // Ecranele cu date se reîncarcă la fiecare deschidere (graficele au nevoie de dimensiunea reală).
   if (id === 'ecran-acasa') randeazaAcasa();
   if (id === 'ecran-biblioteca') { deseneazaFiltre(); randeazaBiblioteca(); }
-  if (id === 'ecran-progres') arataFilaProgres($('progres-istoric').hidden ? 'grafice' : 'istoric');
+  if (id === 'ecran-progres') arataFilaProgres(!$('progres-realizari').hidden ? 'realizari' : $('progres-istoric').hidden ? 'grafice' : 'istoric');
   if (id === 'ecran-masuratori') reincarcaMasuratori();
   if (id === 'ecran-setari') {
     actualizeazaInfoBackup();

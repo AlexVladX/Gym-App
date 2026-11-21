@@ -13,9 +13,9 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
   <title>Jurnal de antrenament</title>
-  <link rel="stylesheet" href="styles.css?v=18">
+  <link rel="stylesheet" href="styles.css?v=19">
 </head>
-<body class="se-incarca" data-versiune="18">
+<body class="se-incarca" data-versiune="19">
   <header class="topbar">
     <div class="topbar-interior">
       <div class="marca">
@@ -126,6 +126,27 @@
       <div class="segment" role="tablist">
         <button id="tab-grafice" class="activ" type="button" role="tab" aria-selected="true">Grafice</button>
         <button id="tab-istoric" type="button" role="tab" aria-selected="false">Istoric</button>
+        <button id="tab-realizari" type="button" role="tab" aria-selected="false">Realizări</button>
+      </div>
+
+      <div id="progres-realizari" hidden>
+        <div class="card">
+          <div class="card-cap"><h2 id="nivel-titlu">Nivel</h2><span id="nivel-numar" class="nota"></span></div>
+          <div class="obiectiv-bara"><div id="nivel-bara" class="obiectiv-umplere"></div></div>
+          <p id="nivel-nota" class="nota"></p>
+        </div>
+        <div class="card">
+          <div class="card-cap"><h2>Obiectivul săptămânal</h2><span id="obiectiv-sapt-text" class="nota"></span></div>
+          <div id="obiectiv-sapt-alege" class="chipuri chipuri-mici" role="group" aria-label="Antrenamente pe săptămână"></div>
+          <div id="obiectiv-sapt-puncte" class="puncte-obiectiv mt" aria-hidden="true"></div>
+          <div id="obiectiv-sapt-placute" class="placute mt"></div>
+        </div>
+        <div class="card">
+          <div class="card-cap"><h2>Deblocate recent</h2><span id="insigne-numar" class="nota"></span></div>
+          <div id="insigne-recente" class="insigne-recente"></div>
+        </div>
+        <div id="insigne-categorii"></div>
+        <p class="nota">Realizările se calculează din antrenamentele, cântăririle și pozele salvate. Dacă editezi sau ștergi un antrenament, se recalculează.</p>
       </div>
 
       <div id="progres-istoric" hidden>
@@ -360,6 +381,10 @@
           <label for="set-pas-kg">Pas de greutate (kg)</label>
           <input id="set-pas-kg" class="camp-scurt" type="number" inputmode="decimal" min="0.5" max="20" step="0.5">
         </div>
+        <div class="rand aliniat mt">
+          <label for="set-obiectiv-sapt">Obiectiv: antrenamente pe săptămână</label>
+          <input id="set-obiectiv-sapt" class="camp-scurt" type="number" inputmode="numeric" min="1" max="7">
+        </div>
       </div>
 
       <h2 class="titlu-sectiune">Date și backup</h2>
@@ -439,25 +464,27 @@
     </button>
   </nav>
 
-  <script src="db.js?v=18"></script>
-  <script src="validare.js?v=18"></script>
-  <script src="exercitii.js?v=18"></script>
-  <script src="analiza.js?v=18"></script>
-  <script src="statistici.js?v=18"></script>
-  <script src="corp-calcul.js?v=18"></script>
-  <script src="catalog.js?v=18"></script>
-  <script src="figuri.js?v=18"></script>
-  <script src="ui.js?v=18"></script>
-  <script src="grafice.js?v=18"></script>
-  <script src="setari.js?v=18"></script>
-  <script src="timer.js?v=18"></script>
-  <script src="sesiune.js?v=18"></script>
-  <script src="corp.js?v=18"></script>
-  <script src="progres.js?v=18"></script>
-  <script src="istoric.js?v=18"></script>
-  <script src="biblioteca.js?v=18"></script>
-  <script src="backup.js?v=18"></script>
-  <script src="acasa.js?v=18"></script>
-  <script src="main.js?v=18"></script>
+  <script src="db.js?v=19"></script>
+  <script src="validare.js?v=19"></script>
+  <script src="exercitii.js?v=19"></script>
+  <script src="analiza.js?v=19"></script>
+  <script src="statistici.js?v=19"></script>
+  <script src="corp-calcul.js?v=19"></script>
+  <script src="realizari.js?v=19"></script>
+  <script src="catalog.js?v=19"></script>
+  <script src="figuri.js?v=19"></script>
+  <script src="ui.js?v=19"></script>
+  <script src="grafice.js?v=19"></script>
+  <script src="setari.js?v=19"></script>
+  <script src="timer.js?v=19"></script>
+  <script src="sesiune.js?v=19"></script>
+  <script src="corp.js?v=19"></script>
+  <script src="progres.js?v=19"></script>
+  <script src="realizari-ui.js?v=19"></script>
+  <script src="istoric.js?v=19"></script>
+  <script src="biblioteca.js?v=19"></script>
+  <script src="backup.js?v=19"></script>
+  <script src="acasa.js?v=19"></script>
+  <script src="main.js?v=19"></script>
 </body>
 </html>

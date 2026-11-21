@@ -3,7 +3,7 @@
 
 // inaltimeCm și obiectiv (greutatea țintă) vin din ecranul Corp (etapa 6); obiectiv: { tinta, start, dela }.
 const SETARI_IMPLICITE = { minRep: 8, maxRep: 12, pasKg: 2.5, ecranAprins: true, pauzaSec: 90, pauzaAutomata: true, semnal: true,
-  inaltimeCm: null, obiectiv: null };
+  inaltimeCm: null, obiectiv: null, obiectivSaptamanal: 3 };
 const setari = { ...SETARI_IMPLICITE };
 
 // Corectează valorile venite din stocare sau dintr-un backup; ce nu e valid revine la implicit.
@@ -18,6 +18,7 @@ function curataSetari(sursa) {
   if (typeof sursa.pauzaAutomata === 'boolean') rez.pauzaAutomata = sursa.pauzaAutomata;
   if (typeof sursa.semnal === 'boolean') rez.semnal = sursa.semnal;
   if (intreg(sursa.pauzaSec, 10, 600)) rez.pauzaSec = sursa.pauzaSec;
+  if (intreg(sursa.obiectivSaptamanal, 1, 7)) rez.obiectivSaptamanal = sursa.obiectivSaptamanal;
   const numar = (v, min, max) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
   if (numar(sursa.inaltimeCm, 100, 250)) rez.inaltimeCm = sursa.inaltimeCm;
   const o = sursa.obiectiv;
@@ -62,6 +63,7 @@ function afiseazaSetari() {
   $('set-pauza').value = setari.pauzaSec;
   $('set-pauza-auto').checked = setari.pauzaAutomata;
   $('set-semnal').checked = setari.semnal;
+  $('set-obiectiv-sapt').value = setari.obiectivSaptamanal;
 }
 
 function citesteCampuriSetari() {
@@ -82,6 +84,9 @@ function citesteCampuriSetari() {
   setari.ecranAprins = $('set-ecran').checked;
   setari.pauzaAutomata = $('set-pauza-auto').checked;
   setari.semnal = $('set-semnal').checked;
+  const obiectivSapt = parseInt($('set-obiectiv-sapt').value, 10);
+  if (obiectivSapt >= 1 && obiectivSapt <= 7) setari.obiectivSaptamanal = obiectivSapt;
+  else notifica('Obiectivul săptămânal trebuie să fie între 1 și 7 antrenamente.', 'eroare');
   if (!setari.ecranAprins) elibereazaEcranul(); else tineEcranulAprins();
   salveazaSetari();
   afiseazaSetari();
@@ -89,7 +94,7 @@ function citesteCampuriSetari() {
 }
 
 function initSetari() {
-  ['set-min-rep', 'set-max-rep', 'set-pas-kg', 'set-ecran', 'set-pauza', 'set-pauza-auto', 'set-semnal'].forEach(id =>
+  ['set-min-rep', 'set-max-rep', 'set-pas-kg', 'set-ecran', 'set-pauza', 'set-pauza-auto', 'set-semnal', 'set-obiectiv-sapt'].forEach(id =>
     $(id).addEventListener('change', citesteCampuriSetari));
   // Butoanele rapide pentru pauză
   document.querySelectorAll('[data-pauza]').forEach(b => b.addEventListener('click', () => {

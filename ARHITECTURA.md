@@ -21,6 +21,8 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `sesiune.js` | Antrenamentul în curs: exerciții, serii, ciornă, recorduri, închidere |
 | `corp-calcul.js` | Calcule pentru Corp (etapa 6): tipuri și unități, media pe 7 zile, IMC, obiectiv, comparare (fără DOM) |
 | `corp.js` | Ecranul Corp: greutate, profil și obiectiv, măsurători, corectare, comparare, poze de progres |
+| `realizari.js` | Realizări (etapa 7): nivel, obiectivul săptămânal, insigne cu trepte (fără DOM) |
+| `realizari-ui.js` | Fila Progres → Realizări, cardul de pe Acasă, sărbătorirea de la finalul antrenamentului |
 | `progres.js` | Ecranul Progres → Grafice: afișarea statisticilor (perioadă, rezumat, evoluție, grupe, exercițiu, forță, recorduri) |
 | `istoric.js` | Istoricul sesiunilor, editare și ștergere |
 | `biblioteca.js` | Ecranul Exerciții: listă, filtre, detalii, formular, reîncadrarea grupei vechi, selectorul rapid, rutine |
@@ -87,6 +89,25 @@ Se pot importa și backupurile v1/v2. La restaurare:
 - **Același exercițiu de două ori** într-o sesiune se unește la calcul (o singură sesiune, toate seriile).
 - Toate statisticile se calculează din sesiunile salvate la fiecare afișare: editarea sau ștergerea unei sesiuni
   le actualizează imediat. Antrenamentul în curs (ciorna) nu intră. Unitatea e mereu kg.
+
+## Realizări (etapa 7)
+
+- Nimic nu se ține separat: nivelul, seriile și insignele se calculează din antrenamentele, cântăririle, măsurătorile
+  și pozele salvate. Editarea sau ștergerea unui antrenament le recalculează (o insignă se poate bloca din nou).
+- **Nivel**: după numărul de antrenamente încheiate; nivelul N+1 începe la `PRAGURI_NIVEL[N]`
+  (0, 1, 5, 10, 20, 35, 50, 75, 100, 150, 200, 300, 400, 500, 750, 1000).
+- **Obiectivul săptămânal** (`setari.obiectivSaptamanal`, 1–7, implicit 3): antrenamente luni–duminică. Seria = săptămâni
+  consecutive cu obiectivul atins; săptămâna în curs intră când e atins și nu rupe seria până nu se termină.
+  Schimbarea obiectivului se aplică și retroactiv (seriile se recalculează cu noul obiectiv).
+- **Insigne** (familii cu trepte bronz → argint → aur → platină): o treaptă se deblochează la data antrenamentului
+  (sau a cântăririi, pozei) la care valoarea a ajuns la prag. Valorile: antrenamente; săptămâni consecutive cu cel puțin
+  un antrenament; săptămâni consecutive cu obiectivul atins; tone (volumul din etapa 5); ore active; recorduri noi
+  (`recorduriNoi`); exerciții diferite; săptămâni cu toate cele 6 zone (piept, spate, umeri, brațe, picioare, abdomen);
+  forța = cel mai bun 1RM estimat / greutatea corporală la data sesiunii (împins, genuflexiuni, îndreptări);
+  repetări într-o serie de tracțiuni; zile cu cântărire; zile cu ≥ 5 măsurători; zile cu poze; greutatea țintă
+  (media pe 7 zile ajunge la țintă, după data setării).
+- La salvarea unui antrenament, realizările de dinainte se compară cu cele de după: insignele noi apar într-un dialog,
+  iar obiectivul atins și nivelul nou ca mesaje.
 
 ## Corp (etapa 6)
 
