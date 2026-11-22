@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "24";
+  --versiune-css: "25";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -1425,3 +1425,29 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .estimare-tinte { margin-top: var(--s2); padding: var(--s3); border-radius: var(--raza); background: var(--suprafata-2); }
 .estimare-tinte summary { cursor: pointer; font-weight: 600; color: var(--text); }
 .estimare-tinte select { width: 100%; }
+
+/* ---------- Nutriție → generatorul și planurile (etapa 4) ---------- */
+.zi-generator .btn-mare { min-height: 52px; font-size: 16px; }
+.zi-generator .nota { margin: var(--s2) 0 0; }
+.zi-intrare-kcal { font-size: 13px; color: var(--text-2); }
+.zi-intrare-kcal b { color: var(--text); font-variant-numeric: tabular-nums; }
+.zi-intrare-actiuni { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s2); }
+.zi-intrare-actiuni .zi-ingrediente { flex: 1 1 100%; }
+.zi-lacat.activ { color: var(--accent); background: var(--accent-slab); }
+.zi-ingrediente summary { cursor: pointer; font-size: 13px; color: var(--text-2); padding: 4px 0; }
+.zi-ingrediente .lista-ingrediente li { grid-template-columns: 1fr auto; font-size: 13px; padding: 6px 0; }
+.ajustare-cantitati { margin-top: var(--s3); }
+.ajustare-cantitati summary { cursor: pointer; color: var(--text-2); font-size: 14px; }
+.lista-ajustare { list-style: none; margin: var(--s2) 0 0; padding: 0; }
+.rand-ajustare { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); padding: 6px 0; border-top: 1px solid var(--bordura); font-size: 14px; }
+.camp-grame { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.camp-grame input { width: 84px; text-align: right; }
+.camp-grame .nota { margin: 0; }
+.lista-planuri { display: flex; flex-direction: column; gap: var(--s3); }
+.plan-salvat { background: var(--suprafata-2); border-radius: var(--raza); padding: var(--s3); display: flex; flex-direction: column; gap: 4px; }
+.plan-cap { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
+.plan-cap strong { overflow-wrap: anywhere; }
+.plan-salvat .nota { margin: 0; font-size: 12px; }
+.plan-mese { list-style: none; margin: 4px 0 0; padding: 0; font-size: 13px; display: flex; flex-direction: column; gap: 2px; }
+.plan-mese li { display: grid; grid-template-columns: 84px 1fr; gap: var(--s2); }
+.zi-generator .rand-butoane > .btn { min-width: 0; }

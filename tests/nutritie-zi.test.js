@@ -155,3 +155,127 @@ test('vârsta din anul nașterii', () => {
   assert.equal(z.varstaDinAn(null), null);
   assert.equal(z.varstaDinAn(3000, new Date(2026, 0, 1)), null);
 });
+
+// ---------- Etapa 4: generarea aleatorie ----------
+function rngFix(seed = 1) { let x = seed; return () => { x = (x * 16807) % 2147483647; return (x - 1) / 2147483646; }; }
+function idGen() { let n = 0; return () => `t-${++n}`; }
+const valoriPentru = r => c.valoriPortie(r, idx);
+
+test('generarea: exact 5 mese, câte una pe categorie, fără repetări, cu ingrediente și timp', () => {
+  for (let seed = 1; seed <= 30; seed++) {
+    const rez = z.genereazaPlanZi({ zi: { data: '2026-11-22', mese: [] }, retete: RETETE_BAZA, valoriPentru, preferate: new Set(), rng: rngFix(seed), idNou: idGen(), acum: 5 });
+    assert.deepEqual(rez.mese.map(i => i.masa), ['mic-dejun', 'gustare-1', 'pranz', 'gustare-2', 'cina']);
+    assert.equal(new Set(rez.mese.map(i => i.idReteta)).size, 5);
+    for (const i of rez.mese) {
+      const r = RETETE_BAZA.find(x => x.id === i.idReteta);
+      assert.equal(r.masa, i.masa);
+      assert.equal(i.stare, 'neinceput');
+      assert.equal(i.timp, r.timp);
+      assert.equal(i.ingredientePortie.length, r.ingrediente.length);
+      // valorile din ingredientele pe porție ≈ valorile pe porție ale rețetei
+      aproape(c.valoriIngrediente(i.ingredientePortie, idx).total.kcal, i.valoriPortie.kcal, 1.5);
+    }
+    assert.deepEqual(rez.lipsa, []);
+  }
+});
+
+test('generarea păstrează mesele blocate și pe cele începute; nu le repetă rețetele', () => {
+  const gen = z.genereazaPlanZi({ zi: { data: 'x', mese: [] }, retete: RETETE_BAZA, valoriPentru, rng: rngFix(7), idNou: idGen() });
+  const blocat = { ...gen.mese[0], blocat: true };
+  const mancat = z.schimbaStareIntrare(gen.mese[2], 'complet');
+  const zi = { data: 'x', mese: [blocat, gen.mese[1], mancat, gen.mese[3], gen.mese[4]] };
+  for (let seed = 2; seed < 20; seed++) {
+    const rez = z.genereazaPlanZi({ zi, retete: RETETE_BAZA, valoriPentru, rng: rngFix(seed), idNou: idGen() });
+    assert.deepEqual(rez.pastrate.sort(), ['mic-dejun', 'pranz']);
+    assert.deepEqual(rez.mese.find(i => i.masa === 'mic-dejun'), blocat);
+    assert.deepEqual(rez.mese.find(i => i.masa === 'pranz'), mancat);
+    assert.equal(rez.mese.length, 5);
+    assert.equal(new Set(rez.mese.map(i => i.idReteta)).size, 5);
+  }
+});
+
+test('regenerarea unei mese nu schimbă celelalte; nu merge pe mese blocate sau începute', () => {
+  const gen = z.genereazaPlanZi({ zi: { data: 'x', mese: [] }, retete: RETETE_BAZA, valoriPentru, rng: rngFix(3), idNou: idGen() });
+  const zi = { data: 'x', mese: gen.mese.map((i, k) => (k === 2 ? { ...i, portii: 1.5 } : i)) };
+  const noua = z.regenereazaIntrare({ zi, idIntrare: zi.mese[2].id, retete: RETETE_BAZA, valoriPentru, rng: rngFix(9), idNou: idGen() });
+  for (const k of [0, 1, 3, 4]) assert.deepEqual(noua.mese[k], zi.mese[k]);
+  assert.notEqual(noua.mese[2].idReteta, zi.mese[2].idReteta);
+  assert.equal(noua.mese[2].masa, 'pranz');
+  assert.equal(noua.mese[2].portii, 1.5);
+  assert.equal(new Set(noua.mese.map(i => i.idReteta)).size, 5);
+  assert.equal(z.regenereazaIntrare({ zi: { ...zi, mese: zi.mese.map((i, k) => (k === 2 ? { ...i, blocat: true } : i)) }, idIntrare: zi.mese[2].id, retete: RETETE_BAZA, valoriPentru, idNou: idGen() }), null);
+  assert.equal(z.regenereazaIntrare({ zi: { ...zi, mese: zi.mese.map((i, k) => (k === 2 ? z.schimbaStareIntrare(i, 'complet') : i)) }, idIntrare: zi.mese[2].id, retete: RETETE_BAZA, valoriPentru, idNou: idGen() }), null);
+  // o singură rețetă disponibilă pentru masă, deja folosită → null
+  const doar = RETETE_BAZA.filter(r => r.masa !== 'cina' || r.id === zi.mese[4].idReteta);
+  assert.equal(z.regenereazaIntrare({ zi, idIntrare: zi.mese[4].id, retete: doar, valoriPentru, idNou: idGen() }), null);
+});
+
+test('generarea anunță mesele fără rețete disponibile', () => {
+  const fara = RETETE_BAZA.filter(r => r.masa !== 'gustare-2');
+  const rez = z.genereazaPlanZi({ zi: { data: 'x', mese: [] }, retete: fara, valoriPentru, rng: rngFix(1), idNou: idGen() });
+  assert.deepEqual(rez.lipsa, ['gustare-2']);
+  assert.equal(rez.mese.length, 4);
+});
+
+test('alegerea aleatorie: favoritele au șanse duble, exclude respectat', () => {
+  const retete = [{ id: 'a', masa: 'cina' }, { id: 'b', masa: 'cina' }, { id: 'c', masa: 'pranz' }];
+  let a = 0;
+  const rng = rngFix(11);
+  for (let k = 0; k < 6000; k++) if (z.alegeRetetaAleatorie({ retete, masa: 'cina', preferate: new Set(['a']), rng }).id === 'a') a++;
+  assert.ok(a / 6000 > 0.62 && a / 6000 < 0.71, `${a / 6000}`); // ≈ 2/3
+  for (let k = 0; k < 50; k++) assert.equal(z.alegeRetetaAleatorie({ retete, masa: 'cina', exclude: new Set(['a']), rng }).id, 'b');
+  assert.equal(z.alegeRetetaAleatorie({ retete, masa: 'cina', exclude: new Set(['a', 'b']), rng }), null);
+});
+
+test('ajustarea cantităților recalculează valorile; doar ingredientele > 0 rămân', () => {
+  const r = RETETE_BAZA.find(x => x.id === 'pr-pui-orez-broccoli');
+  const i = intrare('a', 'pranz', r, 1);
+  const ing = i.ingredientePortie.map(([id, g], k) => [id, k === 0 ? g * 2 : g]);
+  ing[ing.length - 1][1] = 0;
+  const noua = z.ajusteazaIngredienteIntrare(i, ing, x => c.valoriIngrediente(x, idx));
+  assert.equal(noua.ingredientePortie.length, i.ingredientePortie.length - 1);
+  aproape(noua.valoriPortie.kcal, Math.round(c.valoriIngrediente(ing.filter(([, g]) => g > 0), idx).total.kcal * 10) / 10);
+  assert.ok(noua.valoriPortie.proteine > i.valoriPortie.proteine);
+  assert.equal(noua.ajustat, true);
+  assert.throws(() => z.ajusteazaIngredienteIntrare(i, ing.map(([id]) => [id, 0]), x => c.valoriIngrediente(x, idx)));
+});
+
+test('planuri: salvare și încărcare păstrează rețetele, porțiile și cantitățile; mesele începute rămân', () => {
+  const gen = z.genereazaPlanZi({ zi: { data: 'x', mese: [] }, retete: RETETE_BAZA, valoriPentru, rng: rngFix(5), idNou: idGen() });
+  const zi = { data: 'x', mese: gen.mese.map((i, k) => (k === 1 ? { ...i, portii: 2, blocat: true } : i)) };
+  const plan = z.planDinZi(zi, { id: 'u-p', nume: ' Ziua grea ', favorit: true, acum: 9 });
+  assert.equal(plan.mese.length, 5);
+  assert.ok(plan.mese.every(m => !('stare' in m) && !('blocat' in m) && !('id' in m)));
+  assert.deepEqual(z.curataPlanNutritie(plan).nume, 'Ziua grea');
+  // altă zi, cu prânzul deja mâncat
+  const alta = z.genereazaPlanZi({ zi: { data: 'y', mese: [] }, retete: RETETE_BAZA, valoriPentru, rng: rngFix(99), idNou: idGen() });
+  const pranzMancat = z.schimbaStareIntrare(alta.mese[2], 'complet');
+  const rez = z.aplicaPlan({ zi: { data: 'y', mese: [alta.mese[0], pranzMancat] }, plan, idNou: idGen(), acum: 10 });
+  assert.deepEqual(rez.sarite, ['pranz']);
+  assert.equal(rez.mese.length, 5);
+  assert.deepEqual(rez.mese.find(i => i.masa === 'pranz'), pranzMancat);
+  const g1 = rez.mese.find(i => i.masa === 'gustare-1');
+  assert.equal(g1.portii, 2);
+  assert.equal(g1.idReteta, zi.mese[1].idReteta);
+  assert.equal(g1.stare, 'neinceput');
+  assert.equal(g1.blocat, undefined);
+  assert.deepEqual(z.totaluriZi({ mese: [g1] }).planificat, z.totaluriZi({ mese: [zi.mese[1]] }).planificat);
+});
+
+test('validare planuri și backup', () => {
+  const r = RETETE_BAZA[0];
+  const bun = z.planDinZi({ mese: [intrare('a', r.masa, r, 1)] }, { id: 'u-1', nume: 'P' });
+  assert.ok(z.curataPlanNutritie(bun));
+  assert.equal(z.curataPlanNutritie({ ...bun, nume: '' }), null);
+  assert.equal(z.curataPlanNutritie({ ...bun, mese: [{ masa: 'cina' }] }), null);
+  assert.equal(z.curataPlanNutritie({ ...bun, id: 5 }), null);
+  const zi = z.curataZiNutritie({ data: '2026-11-22', mese: [{ ...intrare('a', r.masa, r, 1), ingredientePortie: [['x', -3]], timp: 'lung', blocat: 'da' }] });
+  assert.equal(zi.mese[0].ingredientePortie, undefined);
+  assert.equal(zi.mese[0].timp, undefined);
+  assert.equal(zi.mese[0].blocat, undefined);
+  const b = v.valideazaBackup({ versiune: 3, sesiuni: [], exercitii: [], masuratori: [], planuriNutritie: [bun, bun, { id: 'stricat' }] });
+  assert.equal(b.ok, true);
+  assert.equal(b.date.planuriNutritie.length, 1);
+  assert.equal(b.ignorate, 1);
+  assert.equal(b.rezumat.planuriNutritie, 1);
+});

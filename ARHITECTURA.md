@@ -44,7 +44,7 @@ Regula: fișierele definesc funcții; singurul cod care rulează la încărcare 
 
 ## Date
 
-Baza `jurnal-antrenament`, versiunea 8:
+Baza `jurnal-antrenament`, versiunea 9:
 
 - `sesiuni` `{ id, data: 'AAAA-LL-ZZ', inceput, sfarsit, grupe[], exercitii: [{ nume, serii: [{ kg, repetari }] }] }`
   Din etapa 3 (`versiune: 2`), opțional: `durataActivaMs`, `pauze[{start, sfarsit}]`, `nota`, `serii` (nr. serii de lucru),
@@ -66,6 +66,8 @@ Baza `jurnal-antrenament`, versiunea 8:
 - `pozeRetete` (v7) — poza ta pentru o rețetă (din bibliotecă sau proprie): `{ id (= id-ul rețetei), imagine: Blob JPEG (max. 1024 px), latime, inaltime, creat }`
 - Setare nouă: `retetePreferate` — id-urile rețetelor favorite.
 - `zileNutritie` (v8) — mesele unei zile, cheie `data` ('AAAA-LL-ZZ'): `{ data, mese: [{ id, masa, idReteta, nume, portii, valoriPortie{kcal, proteine, carbohidrati, grasimi, fibre}, stare: 'neinceput' | 'partial' | 'complet', portiiMancate?, adaugat, modificat }], modificat }`
+- Intrările unei zile au din etapa 4, opțional: `ingredientePortie [[idAliment, grame pe porție]]`, `timp`, `blocat`, `ajustat`.
+- `planuriNutritie` (v9) — planurile de mese salvate, cheie text `u-…`: `{ id, nume, favorit, mese: [{ masa, idReteta, nume, portii, valoriPortie, ingredientePortie?, timp? }], creat, modificat }`. Ștergerea trece prin „Șterse recent”.
 - Setări noi (etapa 3 nutriție): `tinteNutritie { kcal, proteine?, carbohidrati?, grasimi?, fibre?, estimat? }`, `anNastere`, `sex` ('m' | 'f'), `activitate`, `scopNutritie`.
 - Alimentele și rețetele din bibliotecă nu stau în bază: sunt fișiere ale aplicației (se actualizează odată cu ea).
   Id-urile lor nu încep cu `u-`, deci nu se pot amesteca cu ale tale.
@@ -79,7 +81,7 @@ Baza `jurnal-antrenament`, versiunea 8:
 
 ## Backup
 
-Format v3: `{ aplicatie, versiune: 3, schema, exportat, setari, sesiuni, exercitii, masuratori, rutine, poze?, alimente?, retete?, pozeRetete?, zileNutritie? }`.
+Format v3: `{ aplicatie, versiune: 3, schema, exportat, setari, sesiuni, exercitii, masuratori, rutine, poze?, alimente?, retete?, pozeRetete?, zileNutritie?, planuriNutritie? }`.
 Nutriția (alimente, rețete, pozele rețetelor) e opțională în fișier: un backup fără ea (ex. făcut înainte de modulul de nutriție)
 nu atinge nutriția de pe telefon; o versiune mai veche a aplicației o ignoră. Pozele rețetelor urmează regula pozelor de progres.
 Pozele (etapa 6) sunt în fișier ca data-URL JPEG; o versiune mai veche a aplicației le ignoră. Copia automată săptămânală
@@ -286,3 +288,15 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
   Proteine 1,8 / 1,6 / 2,0 g/kg; grăsimi 25% din calorii (minim 0,6 g/kg); fibre 14 g la 1000 kcal; restul carbohidrați.
   Greutatea = media pe 7 zile din Corp; înălțimea din Corp; vârsta din anul nașterii. Toate țintele se pot edita manual.
 
+
+### Generatorul aleatoriu (etapa 4)
+
+- „Generează planul” alege câte o rețetă la întâmplare pentru fiecare din cele 5 mese (din bibliotecă și rețetele tale,
+  după masa rețetei). Nicio rețetă nu se repetă în zi. Favoritele au șanse duble.
+- Se înlocuiesc doar intrările **neîncepute și neblocate**. O masă care are o intrare blocată sau începută
+  rămâne întreagă (nu primește o rețetă în plus). Generarea și încărcarea unui plan se pot anula imediat.
+- „Altă rețetă” schimbă o singură intrare (aceeași masă, aceleași porții, rețetă care nu e deja în zi); restul nu se atinge.
+- Ajustarea cantităților se face pe intrarea din zi (grame pe porție), nu pe rețetă; valorile se recalculează
+  din ingrediente. Intrările mâncate sau parțiale nu se mai modifică (porții, cantități).
+- Un plan salvat păstrează rețetele, porțiile și cantitățile ajustate, fără stări și blocări; la încărcare se aplică
+  aceeași regulă ca la generare.

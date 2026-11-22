@@ -26,6 +26,7 @@ function titluZi(data) {
 
 async function incarcaZiNutritie(data = dataZiNutritie) {
   dataZiNutritie = data;
+  await reincarcaPlanurile();
   try {
     ziNutritie = await citesteZiNutritie(data);
   } catch (err) {
@@ -51,6 +52,7 @@ async function randeazaZiNutritie({ reincarca = false } = {}) {
   if (reincarca || ziNutritie.data !== dataZiNutritie) await incarcaZiNutritie(dataZiNutritie);
   deseneazaNavZi();
   deseneazaSumarZi();
+  deseneazaGeneratorZi();
   deseneazaMeseZi();
 }
 
@@ -157,8 +159,19 @@ function textStareIntrare(i) {
   return 'Neîncepută';
 }
 
+function listaIngredienteIntrare(i) {
+  const r = retetaDupaId(i.idReteta);
+  const ing = i.ingredientePortie || (r ? r.ingrediente.map(([id, g]) => [id, g / (r.portii || 1)]) : []);
+  return ing.map(([id, g]) => {
+    const a = indexNutritie.get(id);
+    return el('li', {}, [el('span', { text: a ? a.nume : 'Aliment șters din bibliotecă' }), el('strong', { text: a ? textCantitate(a, g * i.portii) : fmtG(g * i.portii) })]);
+  });
+}
+
 function randIntrare(i) {
   const vPlan = valoriPlanificateIntrare(i);
+  const modificabila = intrareModificabila(i);
+  const ingrediente = listaIngredienteIntrare(i);
   const butoaneStare = STARI_MASA.map(s => el('button', {
     type: 'button', class: 'zi-stare-btn' + (i.stare === s.id ? ' activ' : '') + ` stare-${s.id}`,
     'aria-pressed': String(i.stare === s.id), text: s.nume,
@@ -170,9 +183,20 @@ function randIntrare(i) {
       imagineIntrare(i),
       el('span', { class: 'zi-intrare-text' }, [
         el('strong', { text: i.nume }),
-        el('span', { class: 'nota', text: `${fmtPortii(i.portii)} · ${fmtNr(vPlan.kcal)} kcal · P ${fmtNr(vPlan.proteine)} g` }),
+        el('span', { class: 'zi-intrare-kcal' }, [el('b', { text: fmtNr(vPlan.kcal) }), ` kcal · ${fmtPortii(i.portii)}${i.timp ? ` · ${i.timp} min` : ''}`]),
+        el('span', { class: 'nota', text: `P ${fmtNr(vPlan.proteine)} g · C ${fmtNr(vPlan.carbohidrati)} g · G ${fmtNr(vPlan.grasimi)} g${i.ajustat ? ' · cantități ajustate' : ''}` }),
         i.stare === 'partial' ? el('span', { class: 'zi-partial', text: textStareIntrare(i) }) : null,
       ]),
+    ]),
+    el('div', { class: 'zi-intrare-actiuni' }, [
+      el('button', { type: 'button', class: 'btn btn-fantoma btn-icon btn-mic zi-lacat' + (i.blocat ? ' activ' : ''), 'aria-pressed': String(Boolean(i.blocat)),
+        'aria-label': i.blocat ? `Deblochează ${i.nume}` : `Blochează ${i.nume} (nu se schimbă la generare)`, title: i.blocat ? 'Blocată' : 'Blochează',
+        onclick: () => comutaBlocarea(i) }, [iconita(i.blocat ? 'lacat' : 'lacat-deschis')]),
+      modificabila ? buton({ text: 'Altă rețetă', icon: 'schimba', tip: 'fantoma', mic: true, onclick: () => regenereazaMasa(i) }) : null,
+      ingrediente.length ? el('details', { class: 'zi-ingrediente' }, [
+        el('summary', { text: `Ingrediente (${ingrediente.length})` }),
+        el('ul', { class: 'lista-ingrediente' }, ingrediente),
+      ]) : null,
     ]),
     el('div', { class: 'zi-stari', role: 'group', 'aria-label': `Starea mesei ${i.nume}` }, butoaneStare),
   ]);
@@ -193,6 +217,146 @@ function deseneazaMeseZi() {
     ]);
   });
   $('zi-mese').replaceChildren(...carduri);
+}
+
+// ---------- Generatorul aleatoriu, planurile salvate (etapa 4) ----------
+let planuriMele = [];
+async function reincarcaPlanurile() {
+  try { planuriMele = await toatePlanurileNutritie(); } catch (err) { console.warn(err); }
+  planuriMele.sort((a, b) => (b.favorit - a.favorit) || (b.modificat || 0) - (a.modificat || 0));
+}
+
+function deseneazaGeneratorZi() {
+  const nr = ziNutritie.mese.length;
+  const pastrate = ziNutritie.mese.filter(i => !intrareModificabila(i)).length;
+  $('zi-generator').replaceChildren(
+    buton({ text: nr ? 'Generează din nou planul zilei' : 'Generează planul meu de mese', icon: 'zar', tip: 'principal', lat: true, clasa: 'btn-mare', onclick: genereazaZiua }),
+    el('p', { class: 'nota nota-mica', text: nr
+      ? `O rețetă pentru fiecare din cele 5 mese, aleasă la întâmplare din bibliotecă, fără repetări.${pastrate ? ` Mesele blocate sau începute (${pastrate}) rămân neschimbate.` : ' Blochează o masă cu lacătul ca să o păstrezi.'}`
+      : 'Alege la întâmplare câte o rețetă pentru fiecare din cele 5 mese, fără repetări. Favoritele au șanse mai mari.' }),
+    el('div', { class: 'rand-butoane' }, [
+      buton({ text: 'Salvează planul', icon: 'descarca', tip: 'secundar', mic: true, onclick: deschideSalvarePlan }),
+      buton({ text: `Planuri${planuriMele.length ? ` (${planuriMele.length})` : ''}`, icon: 'lista', eticheta: `Planurile mele${planuriMele.length ? ` (${planuriMele.length})` : ''}`, tip: 'secundar', mic: true, onclick: deschidePlanurile }),
+    ]),
+  );
+}
+
+function optiuniGenerator() {
+  return { retete: toateRetetele(), valoriPentru: r => valoriPortie(r, indexNutritie), preferate: new Set(setari.retetePreferate || []), idNou: idNutritieNou };
+}
+
+async function genereazaZiua() {
+  const deInlocuit = ziNutritie.mese.filter(intrareModificabila);
+  if (deInlocuit.length) {
+    const da = await confirma({ titlu: 'Generezi alt plan?', ok: 'Generează',
+      text: `${plural(deInlocuit.length, 'rețetă neîncepută și neblocată va fi înlocuită', 'rețete neîncepute și neblocate vor fi înlocuite')}. Mesele blocate sau începute rămân. Poți anula imediat după.` });
+    if (!da) return;
+  }
+  const inainte = ziNutritie;
+  const rez = genereazaPlanZi({ zi: ziNutritie, ...optiuniGenerator() });
+  if (!(await salveazaZiua({ ...ziNutritie, mese: rez.mese }, 'Planul nu a putut fi salvat.'))) return;
+  randeazaZiNutritie();
+  const parti = [];
+  if (rez.pastrate.length) parti.push(`${plural(rez.pastrate.length, 'masă păstrată', 'mese păstrate')}`);
+  if (rez.lipsa.length) parti.push(`fără rețete pentru: ${rez.lipsa.map(numeMasa).join(', ')}`);
+  notifica(`Plan generat${parti.length ? ` (${parti.join('; ')})` : ''}.`, rez.lipsa.length ? 'eroare' : 'succes', 5000,
+    { text: 'Anulează', onclick: async () => { if (await salveazaZiua(inainte)) randeazaZiNutritie(); } });
+}
+
+async function regenereazaMasa(i) {
+  const noua = regenereazaIntrare({ zi: ziNutritie, idIntrare: i.id, ...optiuniGenerator() });
+  if (!noua) { notifica(`Nu mai există altă rețetă pentru ${numeMasa(i.masa).toLowerCase()} care să nu fie deja în ziua aceasta.`, 'eroare'); return; }
+  const inainte = ziNutritie;
+  if (!(await salveazaZiua(noua))) return;
+  randeazaZiNutritie();
+  notifica(`${i.nume} → ${noua.mese.find(x => x.masa === i.masa && !inainte.mese.some(y => y.id === x.id)).nume}`, 'info', 4000,
+    { text: 'Anulează', onclick: async () => { if (await salveazaZiua(inainte)) randeazaZiNutritie(); } });
+}
+
+async function comutaBlocarea(i) {
+  const noua = { ...i, modificat: Date.now() };
+  if (i.blocat) delete noua.blocat; else noua.blocat = true;
+  await inlocuiesteIntrarea(noua);
+}
+
+function deschideSalvarePlan() {
+  if (!ziNutritie.mese.length) { notifica('Ziua nu are încă nicio rețetă. Generează sau adaugă mese, apoi salvează planul.', 'eroare'); return; }
+  const input = el('input', { type: 'text', maxlength: '60', value: `Plan ${afiseazaData(dataZiNutritie)}`, 'aria-label': 'Numele planului' });
+  const fav = el('input', { type: 'checkbox', role: 'switch' });
+  const t = totaluriZi(ziNutritie).planificat;
+  const d = deschideDialog({
+    titlu: 'Salvează planul',
+    continut: el('div', { class: 'formular' }, [
+      el('p', { class: 'nota', text: `${plural(ziNutritie.mese.length, 'rețetă', 'rețete')} · ${fmtNr(t.kcal)} kcal · P ${fmtNr(t.proteine)} g · C ${fmtNr(t.carbohidrati)} g · G ${fmtNr(t.grasimi)} g. Se salvează rețetele, porțiile și cantitățile ajustate, fără stări.` }),
+      el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Nume' }), input]),
+      el('label', { class: 'rand aliniat comutator' }, [el('span', { text: 'Combinație favorită (apare prima)' }), fav]),
+    ]),
+    butoane: [
+      buton({ text: 'Renunță', tip: 'fantoma', onclick: () => d.inchide() }),
+      buton({ text: 'Salvează', tip: 'principal', onclick: async () => {
+        const nume = input.value.trim();
+        if (!nume) { notifica('Scrie un nume pentru plan.', 'eroare'); input.focus(); return; }
+        const plan = planDinZi(ziNutritie, { id: idNutritieNou(), nume, favorit: fav.checked });
+        try { await salveazaPlanNutritie(plan); } catch (err) { console.error(err); notifica(mesajEroareSalvare(err, 'Planul nu a putut fi salvat.'), 'eroare'); return; }
+        d.inchide();
+        await reincarcaPlanurile();
+        deseneazaGeneratorZi();
+        notifica(`Plan salvat: ${nume}.`, 'succes');
+      } }),
+    ],
+  });
+}
+
+async function deschidePlanurile() {
+  await reincarcaPlanurile();
+  const lista = el('div', { class: 'lista-planuri' });
+  const deseneaza = () => {
+    if (!planuriMele.length) {
+      lista.replaceChildren(el('p', { class: 'nota', text: 'Nu ai încă planuri salvate. Generează sau compune o zi, apoi apasă „Salvează planul”.' }));
+      return;
+    }
+    lista.replaceChildren(...planuriMele.map(p => {
+      const t = totaluriZi({ mese: p.mese.map(m => ({ ...m, stare: 'neinceput' })) }).planificat;
+      return el('article', { class: 'plan-salvat' }, [
+        el('div', { class: 'plan-cap' }, [
+          el('strong', { text: p.nume }),
+          el('button', { type: 'button', class: 'btn btn-fantoma btn-icon btn-mic favorit' + (p.favorit ? ' activ' : ''), 'aria-pressed': String(p.favorit),
+            'aria-label': p.favorit ? `Scoate ${p.nume} de la favorite` : `Marchează ${p.nume} ca favorit`, onclick: async () => {
+              try { await salveazaPlanNutritie({ ...p, favorit: !p.favorit, modificat: Date.now() }); } catch (err) { notifica(mesajEroareSalvare(err, 'Nu s-a putut salva.'), 'eroare'); return; }
+              await reincarcaPlanurile(); deseneaza();
+            } }, [iconita('stea')]),
+        ]),
+        el('span', { class: 'nota', text: `${fmtNr(t.kcal)} kcal · P ${fmtNr(t.proteine)} g · C ${fmtNr(t.carbohidrati)} g · G ${fmtNr(t.grasimi)} g` }),
+        el('ul', { class: 'plan-mese' }, p.mese.map(m => el('li', {}, [el('span', { class: 'nota', text: numeMasa(m.masa) }), el('span', { text: `${m.nume}${m.portii !== 1 ? ` × ${String(m.portii).replace('.', ',')}` : ''}` })]))),
+        el('div', { class: 'rand-butoane' }, [
+          buton({ text: 'Încarcă în zi', tip: 'principal', mic: true, onclick: () => d.inchide(() => incarcaPlanInZi(p)) }),
+          buton({ icon: 'cos', tip: 'fantoma', mic: true, eticheta: `Șterge planul ${p.nume}`, onclick: async () => {
+            let idCos;
+            try { idCos = await stergePlanNutritie(p.id, p.nume); } catch (err) { notifica(mesajEroareSalvare(err, 'Planul nu a putut fi șters.'), 'eroare'); return; }
+            await reincarcaPlanurile(); deseneaza(); deseneazaGeneratorZi();
+            notificaStergere(`Planul „${p.nume}” a fost șters.`, idCos, async () => { await reincarcaPlanurile(); deseneazaGeneratorZi(); });
+          } }),
+        ]),
+      ]);
+    }));
+  };
+  deseneaza();
+  const d = deschideDialog({ titlu: 'Planurile mele', continut: lista, butoane: [buton({ text: 'Închide', tip: 'fantoma', onclick: () => d.inchide() })] });
+}
+
+async function incarcaPlanInZi(p) {
+  const deInlocuit = ziNutritie.mese.filter(intrareModificabila);
+  if (deInlocuit.length) {
+    const da = await confirma({ titlu: `Încarci „${p.nume}”?`, ok: 'Încarcă',
+      text: `${plural(deInlocuit.length, 'rețetă neîncepută și neblocată va fi înlocuită', 'rețete neîncepute și neblocate vor fi înlocuite')}. Mesele blocate sau începute rămân.` });
+    if (!da) return;
+  }
+  const inainte = ziNutritie;
+  const rez = aplicaPlan({ zi: ziNutritie, plan: p, idNou: idNutritieNou });
+  if (!(await salveazaZiua({ ...ziNutritie, mese: rez.mese }))) return;
+  randeazaZiNutritie();
+  notifica(`Plan încărcat${rez.sarite.length ? ` (păstrate: ${rez.sarite.map(numeMasa).join(', ')})` : ''}.`, 'succes', 5000,
+    { text: 'Anulează', onclick: async () => { if (await salveazaZiua(inainte)) randeazaZiNutritie(); } });
 }
 
 // ---------- Acțiuni pe intrări ----------
@@ -261,29 +425,56 @@ async function scoateIntrarea(i) {
 }
 
 function deschideIntrarea(i) {
+  const editabila = i.stare === 'neinceput';
   let portii = i.portii;
+  // Cantitățile pe porție: cele salvate în zi; pentru intrările vechi (etapa 3), cele din rețeta de acum.
+  const r = retetaDupaId(i.idReteta);
+  let ingrediente = (i.ingredientePortie || (r ? r.ingrediente.map(([id, g]) => [id, Math.round(g / (r.portii || 1) * 10) / 10]) : [])).map(x => [...x]);
+  let cantitatiSchimbate = false;
   const valori = el('div');
   const textPortii = el('strong', { class: 'portii-valoare', text: '' });
+  const valoriPortieAcum = () => (cantitatiSchimbate
+    ? valoriIngrediente(ingrediente.filter(([, g]) => g > 0), indexNutritie).total
+    : i.valoriPortie);
   const deseneaza = () => {
     textPortii.textContent = String(portii).replace('.', ',');
-    valori.replaceChildren(panouNutritional(valoriPlanificateIntrare({ ...i, portii }), `planificat (${fmtPortii(portii)})`));
+    valori.replaceChildren(panouNutritional(valoriInmultite(valoriPortieAcum(), portii), `planificat (${fmtPortii(portii)})`));
   };
   const schimba = delta => { portii = Math.max(0.5, Math.min(10, Math.round((portii + delta) * 2) / 2)); deseneaza(); };
+
+  const randuriIngrediente = ingrediente.map((x, k) => {
+    const a = indexNutritie.get(x[0]);
+    const input = el('input', { type: 'number', inputmode: 'decimal', step: '1', min: '0', max: '5000', value: String(x[1]),
+      disabled: !editabila || !a, 'aria-label': `Grame pe porție: ${a ? a.nume : 'aliment șters'}` });
+    input.addEventListener('input', () => {
+      const g = parseFloat(String(input.value).replace(',', '.'));
+      ingrediente[k][1] = g >= 0 && g <= 5000 ? g : 0;
+      cantitatiSchimbate = true;
+      deseneaza();
+    });
+    return el('li', { class: 'rand-ajustare' }, [el('span', { text: a ? a.nume : 'Aliment șters din bibliotecă' }), el('span', { class: 'camp-grame' }, [input, el('span', { class: 'nota', text: 'g' })])]);
+  });
   deseneaza();
-  const r = retetaDupaId(i.idReteta);
+
   const d = deschideDialog({
     titlu: i.nume,
     continut: el('div', {}, [
-      el('p', { class: 'nota', text: `${numeMasa(i.masa)} · ${textStareIntrare(i)}` }),
+      el('p', { class: 'nota', text: `${numeMasa(i.masa)} · ${textStareIntrare(i)}${i.timp ? ` · ${i.timp} min` : ''}${i.blocat ? ' · blocată' : ''}` }),
       el('div', { class: 'rand aliniat portii-rand' }, [
         el('h3', { class: 'detaliu-titlu', text: 'Porții planificate' }),
-        el('div', { class: 'stepper' }, [
+        editabila ? el('div', { class: 'stepper' }, [
           buton({ icon: 'minus', tip: 'secundar', mic: true, eticheta: 'Mai puțin', onclick: () => schimba(-0.5) }),
           textPortii,
           buton({ icon: 'plus', tip: 'secundar', mic: true, eticheta: 'Mai mult', onclick: () => schimba(0.5) }),
-        ]),
+        ]) : textPortii,
       ]),
       valori,
+      randuriIngrediente.length ? el('details', { class: 'ajustare-cantitati', open: false }, [
+        el('summary', { text: 'Ajustează cantitățile (grame pe porție)' }),
+        el('ul', { class: 'lista-ajustare' }, randuriIngrediente),
+        el('p', { class: 'nota nota-mica', text: 'Schimbarea se aplică doar acestei mese din zi, nu rețetei din bibliotecă. Pune 0 ca să scoți un ingredient.' }),
+      ]) : null,
+      editabila ? null : el('p', { class: 'nota nota-mica', text: 'Masa e marcată ca mâncată (sau parțial), așa că porțiile și cantitățile nu se mai schimbă. Pune-o pe „Neîncepută” dacă vrei s-o modifici.' }),
       el('p', { class: 'nota nota-mica', text: 'Valorile au fost salvate când ai adăugat rețeta în zi. Dacă editezi rețeta mai târziu, ziua aceasta nu se schimbă.' }),
       el('div', { class: 'rand-butoane mt' }, [
         r ? buton({ text: 'Vezi rețeta', icon: 'carte', tip: 'secundar', mic: true, onclick: () => d.inchide(() => arataReteta(r.id)) }) : null,
@@ -292,15 +483,18 @@ function deschideIntrarea(i) {
     ]),
     butoane: [
       buton({ text: 'Închide', tip: 'fantoma', onclick: () => d.inchide() }),
-      buton({ text: 'Salvează', tip: 'principal', onclick: async () => {
-        d.inchide();
-        if (portii === i.portii) return;
+      editabila ? buton({ text: 'Salvează', tip: 'principal', onclick: async () => {
         let noua = { ...i, portii, modificat: Date.now() };
-        // Dacă ai mâncat parțial cel puțin cât ai planificat acum, masa devine „Mâncată”.
-        if (noua.stare === 'partial' && noua.portiiMancate >= portii) { noua = schimbaStareIntrare(noua, 'complet'); }
+        if (cantitatiSchimbate) {
+          try {
+            noua = ajusteazaIngredienteIntrare(noua, ingrediente, ing => valoriIngrediente(ing, indexNutritie));
+          } catch (err) { notifica(err.message, 'eroare'); return; }
+        }
+        d.inchide();
+        if (portii === i.portii && !cantitatiSchimbate) return;
         await inlocuiesteIntrarea(noua);
-      } }),
-    ],
+      } }) : null,
+    ].filter(Boolean),
   });
 }
 
