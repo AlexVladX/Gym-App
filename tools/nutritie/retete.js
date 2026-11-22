@@ -9,17 +9,23 @@ const { ALIMENTE_BAZA } = require('../../nutritie-alimente.js');
 const c = require('../../nutritie-calcul.js');
 
 const SURSE = [['mic-dejun', 'mic-dejun.js'], ['gustare-1', 'gustare-1.js'], ['pranz', 'pranz.js'],
-  ['gustare-2', 'gustare-2.js'], ['cina', 'cina.js']];
+  ['gustare-2', 'gustare-2.js'], ['cina', 'cina.js'], [null, 'romanesti.js']]; // romanesti.js: fiecare rețetă își spune masa
+const MESE_ID = ['mic-dejun', 'gustare-1', 'pranz', 'gustare-2', 'cina'];
+const FELURI = ['fel-principal', 'ciorba', 'patiserie', 'desert'];
+// Câmpuri opționale (Faza 3), copiate doar dacă există.
+const CAMPURI_OPTIONALE = ['numeEn', 'fel', 'bucatarie', 'timpPregatire', 'timpGatire', 'gatit', 'estimari', 'varianta'];
 const VASE = ['farfurie', 'bol', 'pahar', 'borcan', 'tocator'];
 
 const FOTO = require('./foto.js');
+const FOTO_COMMONS = require('./foto-commons.js');
 const idx = c.indexAlimente(ALIMENTE_BAZA);
 const toate = [];
 const erori = [];
-for (const [masa, fisier] of SURSE) {
+for (const [masaFisier, fisier] of SURSE) {
   const cale = path.join(__dirname, 'retete', fisier);
   if (!fs.existsSync(cale)) continue;
   for (const r of require(cale)) {
+    const masa = masaFisier || r.masa;
     const reteta = { id: r.id, nume: r.nume, masa, descriere: r.descriere, timp: r.timp, portii: r.portii,
       dificultate: r.dificultate, vas: r.vas, etichete: r.etichete, ingrediente: r.ingrediente, pasi: r.pasi };
     if (FOTO[r.id]) {
@@ -31,8 +37,23 @@ for (const [masa, fisier] of SURSE) {
       if (autor) reteta.foto.autor = autor;
       if (profil) reteta.foto.profil = `https://www.pexels.com/@${profil}/`;
       if (!fs.existsSync(path.join(__dirname, '..', '..', reteta.foto.fisier))) erori.push(`${r.id}: lipsește ${reteta.foto.fisier}`);
+    } else if (FOTO_COMMONS[r.id]) {
+      const [fisierCommons, autor, licenta, linkLicenta] = FOTO_COMMONS[r.id];
+      reteta.foto = { fisier: `foto-retete/${r.id}.webp`, furnizor: 'Wikimedia Commons', idSursa: fisierCommons,
+        pagina: `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(fisierCommons).replace(/%20/g, '_')}`, autor, licenta, linkLicenta };
+      if (!fs.existsSync(path.join(__dirname, '..', '..', reteta.foto.fisier))) erori.push(`${r.id}: lipsește ${reteta.foto.fisier}`);
     }
+    for (const k of CAMPURI_OPTIONALE) if (r[k] !== undefined) reteta[k] = r[k];
     const e = (m) => erori.push(`${r.id}: ${m}`);
+    if (!MESE_ID.includes(masa)) e('masă necunoscută');
+    if (r.fel !== undefined && !FELURI.includes(r.fel)) e('fel necunoscut');
+    if ((r.timpPregatire !== undefined || r.timpGatire !== undefined) && r.timpPregatire + r.timpGatire !== r.timp) e('timp ≠ pregătire + gătire');
+    if (r.gatit !== undefined) {
+      const gp = r.gatit.greutateGatita / r.portii;
+      if (!(gp >= 50 && gp <= 1000) || !r.gatit.nota) e(`greutatea gătită nerealistă (${Math.round(gp)} g/porție) sau fără notă`);
+    }
+    if (r.estimari !== undefined && !(Array.isArray(r.estimari) && r.estimari.every(x => typeof x === 'string' && x))) e('estimări invalide');
+    if (r.varianta !== undefined && !(r.varianta.grup && r.varianta.nume)) e('variantă invalidă');
     if (!/^[a-z0-9-]+$/.test(r.id || '')) e('id invalid');
     if (toate.some(x => x.id === r.id)) e('id dublu');
     if (!r.nume || !r.descriere) e('fără nume sau descriere');
@@ -49,7 +70,7 @@ for (const [masa, fisier] of SURSE) {
     toate.push(reteta);
   }
 }
-for (const id of Object.keys(FOTO)) if (!toate.some(r => r.id === id)) erori.push(`foto.js: rețeta ${id} nu există`);
+for (const id of [...Object.keys(FOTO), ...Object.keys(FOTO_COMMONS)]) if (!toate.some(r => r.id === id)) erori.push(`foto: rețeta ${id} nu există`);
 if (erori.length) { console.error(erori.join('\n')); process.exit(1); }
 
 if (process.argv.includes('--raport')) {

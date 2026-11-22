@@ -7,7 +7,7 @@ let reteteMele = [];
 let indexNutritie = indexAlimente(ALIMENTE_BAZA);
 const pozeRetetaUrl = new Map(); // id rețetă → URL al pozei tale (object URL)
 let filaNutritie = 'zi';
-const filtreRetete = { cautare: '', masa: '', etichete: new Set(), favorite: false, proprii: false };
+const filtreRetete = { cautare: '', masa: '', etichete: new Set(), favorite: false, proprii: false, romanesti: false };
 const filtreAlimente = { cautare: '', cat: '' };
 
 // Filtrele de etichete oferite în listă (ordinea contează: cele mai cerute întâi).
@@ -149,6 +149,7 @@ function deseneazaFiltreRetete() {
     el('button', { class: 'chip chip-mic chip-icon' + (filtreRetete.favorite ? ' activ' : ''), type: 'button', 'aria-pressed': String(filtreRetete.favorite),
       'aria-label': 'Doar favoritele', onclick: () => { filtreRetete.favorite = !filtreRetete.favorite; deseneazaFiltreRetete(); randeazaRetete(); } }, [iconita('stea'), el('span', { text: 'Favorite' })]),
     chip('Ale mele', filtreRetete.proprii, () => { filtreRetete.proprii = !filtreRetete.proprii; deseneazaFiltreRetete(); randeazaRetete(); }),
+    chip('Românești', filtreRetete.romanesti, () => { filtreRetete.romanesti = !filtreRetete.romanesti; deseneazaFiltreRetete(); randeazaRetete(); }, 'Doar rețetele românești'),
     ...ETICHETE_FILTRU.map(t => chip(NUME_SCURT_ETICHETA[t], filtreRetete.etichete.has(t), () => {
       if (filtreRetete.etichete.has(t)) filtreRetete.etichete.delete(t); else filtreRetete.etichete.add(t);
       deseneazaFiltreRetete(); randeazaRetete();
@@ -156,11 +157,11 @@ function deseneazaFiltreRetete() {
 }
 
 function areFiltreRetete() {
-  return Boolean(filtreRetete.cautare || filtreRetete.masa || filtreRetete.etichete.size || filtreRetete.favorite || filtreRetete.proprii);
+  return Boolean(filtreRetete.cautare || filtreRetete.masa || filtreRetete.etichete.size || filtreRetete.favorite || filtreRetete.proprii || filtreRetete.romanesti);
 }
 
 function reseteazaFiltreRetete() {
-  Object.assign(filtreRetete, { cautare: '', masa: '', favorite: false, proprii: false });
+  Object.assign(filtreRetete, { cautare: '', masa: '', favorite: false, proprii: false, romanesti: false });
   filtreRetete.etichete.clear();
   $('retete-cautare').value = '';
   deseneazaFiltreRetete();
@@ -170,7 +171,7 @@ function reseteazaFiltreRetete() {
 // Fiecare cuvânt căutat trebuie să apară în nume, descriere sau ingrediente (fără diacritice).
 function textCautareReteta(r) {
   const ing = (r.ingrediente || []).map(([id]) => (indexNutritie.get(id) || {}).nume || '').join(' ');
-  return normalizeazaText(`${r.nume} ${r.descriere || ''} ${ing}`);
+  return normalizeazaText(`${r.nume} ${r.numeEn || ''} ${r.descriere || ''} ${ing}`);
 }
 
 function infoReteta(r) {
@@ -186,6 +187,7 @@ function randeazaRetete() {
     if (filtreRetete.masa && r.masa !== filtreRetete.masa) continue;
     if (filtreRetete.proprii && !r.propriu) continue;
     if (filtreRetete.favorite && !estePreferata(r.id)) continue;
+    if (filtreRetete.romanesti && r.bucatarie !== 'romaneasca') continue;
     if (cuvinte.length) {
       const t = textCautareReteta(r);
       if (!cuvinte.every(c => t.includes(c))) continue;
@@ -287,6 +289,13 @@ function cipEticheta(id) {
 }
 
 // ---------- Detaliile unei rețete ----------
+const NUME_FEL = { 'fel-principal': 'Fel principal', ciorba: 'Ciorbă', patiserie: 'Patiserie', desert: 'Desert' };
+function gramePortie(r) { return r.gatit && r.gatit.greutateGatita > 0 ? Math.round(r.gatit.greutateGatita / r.portii / 5) * 5 : null; }
+// Primele 3 ingrediente după greutate, fără condimente, sare, ulei și altele de același fel (categoria „altele”).
+function ingredientePrincipale(r) {
+  return (r.ingrediente || []).map(([id, g]) => [indexNutritie.get(id), g]).filter(([a]) => a && a.cat !== 'altele')
+    .sort((x, y) => y[1] - x[1]).slice(0, 3).map(([a]) => a.nume.toLowerCase());
+}
 function arataReteta(id, portiiAlese) {
   const r = retetaDupaId(id);
   if (!r) { notifica('Rețeta nu mai există.', 'eroare'); return; }
@@ -318,6 +327,8 @@ function arataReteta(id, portiiAlese) {
   };
 
   const note = [...new Set(r.ingrediente.map(([idA]) => indexNutritie.get(idA)).filter(a => a && a.nota).map(a => `${a.nume}: ${a.nota}`))];
+  const variante = r.varianta ? toateRetetele().filter(x => x.varianta && x.varianta.grup === r.varianta.grup) : [];
+  const principale = ingredientePrincipale(r);
   const pref = estePreferata(r.id);
   const butonStea = el('button', { class: 'btn btn-fantoma btn-icon favorit' + (pref ? ' activ' : ''), type: 'button', 'aria-pressed': String(pref),
     'aria-label': pref ? 'Scoate de la favorite' : 'Adaugă la favorite', onclick: e => {
@@ -333,7 +344,9 @@ function arataReteta(id, portiiAlese) {
     el('div', { class: 'reteta-imagine-mare' }, [imagineReteta(r, 'reteta-imagine')]),
     !pozeRetetaUrl.has(r.id) && fotoReteta(r)
       ? el('p', { class: 'nota nota-mica atribuire-foto' }, [
-        el('a', { href: fotoReteta(r).pagina, target: '_blank', rel: 'noopener', text: textAtribuire(fotoReteta(r)) })])
+        el('a', { href: fotoReteta(r).pagina, target: '_blank', rel: 'noopener', text: textAtribuire(fotoReteta(r)).replace(/ · [^·]+$/, '') }),
+        fotoReteta(r).licenta ? ' · ' : null,
+        fotoReteta(r).licenta ? el('a', { href: fotoReteta(r).linkLicenta, target: '_blank', rel: 'noopener license', text: fotoReteta(r).licenta }) : null])
       : null,
     // Rețetă fără fotografie: invitație vizibilă chiar sub imaginea de rezervă să pui poza ta.
     !pozeRetetaUrl.has(r.id) && !fotoReteta(r)
@@ -344,16 +357,25 @@ function arataReteta(id, portiiAlese) {
     el('div', { class: 'detaliu-cap' }, [
       el('div', { class: 'detaliu-etichete' }, [
         el('span', { class: 'eticheta-grupa', text: numeMasa(r.masa) }),
+        r.fel ? el('span', { class: 'eticheta-tip', text: NUME_FEL[r.fel] || r.fel }) : null,
+        r.bucatarie === 'romaneasca' ? el('span', { class: 'eticheta-tip', text: 'Românească' }) : null,
         r.propriu ? el('span', { class: 'eticheta-tip', text: 'Rețeta mea' }) : null,
       ]),
       butonStea,
     ]),
+    r.numeEn ? el('p', { class: 'nume-en', lang: 'en', text: r.numeEn }) : null,
     r.descriere ? el('p', { class: 'descriere', text: r.descriere }) : null,
     el('div', { class: 'reteta-fapte' }, [
-      placuta('Timp', `${r.timp} min`, null),
-      placuta('Porții', String(r.portii), null),
+      placuta('Timp', `${r.timp} min`, r.timpPregatire !== undefined ? `pregătire ${r.timpPregatire} · gătire ${r.timpGatire}` : null),
+      placuta('Porții', String(r.portii), r.gatit ? `≈${gramePortie(r)} g (estimat)` : null),
       placuta('Dificultate', DIFICULTATI[r.dificultate] || '—', null),
     ]),
+    variante.length > 1 ? el('div', { class: 'variante-reteta' }, [
+      el('span', { class: 'camp-eticheta', text: 'Variante' }),
+      el('div', { class: 'chipuri chipuri-mici' }, variante.map(v => chip(v.varianta.nume, v.id === r.id, () => { if (v.id !== r.id) d.inchide(() => arataReteta(v.id)); },
+        `${v.nume}${v.id === r.id ? ' (deschisă)' : ''}`))),
+    ]) : null,
+    principale.length ? el('p', { class: 'nota ingrediente-principale' }, [el('strong', { text: 'Ingrediente principale: ' }), principale.join(', ')]) : null,
     buton({ text: `Adaugă în ziua mea${dataZiNutritie === dataLocala() ? '' : ` (${afiseazaData(dataZiNutritie)})`}`, icon: 'plus', tip: 'principal', lat: true, clasa: 'mt',
       onclick: () => d.inchide(() => deschideAdaugareInZi(r, { masa: r.masa, data: dataZiNutritie })) }),
     info.etichete.length ? el('div', { class: 'chipuri chipuri-mici mt' }, info.etichete.map(cipEticheta)) : null,
@@ -377,6 +399,14 @@ function arataReteta(id, portiiAlese) {
     listaIngrediente,
     el('h3', { class: 'detaliu-titlu', text: 'Preparare' }),
     r.pasi.length ? el('ol', { class: 'pasi-reteta' }, r.pasi.map(p => el('li', { text: p }))) : el('p', { class: 'nota', text: 'Fără pași scriși.' }),
+    r.gatit || (r.estimari && r.estimari.length) ? el('div', { class: 'estimari-reteta' }, [
+      el('strong', { text: 'Ce e estimat' }),
+      el('ul', {}, [
+        r.gatit ? el('li', { text: `Greutatea porției: ${r.gatit.nota}` }) : null,
+        ...(r.estimari || []).map(t => el('li', { text: t })),
+      ].filter(Boolean)),
+      el('p', { class: 'nota nota-mica', text: 'Caloriile și macronutrienții de mai sus sunt calculați din cantitățile crude ale ingredientelor; doar punctele de aici sunt aproximări.' }),
+    ]) : null,
     note.length ? el('details', { class: 'note-sursa' }, [el('summary', { text: 'Note despre valori' }), ...note.map(n => el('p', { class: 'nota', text: n }))]) : null,
     el('p', { class: 'nota nota-mica', text: `Valori calculate din cantitățile ingredientelor (${SURSA_NUTRITIE.scurt}${alimenteMele.length ? ' și alimentele tale' : ''}). Sunt estimări.` }),
     el('div', { class: 'rand-butoane mt' }, [

@@ -134,6 +134,16 @@ function scorPlanGen(sel, ctx) {
   }
   if (tinte && tinte.carbohidrati) { const d = (c - tinte.carbohidrati) / tinte.carbohidrati; scor += d * d * 100 * 0.8; }
   if (tinte && tinte.grasimi) { const d = (g - tinte.grasimi) / tinte.grasimi; scor += d * d * 100 * 0.8; }
+  // O gustare nu trebuie să fie mai mare decât o masă principală (prânz/cină) din același plan.
+  const pe = {};
+  for (const s of sel) pe[s.masa] = (pe[s.masa] || 0) + s.info.v.kcal * s.portii;
+  const principale = ['pranz', 'cina'].filter(m => pe[m] !== undefined).map(m => pe[m]);
+  if (principale.length) {
+    const minim = Math.min(...principale), ref = (tinte && tinte.kcal) || 2000;
+    for (const m of ['gustare-1', 'gustare-2']) {
+      if (pe[m] !== undefined && pe[m] > minim) { const ex = (pe[m] - minim) / ref; scor += 3 + ex * ex * 100 * 4; }
+    }
+  }
   for (const s of sel) {
     scor += Math.abs(s.portii - 1) * 0.35;
     for (const st of pref.stil) if (s.info.etichete.has(st)) scor -= 0.8;

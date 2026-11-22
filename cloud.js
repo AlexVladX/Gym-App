@@ -23,8 +23,15 @@ const LOT_TRIMITERE = 100;
 const PAGINA_TRAGERE = 500;
 const MAX_COPII_CLOUD = 10;
 
+// Adresa proiectului: doar „https://<proiect>.supabase.co”. Dacă s-a lipit o adresă cu ceva după
+// (ex. „…supabase.co/rest/v1/” din pagina Data API), păstrăm doar începutul — altfel serverul răspunde
+// „Invalid path specified in request URL”.
+function adresaProiect() {
+  try { return new URL(String(CONFIG_CLOUD.url || '').trim()).origin; } catch (_) { return ''; }
+}
+
 function cloudConfigurat() {
-  return typeof CONFIG_CLOUD !== 'undefined' && /^https:\/\/[^/]+/.test(CONFIG_CLOUD.url || '') && typeof CONFIG_CLOUD.cheiePublica === 'string' && CONFIG_CLOUD.cheiePublica.length > 10;
+  return typeof CONFIG_CLOUD !== 'undefined' && /^https:\/\/[^/]+$/.test(adresaProiect()) && typeof CONFIG_CLOUD.cheiePublica === 'string' && CONFIG_CLOUD.cheiePublica.trim().length > 10;
 }
 
 // ---------- Meta (pe dispozitiv): contul legat, cursorul, ultima sincronizare ----------
@@ -135,7 +142,7 @@ async function initializeazaAdaptor() {
     sinc.adaptor = window.__adaptorCloudTest;
   } else {
     const lib = await incarcaClientSupabase();
-    const client = lib.createClient(CONFIG_CLOUD.url, CONFIG_CLOUD.cheiePublica, {
+    const client = lib.createClient(adresaProiect(), CONFIG_CLOUD.cheiePublica.trim(), {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' },
     });
     sinc.adaptor = adaptorSupabase(client);

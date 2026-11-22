@@ -13,11 +13,12 @@ const path = require('node:path');
 const idx = c.indexAlimente(ALIMENTE_BAZA);
 const aproape = (x, y, eps = 1e-6) => assert.ok(Math.abs(x - y) < eps, `${x} ≠ ${y}`);
 
-test('biblioteca are 150 de rețete, 30 pe fiecare masă, cu toate câmpurile', () => {
-  assert.equal(RETETE_BAZA.length, 150);
-  for (const m of c.MESE) assert.equal(RETETE_BAZA.filter(r => r.masa === m.id).length, 30, m.id);
-  assert.equal(new Set(RETETE_BAZA.map(r => r.id)).size, 150);
-  assert.equal(new Set(RETETE_BAZA.map(r => r.nume.toLowerCase())).size, 150);
+test('biblioteca: cele 150 de rețete inițiale (30 pe masă) plus cele românești, cu toate câmpurile', () => {
+  const ro = RETETE_BAZA.filter(r => r.bucatarie === 'romaneasca');
+  assert.equal(RETETE_BAZA.length, 150 + ro.length);
+  for (const m of c.MESE) assert.equal(RETETE_BAZA.filter(r => r.masa === m.id && r.bucatarie !== 'romaneasca').length, 30, m.id);
+  assert.equal(new Set(RETETE_BAZA.map(r => r.id)).size, RETETE_BAZA.length);
+  assert.equal(new Set(RETETE_BAZA.map(r => r.nume.toLowerCase())).size, RETETE_BAZA.length);
   for (const r of RETETE_BAZA) {
     assert.ok(r.nume && r.descriere, r.id);
     assert.ok(r.timp > 0 && Number.isInteger(r.portii) && r.portii >= 1, r.id);
@@ -188,10 +189,17 @@ test('fotografiile rețetelor: fișiere WebP 800×600 existente, unice, cu surs�
     const f = im.fotoReteta(r);
     assert.ok(f, r.id);
     assert.equal(f.fisier, `foto-retete/${r.id}.webp`);
-    assert.equal(f.furnizor, 'Pexels');
-    assert.match(f.idSursa, /^\d+$/);
-    assert.ok(f.pagina.startsWith('https://www.pexels.com/photo/') && f.pagina.endsWith(`${f.idSursa}/`), r.id);
-    if (f.profil) assert.ok(f.autor && f.profil.startsWith('https://www.pexels.com/@'), r.id);
+    assert.ok(['Pexels', 'Wikimedia Commons'].includes(f.furnizor), r.id);
+    if (f.furnizor === 'Pexels') {
+      assert.match(f.idSursa, /^\d+$/);
+      assert.ok(f.pagina.startsWith('https://www.pexels.com/photo/') && f.pagina.endsWith(`${f.idSursa}/`), r.id);
+      if (f.profil) assert.ok(f.autor && f.profil.startsWith('https://www.pexels.com/@'), r.id);
+    } else {
+      // licențele CC cer autorul, licența cu link și linkul la original
+      assert.ok(f.autor && f.licenta && f.linkLicenta.startsWith('https://creativecommons.org/'), r.id);
+      assert.ok(f.pagina.startsWith('https://commons.wikimedia.org/wiki/File:'), r.id);
+      assert.match(im.textAtribuire(f), new RegExp(`${f.autor} / Wikimedia Commons · ${f.licenta.replace(/\./g, '\\.')}$`));
+    }
     // aceeași fotografie nu se folosește pentru două rețete
     assert.ok(!fisiere.has(f.fisier) && !surse.has(f.idSursa), r.id);
     fisiere.add(f.fisier); surse.add(f.idSursa);

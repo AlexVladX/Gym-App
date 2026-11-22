@@ -16,7 +16,8 @@ function fotoReteta(r) {
 // Textul scurt al atribuirii, ex. „Foto: Polina Tankilevitch / Pexels”.
 function textAtribuire(f) {
   if (!f) return '';
-  return f.autor ? `Foto: ${f.autor} / ${f.furnizor || 'Pexels'}` : `Foto: ${f.furnizor || 'Pexels'}`;
+  const baza = f.autor ? `Foto: ${f.autor} / ${f.furnizor || 'Pexels'}` : `Foto: ${f.furnizor || 'Pexels'}`;
+  return f.licenta ? `${baza} · ${f.licenta}` : baza;
 }
 
 // Imaginea de rezervă: un fundal închis cu o farfurie și tacâmuri desenate din linii subțiri și numele mesei.

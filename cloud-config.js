@@ -4,6 +4,6 @@
 // NU pune aici cheia secretă (sb_secret_… sau service_role).
 // Cât timp valorile sunt goale, aplicația merge exact ca înainte, doar pe dispozitiv.
 const CONFIG_CLOUD = {
-  url: 'https://ibxqtjxlhywkvejbizqk.supabase.co',          // ex. 'https://abcdefghijklm.supabase.co'
-  cheiePublica: 'sb_publishable_RhGCWrUXtjCOQ5F1fosihQ_pUpC66Z-', // ex. 'sb_publishable_…'
+  url: 'https://ibxqtjxlhywkvejbizqk.supabase.co', // doar adresa proiectului, fără /rest/v1
+  cheiePublica: 'sb_publishable_RhGCWrUXtjCOQ5F1fosihQ_pUpC66Z-',
 };

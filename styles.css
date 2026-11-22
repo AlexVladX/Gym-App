@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "34";
+  --versiune-css: "36";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -1825,3 +1825,13 @@ html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
 #btn-setari[data-sincron="eroare"]::after, #btn-setari[data-sincron="conflict"]::after { background: var(--pericol); }
 #card-cont .rand-butoane { flex-wrap: wrap; }
 #card-cont .rand-butoane > .btn { min-width: min(150px, 100%); white-space: normal; text-align: center; line-height: 1.2; padding-top: 6px; padding-bottom: 6px; }
+
+/* ---------- Faza 3: rețete românești ---------- */
+.nume-en { margin: -4px 0 var(--s2); color: var(--discret); font-size: 13px; font-style: italic; }
+.variante-reteta { margin-top: var(--s3); }
+.variante-reteta .camp-eticheta { display: block; margin-bottom: 6px; }
+.ingrediente-principale { margin: var(--s3) 0 0; }
+.estimari-reteta { margin-top: var(--s3); padding: var(--s3); border-radius: var(--raza-mica); background: color-mix(in srgb, var(--avertizare) 8%, transparent); border: 1px solid color-mix(in srgb, var(--avertizare) 25%, transparent); font-size: 13.5px; }
+.estimari-reteta ul { margin: 6px 0; padding-left: 18px; }
+.estimari-reteta li { margin-bottom: 4px; }
+.estimari-reteta .nota { margin: 0; }

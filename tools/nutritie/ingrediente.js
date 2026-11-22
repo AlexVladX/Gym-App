@@ -31,6 +31,15 @@ module.exports = [
   ['sardine', 'Sardine în ulei (conservă, scurse)', '15088', 'carne', 'peste', '#9C9A92', ['peste'], 'peste'],
   ['creveti', 'Creveți', '15149', 'carne', 'creveti', '#F5A48A', ['crustacee'], 'peste'],
 
+  // Faza 3 (rețete românești)
+  ['porc-tocat', 'Carne tocată de porc', '10219', 'carne', 'tocata', '#C98A70', [], 'carne'],
+  ['porc-ceafa', 'Ceafă de porc', '10080', 'carne', 'carne', '#C98468', [], 'carne'],
+  ['carnati-porc', 'Cârnați proaspeți de porc', '07063', 'carne', 'mezel', '#B8574A', [], 'carne',
+    { nota: 'Valori medii USDA pentru cârnați proaspeți de porc, cruzi; compoziția diferă de la un producător la altul.' }],
+  ['afumatura', 'Slănină afumată (bacon)', '10123', 'carne', 'mezel', '#C9705C', [], 'carne'],
+  ['pui-pulpa-piele', 'Pulpe de pui cu piele', '05075', 'carne', 'carne', '#E0B08A', [], 'carne',
+    { nota: 'Cantitatea din rețete e partea comestibilă (carne și piele, fără os).' }],
+
   // ---------- Lactate și ouă ----------
   ['ou', 'Ouă', '01123', 'lactate', 'ou', '#F6C744', ['oua'], 'oua', { buc: [50, 'ou', 'ouă'] }],
   ['albus', 'Albuș de ou', '01124', 'lactate', 'omleta', '#F7F3E8', ['oua'], 'oua'],
@@ -54,6 +63,8 @@ module.exports = [
   ['unt', 'Unt', '01001', 'lactate', 'invizibil', '#F5D98A', ['lapte'], 'lactate'],
   ['proteina-zer', 'Pudră proteică din zer', '14066', 'altele', 'pudra', '#E8DCC8', ['lapte'], 'lactate',
     { nota: 'Valori medii; compoziția diferă de la produs la produs, verifică eticheta.', buc: [30, 'măsură', 'măsuri'] }],
+
+  ['galbenus', 'Gălbenuș de ou', '01125', 'lactate', 'ou', '#F4B421', ['oua'], 'oua', { buc: [17, 'gălbenuș', 'gălbenușuri'] }],
 
   // ---------- Cereale și făinoase ----------
   ['ovaz', 'Fulgi de ovăz', '08120', 'cereale', 'fulgi-ovaz', '#D9C28E', ['gluten'], null,
@@ -135,6 +146,8 @@ module.exports = [
   ['lapte-soia', 'Băutură de soia neîndulcită', '16222', 'altele', 'lichid', '#F1EBD9', ['soia'], null],
   ['lapte-migdale', 'Băutură de migdale neîndulcită', '14091', 'altele', 'lichid', '#F2E8D8', ['nuci'], null],
 
+  ['telina-radacina', 'Rădăcină de țelină', '11141', 'legume', 'cuburi', '#E8E1C8', ['telina'], null],
+
   // ---------- Fructe ----------
   ['avocado', 'Avocado', '09037', 'fructe', 'avocado', '#8DB255', [], null, { buc: [136, 'avocado', 'avocado'] }],
   ['banana', 'Banană', '09040', 'fructe', 'rondele', '#F5D76E', [], null, { buc: [118, 'banană', 'banane'] }],
@@ -199,4 +212,10 @@ module.exports = [
   ['sare', 'Sare', '02047', 'altele', 'invizibil', '#FFFFFF', [], null],
   ['praf-copt', 'Praf de copt', '18369', 'altele', 'invizibil', '#FFFFFF', [], null],
   ['vanilie', 'Extract de vanilie', '02050', 'altele', 'invizibil', '#6B4423', [], null],
+  ['zahar', 'Zahăr', '19335', 'altele', 'pudra', '#FAFAF7', [], null],
+  ['zahar-pudra', 'Zahăr pudră', '19336', 'altele', 'pudra', '#FFFFFF', [], null],
+  ['drojdie', 'Drojdie proaspătă', '18374', 'altele', 'invizibil', '#E3D2A6', [], null],
+  ['vin-alb', 'Vin alb sec', '14106', 'altele', 'lichid', '#EFE6B0', ['sulfiti'], null],
+  ['cimbru', 'Cimbru uscat', '02042', 'altele', 'verdeata', '#8E9A63', [], null],
+  ['dafin', 'Foi de dafin', '02004', 'altele', 'frunze', '#9AA06A', [], null],
 ];
