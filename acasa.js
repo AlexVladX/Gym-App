@@ -327,6 +327,97 @@ function deschideGreutatea() {
   setTimeout(() => $('greutate-valoare').focus(), 250);
 }
 
+// ---------- Nutriția de azi (etapa 7 nutriție) ----------
+// Un singur card, compact: caloriile (țintă, planificat, mâncat, rămas), macro, cele 5 mese cu starea lor.
+// Se redesenează la fiecare deschidere a ecranului Acasă, deci reflectă imediat generarea, înlocuirea sau marcarea meselor.
+function deschideZiuaNutritie() {
+  dataZiNutritie = dataLocala();
+  arataEcran('ecran-nutritie');
+  arataFilaNutritie('zi');
+}
+
+async function comutaMancataAcasa(idIntrare) {
+  try {
+    const zi = await citesteZiNutritie(dataLocala());
+    const i = zi.mese.find(x => x.id === idIntrare);
+    if (!i) return;
+    const noua = schimbaStareIntrare(i, i.stare === 'complet' ? 'neinceput' : 'complet');
+    await salveazaZiNutritie({ ...zi, mese: zi.mese.map(x => (x.id === i.id ? noua : x)) });
+    notifica(noua.stare === 'complet' ? `${i.nume}: mâncată.` : `${i.nume}: neîncepută.`, 'succes', 2500);
+  } catch (err) {
+    console.error(err);
+    notifica(mesajEroareSalvare(err, 'Starea mesei nu a putut fi salvată.'), 'eroare');
+  }
+  randeazaAcasa();
+}
+
+function cardNutritieAzi(zi) {
+  const tinte = setari.tinteNutritie;
+  const mese = (zi && zi.mese) || [];
+  if (!tinte && !mese.length) return null; // nefolosită încă: nu aglomerăm panoul
+  const { planificat, mancat, numar, terminate } = totaluriZi(zi);
+  const deschide = buton({ text: 'Deschide', tip: 'fantoma', mic: true, eticheta: 'Deschide Nutriție → Ziua mea', onclick: deschideZiuaNutritie });
+  const copii = [titluCard('Nutriție azi', deschide)];
+
+  if (tinte) {
+    const ramas = tinte.kcal - mancat.kcal;
+    copii.push(el('div', { class: 'zi-kcal' }, [
+      el('div', { class: 'zi-kcal-mare' }, [
+        el('strong', { class: ramas < 0 ? 'peste' : '', text: Math.round(Math.abs(ramas)).toLocaleString('ro-RO') }),
+        el('span', { text: ramas < 0 ? 'kcal peste țintă' : 'kcal rămase' }),
+      ]),
+    ]));
+    copii.push(baraDubla(mancat.kcal, planificat.kcal, tinte.kcal, 'nutri-c zi-bara-kcal'));
+    copii.push(el('div', { class: 'placute placute-nutri' }, [
+      placuta('Țintă', `${Math.round(tinte.kcal).toLocaleString('ro-RO')}`, 'kcal'),
+      placuta('Planificat', `${Math.round(planificat.kcal).toLocaleString('ro-RO')}`, 'kcal'),
+      placuta('Mâncat', `${Math.round(mancat.kcal).toLocaleString('ro-RO')}`, 'kcal'),
+    ]));
+  } else {
+    copii.push(el('p', { class: 'nota', text: `Mâncat ${Math.round(mancat.kcal)} din ${Math.round(planificat.kcal)} kcal planificate. Setează-ți țintele în Nutriție ca să vezi cât a mai rămas.` }));
+  }
+
+  const macro = (nume, camp, clasa) => {
+    const t = tinte && tinte[camp];
+    return el('div', { class: 'acasa-macro' }, [
+      el('span', { class: 'nutri-nume' }, [el('i', { class: `nutri-punct ${clasa}` }), nume]),
+      el('span', { class: 'acasa-macro-val', text: `${Math.round(mancat[camp])}${t ? `/${t}` : ''} g` }),
+      baraDubla(mancat[camp], planificat[camp], t, clasa),
+    ]);
+  };
+  copii.push(el('div', { class: 'acasa-macrouri' }, [
+    macro('Proteine', 'proteine', 'nutri-p'), macro('Carbo', 'carbohidrati', 'nutri-c'),
+    macro('Grăsimi', 'grasimi', 'nutri-g'), macro('Fibre', 'fibre', 'nutri-f'),
+  ]));
+
+  if (mese.length) {
+    copii.push(el('ul', { class: 'acasa-mese' }, MESE.map(m => {
+      const intrari = mese.filter(i => i.masa === m.id);
+      if (!intrari.length) {
+        return el('li', { class: 'acasa-masa goala' }, [el('span', { class: 'acasa-masa-nume', text: m.nume }), el('span', { class: 'nota', text: '—' })]);
+      }
+      const i = intrari[0];
+      const kcal = intrari.reduce((s, x) => s + valoriPlanificateIntrare(x).kcal, 0);
+      const stareMasa = intrari.every(x => x.stare === 'complet') ? 'complet' : intrari.some(x => x.stare !== 'neinceput') ? 'partial' : 'neinceput';
+      const comutabil = intrari.length === 1 && i.stare !== 'partial';
+      return el('li', { class: `acasa-masa stare-${stareMasa}` }, [
+        el('span', { class: 'acasa-masa-nume', text: m.nume }),
+        el('span', { class: 'acasa-masa-reteta', text: i.nume + (intrari.length > 1 ? ` +${intrari.length - 1}` : '') }),
+        el('span', { class: 'acasa-masa-kcal', text: `${Math.round(kcal)} kcal` }),
+        comutabil
+          ? el('button', { type: 'button', class: 'acasa-bifa' + (stareMasa === 'complet' ? ' activ' : ''), 'aria-pressed': String(stareMasa === 'complet'),
+            'aria-label': stareMasa === 'complet' ? `${m.nume}: mâncată. Marchează neîncepută` : `Marchează ${m.nume} ca mâncată`,
+            onclick: () => comutaMancataAcasa(i.id) }, [iconita('bifa', 'iconita mica')])
+          : el('button', { type: 'button', class: 'acasa-bifa partial', 'aria-label': `${m.nume}: ${stareMasa === 'partial' ? 'parțial' : 'mai multe rețete'}. Deschide ziua`, onclick: deschideZiuaNutritie }, [el('span', { text: stareMasa === 'complet' ? '✓' : '½' })]),
+      ]);
+    })));
+    copii.push(el('p', { class: 'nota nota-mica', text: `${terminate} din ${numar} ${numar === 1 ? 'rețetă mâncată' : 'rețete mâncate'}. Bifează ce ai mâncat; porțiile parțiale le notezi în Nutriție.` }));
+  } else {
+    copii.push(buton({ text: 'Generează planul zilei', icon: 'zar', tip: 'secundar', lat: true, onclick: deschideZiuaNutritie }));
+  }
+  return el('div', { class: 'card card-nutritie-acasa' }, copii);
+}
+
 // ---------- Primii pași (utilizator nou) ----------
 function cardPrimiiPasi(sesiuni, masuratori) {
   let backup = false;
@@ -354,9 +445,11 @@ async function randeazaAcasa() {
   let masuratori = [];
   let rutine = [];
   let ctxRealizari = null;
+  let ziNutritieAzi = null;
   try {
     await reincarcaIstoric();
     [masuratori, rutine] = await Promise.all([toateMasuratorile(), toateRutinele()]);
+    ziNutritieAzi = await citesteZiNutritie(dataLocala()).catch(err => { console.warn(err); return null; });
     ctxRealizari = await contextRealizari().catch(err => { console.warn(err); return null; });
   } catch (err) {
     console.error(err);
@@ -367,7 +460,7 @@ async function randeazaAcasa() {
 
   const azi = dataLocala();
   const sesiuni = istoric;
-  const carduri = [cardAzi(azi, sesiuni), cardMementoBackup(sesiuni), cardPrimiiPasi(sesiuni, masuratori)];
+  const carduri = [cardAzi(azi, sesiuni), cardMementoBackup(sesiuni), cardNutritieAzi(ziNutritieAzi), cardPrimiiPasi(sesiuni, masuratori)];
   if (sesiuni.length > 0) {
     const saptamani = rezumatSaptamani(sesiuni, azi, 8);
     carduri.push(

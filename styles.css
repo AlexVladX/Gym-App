@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "27";
+  --versiune-css: "28";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -1496,3 +1496,25 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .cmp-dif { color: var(--accent); }
 .cmp-in-afara .cmp-dif { color: var(--avertizare); }
 .fara-potrivire strong { display: block; margin-bottom: 4px; }
+
+/* ---------- Acasă → Nutriție azi (etapa 7 nutriție) ---------- */
+.card-nutritie-acasa .zi-kcal { margin-bottom: var(--s2); }
+.placute-nutri { margin-top: var(--s3); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.acasa-macrouri { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2) var(--s4); margin-top: var(--s3); }
+.acasa-macro { display: grid; grid-template-columns: 1fr auto; gap: 4px var(--s2); align-items: center; font-size: 13px; }
+.acasa-macro .zi-bara { grid-column: 1 / -1; height: 5px; }
+.acasa-macro-val { font-variant-numeric: tabular-nums; color: var(--text-2); }
+.acasa-mese { list-style: none; margin: var(--s3) 0 0; padding: 0; }
+.acasa-masa { display: grid; grid-template-columns: 78px 1fr auto 36px; align-items: center; gap: var(--s2); padding: 6px 0; border-top: 1px solid var(--bordura); font-size: 13px; }
+.acasa-masa-nume { color: var(--discret); }
+.acasa-masa-reteta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.acasa-masa-kcal { font-variant-numeric: tabular-nums; color: var(--text-2); }
+.acasa-masa.stare-complet .acasa-masa-reteta { color: var(--discret); text-decoration: line-through; text-decoration-color: rgba(255, 255, 255, 0.25); }
+.acasa-masa .nota { margin: 0; grid-column: 2 / -1; }
+.acasa-bifa { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--bordura-tare); background: transparent; color: transparent;
+  display: grid; place-items: center; cursor: pointer; padding: 0; justify-self: end; touch-action: manipulation; }
+.acasa-bifa.activ { background: var(--accent); border-color: var(--accent); color: var(--pe-accent); }
+.acasa-bifa.partial { color: var(--avertizare); border-color: rgba(255, 181, 71, 0.6); font-weight: 700; font-size: 13px; }
+.acasa-bifa .iconita { width: 16px; height: 16px; }
+.acasa-macro-val { white-space: nowrap; }
+.acasa-macro .nutri-nume { min-width: 0; white-space: nowrap; }

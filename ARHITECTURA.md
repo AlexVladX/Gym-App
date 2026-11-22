@@ -333,3 +333,12 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
   cel mult 3 cele mai apropiate (asemănare ≥ 40), marcate ca neechivalente.
 - La alegere poți ajusta porția (din sfert în sfert) cu comparația actualizată; înlocuirea păstrează celelalte mese,
   refuză o masă care între timp a fost blocată sau începută și se poate anula imediat.
+
+### Nutriția pe Acasă (etapa 7)
+
+- Un singur card, „Nutriție azi”, după cardul principal. Nu apare dacă nu ai ținte și nici mese azi (panoul rămâne curat).
+- Arată: kcal rămase (sau peste țintă), bara mâncat/planificat, țintă / planificat / mâncat, proteine, carbohidrați,
+  grăsimi, fibre (mâncat/țintă, cu planificatul în gri) și cele 5 mese cu rețeta, caloriile și starea.
+- Bifa de pe Acasă comută doar între „Neîncepută” și „Mâncată” (o masă cu o singură rețetă); parțialul și mesele cu mai
+  multe rețete se notează în Nutriție (butonul duce acolo). „Deschide” duce la Nutriție → Ziua mea, pe ziua de azi.
+- Acasă se redesenează la fiecare deschidere, din ziua salvată, deci reflectă imediat generarea, înlocuirea și marcarea.
