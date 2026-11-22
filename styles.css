@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "31";
+  --versiune-css: "32";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -1576,3 +1576,12 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .lista-surse li { display: flex; flex-direction: column; padding: 6px 0; border-top: 1px solid var(--bordura); }
 .lista-surse .nota { margin: 0; }
 #nutritie-lista .rand-butoane { flex-wrap: wrap; }
+
+/* ---------- Etapa 11: ecrane înguste (320–390 px) ---------- */
+/* Butoanele doar cu iconiță nu se micșorează niciodată sub zona de atingere. */
+.btn-icon { flex-shrink: 0; }
+/* În Nutriție și în dialoguri, o etichetă lungă trece pe două rânduri în loc să fie tăiată. */
+#ecran-nutritie .btn, .dialog .btn { white-space: normal; text-align: center; line-height: 1.2; padding-top: 6px; padding-bottom: 6px; }
+#ecran-nutritie .btn > span, .dialog .btn > span { min-width: 0; overflow-wrap: anywhere; }
+#ecran-nutritie .rand-butoane, .dialog .rand-butoane { flex-wrap: wrap; }
+#ecran-nutritie .rand-butoane > .btn, .dialog .rand-butoane > .btn { min-width: min(140px, 100%); }

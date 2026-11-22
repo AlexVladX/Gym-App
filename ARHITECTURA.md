@@ -384,3 +384,11 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
 - Intră doar mesele **neîncepute**; cele mâncate sau începute sunt numărate separat și semnalate. Mesele fără ingrediente cunoscute (rețetă ștearsă) sunt semnalate, nu ghicite.
 - Store-ul `listeCumparaturi` (DB v10, cheie `de_pana`) ține doar ce ai făcut tu pe lista unui interval: `cumparate`, `eliminate` (pe id de aliment), `cantitati` ({grame, laPlan} — dacă planul cere acum altă cantitate decât la momentul editării, apare „planul cere acum …”), `personalizate` (articole proprii). Intră în backup/restaurare.
 - Cantitățile din plan sunt grame de ingrediente crude, rotunjite în sus (5 g / 10 g / 50 g); alimentele cu bucăți arată și numărul de bucăți. Cantitatea scrisă de tine se afișează exact.
+
+## Siguranța datelor și verificarea finală (etapa 11)
+
+- **Migrări:** `onupgradeneeded` doar creează store-uri lipsă; nu șterge și nu rescrie nimic. Verificat în browser pornind de la o bază v5 (fără nutriție) cu antrenamente, măsurători și favorite: după deschidere baza e v10 și datele sunt neschimbate.
+- **Backup ↔ restaurare:** backupul conține toate store-urile de date (inclusiv nutriția) și setările din localStorage (ținte, profil, preferințe, rețete favorite). Restaurarea face întâi o copie automată, apoi înlocuiește **doar părțile prezente în backup**; un backup vechi, fără nutriție, lasă nutriția neatinsă, iar dialogul spune ce rămâne (`partiPastrate` în validare.js). Verificat dus-întors: backup → ștergere → restaurare dă exact aceleași date.
+- **localStorage** rămâne doar pentru setări (mici, citite sincron la pornire); tot ce crește în timp e în IndexedDB.
+- **Offline:** codul aplicației e salvat la instalare. Fotografiile rețetelor se salvează pe măsură ce le vezi, în cache-ul separat `jurnal-foto-retete`, care **nu** se șterge la actualizare (adresa are ca versiune id-ul fotografiei, nu versiunea aplicației). Pozele tale de rețete sunt în IndexedDB.
+- **Ecrane înguste:** în Nutriție și în dialoguri, etichetele lungi ale butoanelor trec pe două rânduri, rândurile de butoane se împart pe mai multe linii, iar butoanele-iconiță nu se micșorează. Verificat automat la 320, 360, 390, 768 și 1280 px (depășiri, text tăiat, butoane fără nume, zone de atingere).

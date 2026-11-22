@@ -86,7 +86,8 @@ function imagineReteta(r, clasa = 'reteta-imagine') {
     img.alt = '';
     img.src = rezerva();
   }, { once: true });
-  img.src = `./${f.fisier}?v=${versiuneIlustratii()}`;
+  // Versiunea din adresă e fotografia (id-ul sursei), nu versiunea aplicației: așa, copia offline rămâne valabilă după actualizări.
+  img.src = `./${f.fisier}?v=${f.idSursa || versiuneIlustratii()}`;
   return img;
 }
 

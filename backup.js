@@ -117,6 +117,7 @@ async function restaureaza(brut, sursa) {
     return false;
   }
   const { date, ignorate, rezumat } = rezultat;
+  const pastrate = partiPastrate(date, brut);
   const exportat = rezumat.exportat && Number.isFinite(Date.parse(rezumat.exportat))
     ? ` din ${new Date(rezumat.exportat).toLocaleString('ro-RO', { dateStyle: 'medium', timeStyle: 'short' })}` : '';
 
@@ -124,6 +125,7 @@ async function restaureaza(brut, sursa) {
     titlu: 'Restaurezi datele?',
     text: `${sursa}${exportat} conține ${textRezumat(rezumat)}. Datele actuale de pe telefon vor fi înlocuite.` +
       (ignorate ? ` Atenție: ${ignorate === 1 ? 'o înregistrare deteriorată va fi ignorată' : `${plural(ignorate, 'înregistrare', 'înregistrări deteriorate')} vor fi ignorate`}.` : '') +
+      (pastrate.length ? ` Backupul nu conține ${pastrate.join(', ')}; acestea rămân cum sunt acum pe telefon.` : '') +
       ' Înainte de restaurare se face automat o copie a datelor actuale, pe care o poți recupera din Setări.',
     ok: 'Restaurează', pericol: true,
   });

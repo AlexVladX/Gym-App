@@ -283,7 +283,19 @@ function valideazaBackup(brut) {
   };
 }
 
+// Ce date de pe telefon rămân neatinse la restaurare, pentru că backupul nu are partea respectivă
+// (de ex. un backup făcut înainte de modulul Nutriție). Restaurarea înlocuiește doar ce există în backup.
+const NUME_PARTI_BACKUP = [
+  ['rutine', 'rutinele'], ['alimente', 'alimentele tale'], ['retete', 'rețetele tale'], ['zileNutritie', 'mesele notate'],
+  ['planuriNutritie', 'planurile de mese'], ['listeCumparaturi', 'listele de cumpărături'], ['poze', 'pozele de progres'],
+  ['pozeRetete', 'pozele rețetelor'], ['setari', 'setările (inclusiv țintele și preferințele de nutriție)'],
+];
+function partiPastrate(date, brut = date) {
+  return NUME_PARTI_BACKUP.filter(([cheie]) => (cheie === 'setari' ? !(brut.setari && typeof brut.setari === 'object') : !Array.isArray(date[cheie])))
+    .map(([, nume]) => nume);
+}
+
 if (typeof module !== 'undefined') {
-  module.exports = { valideazaBackup, dataValida, VERSIUNE_BACKUP, curataAliment, curataReteta, curataPozaReteta,
+  module.exports = { valideazaBackup, partiPastrate, dataValida, VERSIUNE_BACKUP, curataAliment, curataReteta, curataPozaReteta,
     ALERGENI_VALIZI, CATEGORII_ALIMENT_VALIDE, ORIGINI_VALIDE, MESE_VALIDE, VASE_VALIDE, DIFICULTATI_VALIDE, ETICHETE_DECLARABILE };
 }

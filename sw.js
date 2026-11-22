@@ -4,7 +4,7 @@
 //
 // La fiecare publicare: mărește VERSIUNE aici, în index.html (?v=… și data-versiune)
 // și în styles.css (--versiune-css). Toate trei trebuie să fie egale.
-const VERSIUNE = '31';
+const VERSIUNE = '32';
 const CACHE = `jurnal-v${VERSIUNE}`;
 const FISIERE_FIXE = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 const FISIERE_VERSIONATE = [
@@ -14,6 +14,10 @@ const FISIERE_VERSIONATE = [
   'biblioteca.js', 'nutritie.js', 'nutritie-zi-ui.js', 'nutritie-saptamana-ui.js', 'nutritie-analiza-ui.js', 'nutritie-cumparaturi-ui.js', 'backup.js', 'siguranta.js', 'acasa.js', 'main.js',
 ].map(f => `./${f}?v=${VERSIUNE}`);
 const LIMITA_RETEA_MS = 3000;
+// Fotografiile rețetelor stau într-un cache separat, care NU se șterge la actualizarea aplicației
+// (adresa lor are ca versiune fotografia însăși, nu versiunea aplicației). Altfel, după fiecare actualizare,
+// pozele văzute deja ar dispărea offline până le revezi cu internet.
+const CACHE_FOTO = 'jurnal-foto-retete';
 
 // Miniaturile ilustrațiilor (lista e scrisă de tools/ilustratii/genereaza.js) se salvează la instalare,
 // ca listele de exerciții să aibă desenele și fără semnal. Dacă vreuna nu se descarcă, instalarea continuă;
@@ -38,7 +42,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(chei => Promise.all(
-      chei.filter(c => c !== CACHE).map(c => caches.delete(c))
+      chei.filter(c => c !== CACHE && c !== CACHE_FOTO).map(c => caches.delete(c))
     )).then(() => self.clients.claim())
   );
 });
@@ -63,13 +67,28 @@ function ilustratie(cerere) {
   return caches.match(cerere.url).then(r => r || dinRetea(cerere));
 }
 
+function fotoReteta(cerere) {
+  return caches.open(CACHE_FOTO).then(c => c.match(cerere.url).then(r => r || new Promise((rezolva, respinge) => {
+    const limita = setTimeout(() => respinge(new Error('timeout')), LIMITA_RETEA_MS * 3);
+    fetch(cerere.url, { credentials: 'same-origin' }).then(raspuns => {
+      clearTimeout(limita);
+      if (raspuns && raspuns.ok) c.put(cerere.url, raspuns.clone()).catch(() => {});
+      rezolva(raspuns);
+    }, err => { clearTimeout(limita); respinge(err); });
+  })));
+}
+
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   if (url.origin !== self.location.origin) return;
   // Fotografiile rețetelor nu se descarcă toate la instalare (ar fi mulți MB): se păstrează în cache
   // pe măsură ce le vezi, apoi merg și offline.
-  if ((url.pathname.includes('/ilustratii/') || url.pathname.includes('/foto-retete/')) && url.searchParams.has('v')) {
+  if (url.pathname.includes('/foto-retete/') && url.searchParams.has('v')) {
+    e.respondWith(fotoReteta(e.request).catch(() => Response.error()));
+    return;
+  }
+  if (url.pathname.includes('/ilustratii/') && url.searchParams.has('v')) {
     e.respondWith(ilustratie(e.request).catch(() => Response.error()));
     return;
   }
