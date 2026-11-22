@@ -310,18 +310,76 @@ function aplicaPlan({ zi, plan, idNou, acum = Date.now() }) {
   return { mese: ordoneazaDupaMasa([...pastrate, ...noi]), sarite: [...sarite] };
 }
 
-function curataPlanNutritie(p) {
-  if (!p || typeof p !== 'object' || typeof p.id !== 'string' || !p.id || p.id.length > 80) return null;
-  if (typeof p.nume !== 'string' || !p.nume.trim() || p.nume.length > 120 || !Array.isArray(p.mese)) return null;
+function curataMesePlan(lista) {
   const mese = [];
-  for (const m of p.mese) {
+  for (const m of Array.isArray(lista) ? lista : []) {
     const c = curataIntrareMasa({ ...m, id: 'x', stare: 'neinceput' });
     if (!c) continue;
-    const { id, stare, ...rest } = c;
+    const { id, stare, blocat, ...rest } = c;
     mese.push(rest);
   }
+  return mese;
+}
+
+// Planurile: de o zi ({ mese }) sau de o săptămână ({ tip: 'saptamana', zile: [7 × mese] }, etapa 8).
+function curataPlanNutritie(p) {
+  if (!p || typeof p !== 'object' || typeof p.id !== 'string' || !p.id || p.id.length > 80) return null;
+  if (typeof p.nume !== 'string' || !p.nume.trim() || p.nume.length > 120) return null;
+  if (p.tip === 'saptamana') {
+    if (!Array.isArray(p.zile) || p.zile.length !== 7) return null;
+    const zile = p.zile.map(curataMesePlan);
+    if (!zile.some(z => z.length)) return null;
+    const { mese, ...rest } = p;
+    return { ...rest, nume: p.nume.trim(), favorit: p.favorit === true, zile };
+  }
+  if (!Array.isArray(p.mese)) return null;
+  const mese = curataMesePlan(p.mese);
   if (!mese.length) return null;
   return { ...p, nume: p.nume.trim(), favorit: p.favorit === true, mese };
+}
+
+// ---------- Etapa 8: săptămâna ----------
+function formatDataZi(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+// Cele 7 zile (luni–duminică) ale săptămânii care conține data.
+function zileSaptamana(data) {
+  const [a, l, z] = data.split('-').map(Number);
+  const d = new Date(a, l - 1, z);
+  const luni = new Date(a, l - 1, z - ((d.getDay() + 6) % 7));
+  return Array.from({ length: 7 }, (_, k) => formatDataZi(new Date(luni.getFullYear(), luni.getMonth(), luni.getDate() + k)));
+}
+
+// Totalurile săptămânii: sume și medii pe zilele cu mese, plus comparația mediei zilnice cu țintele.
+function totaluriSaptamana(zile, tinte) {
+  let planificat = valoriZero(), mancat = valoriZero();
+  let cuMese = 0, cuMancare = 0, intrari = 0, terminate = 0;
+  const reteteFolosite = new Map();
+  for (const zi of zile) {
+    const t = totaluriZi(zi);
+    planificat = valoriAdunate(planificat, t.planificat);
+    mancat = valoriAdunate(mancat, t.mancat);
+    if (t.numar) cuMese++;
+    if (t.mancat.kcal > 0) cuMancare++;
+    intrari += t.numar; terminate += t.terminate;
+    for (const i of (zi && zi.mese) || []) reteteFolosite.set(i.idReteta, (reteteFolosite.get(i.idReteta) || 0) + 1);
+  }
+  const medie = valoriInmultite(planificat, cuMese ? 1 / cuMese : 0);
+  const abateri = {};
+  if (tinte) for (const c of CAMPURI_VALORI) if (typeof tinte[c] === 'number' && cuMese) abateri[c] = medie[c] - tinte[c];
+  const repetate = [...reteteFolosite.values()].filter(n => n > 1).length;
+  return { planificat, mancat, mediePlanificat: medie, zileCuMese: cuMese, zileCuMancare: cuMancare, intrari, terminate,
+    reteteDiferite: reteteFolosite.size, reteteRepetate: repetate, abateri };
+}
+
+// O copie a unei intrări în altă zi: neîncepută, neblocată, cu id nou.
+function copiazaIntrarea(i, { id, masa = i.masa, acum = Date.now() }) {
+  const { portiiMancate, blocat, ...rest } = i;
+  return { ...rest, id, masa, stare: 'neinceput', adaugat: acum, modificat: acum };
+}
+
+function planSaptamanaDinZile(zile, { id, nume, favorit = false, acum = Date.now() }) {
+  return { id, nume, favorit, tip: 'saptamana', zile: zile.map(z => planDinZi(z || { mese: [] }, { id: 'x', nume: 'x', acum }).mese), creat: acum, modificat: acum };
 }
 
 // Vârsta împlinită la o dată, din anul nașterii (aproximare: fără zi și lună, poate fi cu 1 an mai mare).
@@ -339,5 +397,6 @@ if (typeof module !== 'undefined') {
     curataIntrareMasa, curataZiNutritie, varstaDinAn,
     intrareModificabila, alegeRetetaAleatorie, genereazaPlanZi, regenereazaIntrare, ajusteazaIngredienteIntrare,
     planDinZi, aplicaPlan, curataPlanNutritie, curataIngredientePortie,
+    zileSaptamana, totaluriSaptamana, copiazaIntrarea, planSaptamanaDinZile,
   };
 }

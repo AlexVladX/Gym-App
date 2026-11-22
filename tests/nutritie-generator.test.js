@@ -4,6 +4,8 @@ const assert = require('node:assert/strict');
 const g = require('../nutritie-generator.js');
 const c = require('../nutritie-calcul.js');
 const z = require('../nutritie-zi.js');
+const v = require('../validare.js');
+const aproape = (x, y, eps = 1e-6) => assert.ok(Math.abs(x - y) < eps, `${x} ≠ ${y}`);
 const { ALIMENTE_BAZA } = require('../nutritie-alimente.js');
 const { RETETE_BAZA } = require('../nutritie-retete.js');
 
@@ -206,4 +208,86 @@ test('asemănarea: 100 pentru identic, 75 la limita toleranțelor', () => {
   assert.equal(limita.scor, 75);
   assert.equal(limita.toate, true);
   assert.equal(g.comparaValori({ kcal: 560, proteine: 30, carbohidrati: 50, grasimi: 20 }, t).toate, false);
+});
+
+// ---------- Etapa 8: săptămâna ----------
+test('zilele săptămânii: luni–duminică, peste schimbarea lunii și a anului', () => {
+  assert.deepEqual(z.zileSaptamana('2026-11-22'), ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21', '2026-11-22']);
+  assert.deepEqual(z.zileSaptamana('2026-11-16')[0], '2026-11-16');
+  assert.deepEqual(z.zileSaptamana('2027-01-01'), ['2026-12-28', '2026-12-29', '2026-12-30', '2026-12-31', '2027-01-01', '2027-01-02', '2027-01-03']);
+});
+
+const TINTE8 = { kcal: 2500, proteine: 140, carbohidrati: 300, grasimi: 80 };
+function saptamana(seed = 1, extra = {}) {
+  const date = z.zileSaptamana('2026-11-23');
+  return { date, ...g.genereazaSaptamana({ date, zileExistente: {}, retete: RETETE_BAZA, idx, tinte: TINTE8, scop: 'mentinere',
+    pref: g.preferinteGoale(), preferateReteta: new Set(), rng: rngFix(seed), idNou: idGen(), porniri: 8, ...extra }) };
+}
+
+test('săptămâna generată: 7 zile × 5 mese, fiecare zi în țintă, fără repetări în zile consecutive, puține repetări', () => {
+  const { date, zile } = saptamana(3);
+  const toate = [];
+  for (const d of date) {
+    assert.equal(zile[d].mese.length, 5, d);
+    assert.equal(new Set(zile[d].mese.map(i => i.idReteta)).size, 5, d);
+    const t = z.totaluriZi(zile[d]).planificat;
+    assert.ok(Math.abs(t.kcal - TINTE8.kcal) <= TINTE8.kcal * 0.1, `${d}: ${t.kcal}`);
+    toate.push(...zile[d].mese.map(i => i.idReteta));
+  }
+  for (let k = 1; k < 7; k++) {
+    const ieri = new Set(zile[date[k - 1]].mese.map(i => i.idReteta));
+    const comune = zile[date[k]].mese.filter(i => ieri.has(i.idReteta)).length;
+    assert.ok(comune <= 1, `${date[k]}: ${comune} comune cu ziua dinainte`);
+  }
+  // 35 de mese din 150 de rețete: cel puțin 25 de rețete diferite
+  assert.ok(new Set(toate).size >= 25, `${new Set(toate).size}`);
+  const tot = z.totaluriSaptamana(date.map(d => zile[d]), TINTE8);
+  assert.equal(tot.zileCuMese, 7);
+  assert.equal(tot.intrari, 35);
+  assert.ok(Math.abs(tot.abateri.kcal) <= 250);
+  aproape(tot.mediePlanificat.kcal * 7, tot.planificat.kcal, 1e-6);
+});
+
+test('săptămâna: zilele existente cu mese blocate/începute rămân; alergiile se respectă în toată săptămâna', () => {
+  const date = z.zileSaptamana('2026-11-23');
+  const baza = saptamana(5);
+  const blocat = { ...baza.zile[date[2]].mese[0], blocat: true };
+  const mancat = z.schimbaStareIntrare(baza.zile[date[4]].mese[3], 'complet');
+  const pref = g.curataPreferinteNutritie({ alergii: ['lapte'] });
+  const rez = g.genereazaSaptamana({ date, zileExistente: { [date[2]]: { data: date[2], mese: [blocat] }, [date[4]]: { data: date[4], mese: [mancat] } },
+    retete: RETETE_BAZA, idx, tinte: TINTE8, scop: 'mentinere', pref, preferateReteta: new Set(), rng: rngFix(2), idNou: idGen(), porniri: 6 });
+  assert.deepEqual(rez.zile[date[2]].mese.find(i => i.masa === 'mic-dejun'), blocat);
+  assert.deepEqual(rez.zile[date[4]].mese.find(i => i.masa === 'gustare-2'), mancat);
+  for (const d of date) for (const i of rez.zile[d].mese) {
+    if (i === blocat || i === mancat) continue;
+    const al = c.alergeniReteta(RETETE_BAZA.find(r => r.id === i.idReteta), idx);
+    assert.ok(!al.contine.includes('lapte') && !al.urme.includes('lapte'), `${d} ${i.idReteta}`);
+  }
+});
+
+test('copierea unei mese și planurile de săptămână', () => {
+  const { date, zile } = saptamana(7);
+  const i = { ...zile[date[0]].mese[1], blocat: true };
+  const mancata = z.schimbaStareIntrare(i, 'partial', 0.5);
+  const copie = z.copiazaIntrarea(mancata, { id: 'nou', acum: 1 });
+  assert.equal(copie.id, 'nou');
+  assert.equal(copie.stare, 'neinceput');
+  assert.equal(copie.portiiMancate, undefined);
+  assert.equal(copie.blocat, undefined);
+  assert.deepEqual(copie.valoriPortie, i.valoriPortie);
+  const plan = z.planSaptamanaDinZile(date.map(d => zile[d]), { id: 'u-s', nume: 'S1', favorit: true });
+  assert.equal(plan.tip, 'saptamana');
+  assert.equal(plan.zile.length, 7);
+  const curat = z.curataPlanNutritie(JSON.parse(JSON.stringify(plan)));
+  assert.equal(curat.zile.length, 7);
+  assert.equal(curat.zile[3].length, 5);
+  assert.equal(curat.mese, undefined);
+  assert.equal(z.curataPlanNutritie({ ...plan, zile: plan.zile.slice(0, 6) }), null);
+  assert.equal(z.curataPlanNutritie({ ...plan, zile: [[], [], [], [], [], [], []] }), null);
+  // încărcarea unei zile din planul săptămânal în altă zi
+  const rez = z.aplicaPlan({ zi: { data: 'x', mese: [] }, plan: { mese: curat.zile[2] }, idNou: idGen() });
+  assert.deepEqual(rez.mese.map(x => x.idReteta), zile[date[2]].mese.map(x => x.idReteta));
+  // backup
+  const b = v.valideazaBackup({ versiune: 3, sesiuni: [], exercitii: [], masuratori: [], planuriNutritie: [plan] });
+  assert.equal(b.date.planuriNutritie[0].zile.length, 7);
 });

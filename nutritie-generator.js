@@ -113,7 +113,7 @@ function reteteRecente(zile, data, nr = ZILE_FARA_REPETARE) {
 
 // ---------- Scorul unui plan (mai mic = mai bun) ----------
 function scorPlanGen(sel, ctx) {
-  const { tinte, fix, scop, pref, recente, preferateReteta } = ctx;
+  const { tinte, fix, scop, pref, recente, preferateReteta, frecvente } = ctx;
   let k = fix.kcal, p = fix.proteine, c = fix.carbohidrati, g = fix.grasimi;
   for (const s of sel) { k += s.info.v.kcal * s.portii; p += s.info.v.proteine * s.portii; c += s.info.v.carbohidrati * s.portii; g += s.info.v.grasimi * s.portii; }
   let scor = 0;
@@ -143,6 +143,7 @@ function scorPlanGen(sel, ctx) {
     for (const id of pref.preferate) if (s.info.ingrediente.has(id)) { scor -= 0.6; break; }
     if (preferateReteta.has(s.info.r.id)) scor -= 0.5;
     if (recente.has(s.info.r.id)) scor += 4;
+    if (frecvente && frecvente.get(s.info.r.id)) scor += 1.5 * frecvente.get(s.info.r.id);
   }
   return scor;
 }
@@ -163,7 +164,7 @@ function alegeAleatorGen(lista, rng) { return lista[Math.floor(rng() * lista.len
 // zi: ziua curentă (mesele blocate sau începute rămân). retete: toate rețetele (bibliotecă + ale tale).
 // tinte: setari.tinteNutritie (poate lipsi: atunci se aleg doar după preferințe, cu porția 1).
 function genereazaInteligent({ zi, retete, idx, tinte, scop = 'mentinere', pref, recente = new Set(), preferateReteta = new Set(),
-  rng = Math.random, idNou, acum = Date.now(), porniri = 24 }) {
+  frecvente = null, rng = Math.random, idNou, acum = Date.now(), porniri = 24 }) {
   const Z = ziNutritieGen();
   const p = pref || preferinteGoale();
   const existente = (zi && zi.mese) || [];
@@ -176,7 +177,7 @@ function genereazaInteligent({ zi, retete, idx, tinte, scop = 'mentinere', pref,
   const deGenerat = ORDINE_MESE_GEN.filter(m => !meseCuPastrate.has(m));
   const lipsa = deGenerat.filter(m => !candidate[m].some(x => !folositePastrate.has(x.r.id)));
   const sloturi = deGenerat.filter(m => !lipsa.includes(m));
-  const ctx = { tinte: tinte && tinte.kcal ? tinte : null, fix, scop, pref: p, recente, preferateReteta };
+  const ctx = { tinte: tinte && tinte.kcal ? tinte : null, fix, scop, pref: p, recente, preferateReteta, frecvente };
 
   const rezultate = [];
   if (sloturi.length) {
@@ -345,10 +346,34 @@ function alternativeInlocuire({ intrare, zi, retete, idx, pref, toateMesele = fa
     excluseFiltre: ex ? ex.alergii + ex.excluse + ex.dieta + ex.timp + ex.necunoscut : 0 };
 }
 
+// ---------- Etapa 8: săptămâna ----------
+// Generează pe rând zilele date (în ordine), fiecare optimizată pe ținte ca o zi obișnuită. Repetările se evită:
+// rețetele din cele 2 zile dinainte (inclusiv cele tocmai generate) sunt penalizate puternic, iar fiecare folosire
+// anterioară în săptămână adaugă o penalizare mică. zileExistente: { data: zi } pentru toată săptămâna (și zilele dinainte).
+function genereazaSaptamana({ date, zileExistente, retete, idx, tinte, scop, pref, preferateReteta, rng = Math.random, idNou, acum = Date.now(), porniri = 16 }) {
+  const zile = { ...zileExistente };
+  const frecvente = new Map();
+  const numara = zi => { for (const i of (zi && zi.mese) || []) frecvente.set(i.idReteta, (frecvente.get(i.idReteta) || 0) + 1); };
+  // zilele săptămânii care nu se generează contează și ele la frecvență
+  for (const [d, zi] of Object.entries(zile)) if (!date.includes(d)) numara(zi);
+  const rapoarte = {};
+  for (const data of date) {
+    const zi = zile[data] || { data, mese: [] };
+    // ce rămâne din ziua asta (blocat/început) contează la frecvență
+    for (const i of zi.mese.filter(x => !ziNutritieGen().intrareModificabila(x))) frecvente.set(i.idReteta, (frecvente.get(i.idReteta) || 0) + 1);
+    const recente = reteteRecente(Object.values(zile), data);
+    const rez = genereazaInteligent({ zi, retete, idx, tinte, scop, pref, recente, preferateReteta, frecvente, rng, idNou, acum, porniri });
+    zile[data] = { ...zi, data, mese: rez.mese };
+    for (const i of rez.mese.filter(x => ziNutritieGen().intrareModificabila(x))) frecvente.set(i.idReteta, (frecvente.get(i.idReteta) || 0) + 1);
+    rapoarte[data] = rez.raport;
+  }
+  return { zile, rapoarte };
+}
+
 if (typeof module !== 'undefined') {
   module.exports = {
     PONDERI_MESE, PORTII_GEN, DIETE_STRICTE, PREFERINTE_STIL, TIMPI_MAXIMI, TOLERANTE_GEN, ZILE_FARA_REPETARE,
     preferinteGoale, curataPreferinteNutritie, infoGenerator, filtreazaReteteGen, conflicteReteta, reteteRecente,
-    scorPlanGen, genereazaInteligent, raportPlanGen, comparaValori, potrivireLaPortie, alternativeInlocuire, tolerantaCamp,
+    scorPlanGen, genereazaInteligent, raportPlanGen, comparaValori, potrivireLaPortie, alternativeInlocuire, tolerantaCamp, genereazaSaptamana,
   };
 }

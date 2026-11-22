@@ -93,11 +93,12 @@ function imagineReteta(r, clasa = 'reteta-imagine') {
 // ---------- File (Rețete / Alimente) ----------
 function arataFilaNutritie(fila) {
   filaNutritie = fila;
-  for (const [id, f] of [['tab-zi', 'zi'], ['tab-retete', 'retete'], ['tab-alimente', 'alimente']]) {
+  for (const [id, f] of [['tab-zi', 'zi'], ['tab-saptamana', 'saptamana'], ['tab-retete', 'retete'], ['tab-alimente', 'alimente']]) {
     $(id).classList.toggle('activ', f === fila);
     $(id).setAttribute('aria-selected', String(f === fila));
   }
   $('nutritie-zi').hidden = fila !== 'zi';
+  $('nutritie-saptamana').hidden = fila !== 'saptamana';
   $('nutritie-retete').hidden = fila !== 'retete';
   $('nutritie-alimente').hidden = fila !== 'alimente';
   randeazaNutritie();
@@ -105,6 +106,7 @@ function arataFilaNutritie(fila) {
 
 function randeazaNutritie() {
   if (filaNutritie === 'zi') { randeazaZiNutritie({ reincarca: true }); return; }
+  if (filaNutritie === 'saptamana') { randeazaSaptamana(); return; }
   if (filaNutritie === 'alimente') { deseneazaFiltreAlimente(); randeazaAlimente(); } else { deseneazaFiltreRetete(); randeazaRetete(); }
 }
 
@@ -815,6 +817,7 @@ function deschideEditorAliment(a, { copie = false, numeSugerat = '' } = {}) {
 // ---------- Pornire ----------
 function initNutritie() {
   $('tab-zi').addEventListener('click', () => arataFilaNutritie('zi'));
+  $('tab-saptamana').addEventListener('click', () => { dataSaptamana = dataZiNutritie; arataFilaNutritie('saptamana'); });
   $('tab-retete').addEventListener('click', () => arataFilaNutritie('retete'));
   $('tab-alimente').addEventListener('click', () => arataFilaNutritie('alimente'));
   $('retete-cautare').addEventListener('input', e => { filtreRetete.cautare = e.target.value; randeazaRetete(); });

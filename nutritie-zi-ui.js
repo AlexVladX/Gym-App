@@ -54,6 +54,8 @@ async function randeazaZiNutritie({ reincarca = false } = {}) {
   deseneazaSumarZi();
   deseneazaGeneratorZi();
   deseneazaMeseZi();
+  // Acțiunile pe mese pornite din vederea săptămânii folosesc aceleași funcții; după ele, redesenăm săptămâna.
+  if (filaNutritie === 'saptamana' && typeof randeazaSaptamana === 'function') randeazaSaptamana();
 }
 
 // ---------- Navigarea între zile ----------
@@ -221,10 +223,15 @@ function deseneazaMeseZi() {
 }
 
 // ---------- Generatorul aleatoriu, planurile salvate (etapa 4) ----------
-let planuriMele = [];
+let planuriMele = [];        // planurile de o zi
+let planuriSaptamani = [];   // planurile de o săptămână (etapa 8)
 async function reincarcaPlanurile() {
-  try { planuriMele = await toatePlanurileNutritie(); } catch (err) { console.warn(err); }
-  planuriMele.sort((a, b) => (b.favorit - a.favorit) || (b.modificat || 0) - (a.modificat || 0));
+  let toate = null;
+  try { toate = await toatePlanurileNutritie(); } catch (err) { console.warn(err); }
+  if (!toate) return;
+  const ordine = (a, b) => (b.favorit - a.favorit) || (b.modificat || 0) - (a.modificat || 0);
+  planuriMele = toate.filter(p => p.tip !== 'saptamana').sort(ordine);
+  planuriSaptamani = toate.filter(p => p.tip === 'saptamana').sort(ordine);
 }
 
 let raportGenerare = null; // { data, raport } — ultimul raport al generatorului, pentru ziua afișată

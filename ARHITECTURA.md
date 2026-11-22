@@ -34,6 +34,7 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `istoric.js` | Istoricul sesiunilor, editare și ștergere |
 | `biblioteca.js` | Ecranul Exerciții: listă, filtre, detalii, formular, reîncadrarea grupei vechi, selectorul rapid, rutine |
 | `nutritie.js` | Ecranul Nutriție: rețete și alimente (listă, filtre, detalii, editor, favorite, poza rețetei) |
+| `nutritie-saptamana-ui.js` | Nutriție → Săptămâna: cele 7 zile, totaluri, generarea săptămânii/zilei, copieri, săptămâni salvate |
 | `nutritie-zi-ui.js` | Nutriție → Ziua mea: sumarul zilei, cele 5 mese, stările, adăugarea rețetelor, dialogul țintelor |
 | `backup.js` | Export, restaurare, copii automate, stare stocare, ștergerea datelor |
 | `acasa.js` | Ecranul Acasă (panoul): doar afișare; calculele sunt în `analiza.js` |
@@ -69,6 +70,7 @@ Baza `jurnal-antrenament`, versiunea 9:
 - `zileNutritie` (v8) — mesele unei zile, cheie `data` ('AAAA-LL-ZZ'): `{ data, mese: [{ id, masa, idReteta, nume, portii, valoriPortie{kcal, proteine, carbohidrati, grasimi, fibre}, stare: 'neinceput' | 'partial' | 'complet', portiiMancate?, adaugat, modificat }], modificat }`
 - Intrările unei zile au din etapa 4, opțional: `ingredientePortie [[idAliment, grame pe porție]]`, `timp`, `blocat`, `ajustat`.
 - `planuriNutritie` (v9) — planurile de mese salvate, cheie text `u-…`: `{ id, nume, favorit, mese: [{ masa, idReteta, nume, portii, valoriPortie, ingredientePortie?, timp? }], creat, modificat }`. Ștergerea trece prin „Șterse recent”.
+  Din etapa 8, un plan de săptămână: `{ id, nume, favorit, tip: 'saptamana', zile: [7 × mese (luni–duminică)], creat, modificat }`.
 - Setare nouă (etapa 5): `preferinteNutritie { dieta[], alergii[], stil[], excluse[] (id-uri de alimente), preferate[], timpMaxim }`.
 - Setări noi (etapa 3 nutriție): `tinteNutritie { kcal, proteine?, carbohidrati?, grasimi?, fibre?, estimat? }`, `anNastere`, `sex` ('m' | 'f'), `activitate`, `scopNutritie`.
 - Alimentele și rețetele din bibliotecă nu stau în bază: sunt fișiere ale aplicației (se actualizează odată cu ea).
@@ -342,3 +344,18 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
 - Bifa de pe Acasă comută doar între „Neîncepută” și „Mâncată” (o masă cu o singură rețetă); parțialul și mesele cu mai
   multe rețete se notează în Nutriție (butonul duce acolo). „Deschide” duce la Nutriție → Ziua mea, pe ziua de azi.
 - Acasă se redesenează la fiecare deschidere, din ziua salvată, deci reflectă imediat generarea, înlocuirea și marcarea.
+
+### Planificatorul săptămânal (etapa 8)
+
+- Fila **Săptămâna** arată luni–duminică (săptămâna zilei din „Ziua mea”), cu navigare între săptămâni.
+- **Zilele trecute nu se modifică**: nu se generează, nu primesc copii și nu primesc săptămâni încărcate.
+- **Generarea săptămânii** (sau a unei zile): fiecare zi e optimizată ca în etapa 5, pe rând. Repetările: rețetele din
+  cele 2 zile dinainte (inclusiv cele tocmai generate și cele 2 zile dinaintea săptămânii) au penalizare 4, iar fiecare
+  folosire anterioară în săptămână adaugă 1,5. Mesele blocate sau începute rămân și contează la repetări.
+- **Totaluri**: suma pe săptămână, media pe zilele cu mese (comparată cu țintele, aceleași toleranțe ca la zi), mâncat,
+  numărul de rețete diferite și repetate.
+- **Copieri**: o masă în orice zi viitoare (din săptămâna afișată și cea următoare; se adaugă, ca neîncepută și neblocată),
+  o zi întreagă (ca la încărcarea unui plan: înlocuiește doar mesele neîncepute și neblocate), săptămâna trecută peste cea afișată.
+- **Săptămâni salvate** (favorite opțional) se încarcă în săptămâna afișată, zi cu zi, după aceeași regulă.
+- Toate operațiile pe mai multe zile se pot anula imediat (zilele se rescriu cum erau).
+- Acțiunile pe o masă (înlocuire, altă rețetă, blocare) folosesc funcțiile din „Ziua mea”, pe ziua respectivă.

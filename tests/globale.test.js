@@ -19,3 +19,10 @@ test('niciun nume global declarat în două fișiere', () => {
   }
   assert.deepEqual(dubluri, []);
 });
+
+test('fiecare script din index.html e în lista de fișiere a service workerului (funcționare offline)', () => {
+  const R = path.join(__dirname, '..');
+  const scripturi = fs.readFileSync(path.join(R, 'index.html'), 'utf8').match(/src="([a-z-]+\.js)/g).map(x => x.slice(5));
+  const sw = fs.readFileSync(path.join(R, 'sw.js'), 'utf8');
+  assert.deepEqual(scripturi.filter(f => !sw.includes(`'${f}'`)), []);
+});
