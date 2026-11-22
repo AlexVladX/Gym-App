@@ -190,13 +190,15 @@ async function stergeSesiuneaIstoric(s) {
 
 // ---------- File în ecranul Progres ----------
 function arataFilaProgres(fila) {
-  for (const f of ['grafice', 'istoric', 'realizari']) {
+  for (const f of ['grafice', 'istoric', 'realizari', 'nutritie']) {
     $(`tab-${f}`).classList.toggle('activ', f === fila);
     $(`tab-${f}`).setAttribute('aria-selected', String(f === fila));
     $(`progres-${f}`).hidden = f !== fila;
   }
   if (fila === 'grafice') {
     reincarcaProgres().catch(err => { console.error(err); notifica('Graficele nu au putut fi încărcate.', 'eroare'); });
+  } else if (fila === 'nutritie') {
+    randeazaAnalizaNutritie().catch(err => { console.error(err); notifica('Analiza nutriției nu a putut fi încărcată.', 'eroare'); });
   } else if (fila === 'realizari') {
     deseneazaRealizari().catch(err => { console.error(err); notifica('Realizările nu au putut fi încărcate.', 'eroare'); });
   } else {
@@ -209,4 +211,5 @@ function initIstoric() {
   $('tab-grafice').addEventListener('click', () => arataFilaProgres('grafice'));
   $('tab-istoric').addEventListener('click', () => arataFilaProgres('istoric'));
   $('tab-realizari').addEventListener('click', () => arataFilaProgres('realizari'));
+  $('tab-nutritie').addEventListener('click', () => arataFilaProgres('nutritie'));
 }

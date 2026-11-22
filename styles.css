@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "29";
+  --versiune-css: "30";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -1545,3 +1545,14 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 #sapt-nav .zi-titlu strong { text-transform: none; }
 .sapt-zi .rand-butoane { flex-wrap: wrap; }
 .sapt-zi .rand-butoane > .btn { min-width: 0; flex: 1 1 auto; }
+
+/* ---------- Progres → Nutriție (etapa 9) ---------- */
+.card-cap-actiuni { display: flex; align-items: center; gap: 4px; }
+.distributie-macro { display: flex; height: 14px; border-radius: 7px; overflow: hidden; margin: var(--s2) 0 6px; background: var(--suprafata-3); }
+.distributie-macro i { display: block; height: 100%; }
+.lista-luni { display: flex; flex-direction: column; }
+.rand-luna { display: grid; grid-template-columns: 1fr auto; gap: 2px var(--s2); padding: 8px 0; border-top: 1px solid var(--bordura); font-size: 14px; }
+.rand-luna span:first-child { text-transform: capitalize; }
+.rand-luna strong { text-align: right; font-variant-numeric: tabular-nums; }
+.rand-luna .nota { grid-column: 1 / -1; margin: 0; font-size: 12px; }
+#ecran-progres > .segment button { font-size: 14px; padding: 0 2px; }

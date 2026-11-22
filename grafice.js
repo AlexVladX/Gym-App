@@ -202,11 +202,14 @@ function deseneaza(canvas, g) {
 }
 
 // Grafic cu bare verticale.
-// bare: [{ eticheta: text sub bară, valoare: număr, detaliu: text pentru eticheta de la atingere, evidentiata: bool }]
-// optiuni: { inaltime } (implicit 170 px)
+// bare: [{ eticheta: text sub bară, valoare: număr, detaliu: text pentru eticheta de la atingere, evidentiata: bool,
+//          umbra?: număr (o bară discretă în spatele barei, ex. planificatul în spatele mâncatului), culoare? }]
+// optiuni: { inaltime } (implicit 170 px), referinta?: { valoare, eticheta } (linie orizontală punctată, ex. ținta),
+//          gol?: textul afișat când toate valorile sunt 0
 function deseneazaBare(canvas, bare, formateaza = formatNumar, optiuni = {}) {
   ataseazaInteractiune(canvas);
-  const g = { tip: 'bare', bare, formateazaY: formateaza, selectat: null, latime: 0, inaltime: optiuni.inaltime || 170 };
+  const g = { tip: 'bare', bare, formateazaY: formateaza, selectat: null, latime: 0, inaltime: optiuni.inaltime || 170,
+    referinta: optiuni.referinta || null, gol: optiuni.gol || null };
   graficeActive.set(canvas, g);
   deseneazaBareIntern(canvas, g);
 }
@@ -215,7 +218,8 @@ function deseneazaBareIntern(canvas, g) {
   const { bare, formateazaY } = g;
   const { ctx, latime, inaltime } = pregatesteCanvas(canvas, g);
   const pad = { l: 8, r: 8, t: 22, b: 24 };
-  const max = Math.max(0, ...bare.map(b => b.valoare));
+  const ref = g.referinta && g.referinta.valoare > 0 ? g.referinta : null;
+  const max = Math.max(0, ...bare.map(b => Math.max(b.valoare, b.umbra || 0)), ref ? ref.valoare * 1.08 : 0);
   const areaL = latime - pad.l - pad.r;
   const areaI = inaltime - pad.t - pad.b;
   const pas = bare.length ? areaL / bare.length : areaL;
@@ -241,7 +245,15 @@ function deseneazaBareIntern(canvas, g) {
     const x = cx - latimeBara / 2;
     const y = inaltime - pad.b - h;
     const selectata = g.selectat === i;
-    ctx.fillStyle = b.evidentiata || selectata ? CULORI_GRAFIC.accent : 'rgba(183,243,74,0.35)';
+    if (b.umbra > 0 && max > 0) {
+      const hu = Math.max(4, b.umbra / max * areaI);
+      ctx.fillStyle = 'rgba(255,255,255,0.10)';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x, inaltime - pad.b - hu, latimeBara, hu, [6, 6, 2, 2]); else ctx.rect(x, inaltime - pad.b - hu, latimeBara, hu);
+      ctx.fill();
+    }
+    ctx.fillStyle = b.culoare || (b.evidentiata || selectata ? CULORI_GRAFIC.accent : 'rgba(183,243,74,0.35)');
+    if (b.culoare && selectata) ctx.fillStyle = '#FFFFFF';
     if (h > 0) {
       ctx.beginPath();
       if (ctx.roundRect) ctx.roundRect(x, y, latimeBara, h, [6, 6, 2, 2]); else ctx.rect(x, y, latimeBara, h);
@@ -256,11 +268,30 @@ function deseneazaBareIntern(canvas, g) {
   });
   ctx.textAlign = 'left';
 
-  if (max === 0) {
+  if (ref && max > 0) {
+    const y = Math.round(inaltime - pad.b - ref.valoare / max * areaI) + 0.5;
+    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(pad.l, y);
+    ctx.lineTo(latime - pad.r, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    if (ref.eticheta) {
+      ctx.font = '600 10px Inter, system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.textAlign = 'right';
+      ctx.fillText(ref.eticheta, latime - pad.r, y - 4);
+      ctx.textAlign = 'left';
+    }
+  }
+
+  if (!bare.some(b => b.valoare > 0 || b.umbra > 0)) {
     ctx.fillStyle = CULORI_GRAFIC.text;
     ctx.textAlign = 'center';
     ctx.font = '12px Inter, system-ui, sans-serif';
-    ctx.fillText('Nicio activitate în această perioadă', latime / 2, pad.t + areaI / 2);
+    ctx.fillText(g.gol || 'Nicio activitate în această perioadă', latime / 2, pad.t + areaI / 2);
     ctx.textAlign = 'left';
   }
 

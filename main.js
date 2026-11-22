@@ -37,7 +37,7 @@ function arataEcran(id) {
   if (id === 'ecran-acasa') randeazaAcasa();
   if (id === 'ecran-biblioteca') { deseneazaFiltre(); randeazaBiblioteca(); }
   if (id === 'ecran-nutritie') randeazaNutritie();
-  if (id === 'ecran-progres') arataFilaProgres(!$('progres-realizari').hidden ? 'realizari' : $('progres-istoric').hidden ? 'grafice' : 'istoric');
+  if (id === 'ecran-progres') arataFilaProgres(!$('progres-nutritie').hidden ? 'nutritie' : !$('progres-realizari').hidden ? 'realizari' : $('progres-istoric').hidden ? 'grafice' : 'istoric');
   if (id === 'ecran-masuratori') reincarcaMasuratori();
   if (id === 'ecran-setari') {
     actualizeazaInfoBackup();

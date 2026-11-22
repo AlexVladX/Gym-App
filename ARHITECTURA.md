@@ -18,6 +18,7 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `nutritie-calcul.js` | Nutriție: calcule (valori din grame, porții, distribuția energiei, etichete, alergeni), fără DOM |
 | `nutritie-zi.js` | Nutriție (etapa 3): ținte (estimare Mifflin-St Jeor), mesele zilei, planificat vs. mâncat, validarea zilelor (fără DOM) |
 | `nutritie-generator.js` | Nutriție (etapa 5): generarea inteligentă a planului zilei — filtre stricte, preferințe, optimizare pe ținte, raport (fără DOM) |
+| `nutritie-analiza.js` | Nutriție (etapa 9): analiza pe perioadă — medii, distribuția macro, săptămâni, luni, obiective, consecvență (fără DOM) |
 | `nutritie-imagini.js` | Nutriție: fotografia rețetei din bibliotecă (Pexels, locală, WebP), atribuirea și imaginea de rezervă |
 | `catalog.js` | Biblioteca unificată: catalog + exercițiile și preferințele tale, grupe, alternative, validarea exercițiilor proprii |
 | `ui.js` | Componente comune: `el`, iconițe, butoane, notificări, dialoguri, stări goale, formatări |
@@ -34,6 +35,7 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `istoric.js` | Istoricul sesiunilor, editare și ștergere |
 | `biblioteca.js` | Ecranul Exerciții: listă, filtre, detalii, formular, reîncadrarea grupei vechi, selectorul rapid, rutine |
 | `nutritie.js` | Ecranul Nutriție: rețete și alimente (listă, filtre, detalii, editor, favorite, poza rețetei) |
+| `nutritie-analiza-ui.js` | Progres → Nutriție: perioade (7/30/90/personalizat), grafice și cardurile analizei |
 | `nutritie-saptamana-ui.js` | Nutriție → Săptămâna: cele 7 zile, totaluri, generarea săptămânii/zilei, copieri, săptămâni salvate |
 | `nutritie-zi-ui.js` | Nutriție → Ziua mea: sumarul zilei, cele 5 mese, stările, adăugarea rețetelor, dialogul țintelor |
 | `backup.js` | Export, restaurare, copii automate, stare stocare, ștergerea datelor |
@@ -359,3 +361,17 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
 - **Săptămâni salvate** (favorite opțional) se încarcă în săptămâna afișată, zi cu zi, după aceeași regulă.
 - Toate operațiile pe mai multe zile se pot anula imediat (zilele se rescriu cum erau).
 - Acțiunile pe o masă (înlocuire, altă rețetă, blocare) folosesc funcțiile din „Ziua mea”, pe ziua respectivă.
+
+### Analiza nutriției (etapa 9)
+
+- Fila **Progres → Nutriție** (și butonul cu grafic din Nutriție → Ziua mea). Perioade: 7, 30, 90 de zile (până azi)
+  sau personalizat (două date; viitorul nu intră). Perioada și nutrientul graficului se rețin (localStorage).
+- Sursa: zilele salvate, cu valorile copiate la adăugare — istoricul nu se schimbă dacă rețeta e editată sau ștearsă.
+- **Mâncat** = doar ce e marcat; mediile de mâncat se fac pe zilele cu ceva notat (o zi fără notări e „necunoscută”, nu 0).
+  Mediile de planificat se fac pe zilele cu plan. Planificat vs mâncat: doar zilele care au ambele.
+- **Obiective**: zi în țintă = mâncat în ±10% din ținta de calorii; proteine atinse = mâncat ≥ țintă − 10 g.
+- **Consecvență**: zile notate / zile din perioadă; mese mâncate complet / mese planificate; seria de zile notate
+  (azi nenotat nu o întrerupe) și cea mai lungă serie.
+- Grafice: pe zile (mâncat, planificatul în spate, linia țintei; calorii sau oricare macro), medii pe săptămână
+  (luni–duminică), procentul zilelor în țintă pe săptămâni. Medii pe lună în listă.
+- `deseneazaBare` acceptă acum `umbra` pe bară și `referinta` (linie punctată), fără să schimbe graficele existente.
