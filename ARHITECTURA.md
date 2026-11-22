@@ -17,6 +17,7 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `nutritie-retete.js` | Nutriție: 150 de rețete, 30 pe fiecare masă (generat de `tools/nutritie/retete.js` din `tools/nutritie/retete/`) |
 | `nutritie-calcul.js` | Nutriție: calcule (valori din grame, porții, distribuția energiei, etichete, alergeni), fără DOM |
 | `nutritie-zi.js` | Nutriție (etapa 3): ținte (estimare Mifflin-St Jeor), mesele zilei, planificat vs. mâncat, validarea zilelor (fără DOM) |
+| `nutritie-generator.js` | Nutriție (etapa 5): generarea inteligentă a planului zilei — filtre stricte, preferințe, optimizare pe ținte, raport (fără DOM) |
 | `nutritie-imagini.js` | Nutriție: fotografia rețetei din bibliotecă (Pexels, locală, WebP), atribuirea și imaginea de rezervă |
 | `catalog.js` | Biblioteca unificată: catalog + exercițiile și preferințele tale, grupe, alternative, validarea exercițiilor proprii |
 | `ui.js` | Componente comune: `el`, iconițe, butoane, notificări, dialoguri, stări goale, formatări |
@@ -68,6 +69,7 @@ Baza `jurnal-antrenament`, versiunea 9:
 - `zileNutritie` (v8) — mesele unei zile, cheie `data` ('AAAA-LL-ZZ'): `{ data, mese: [{ id, masa, idReteta, nume, portii, valoriPortie{kcal, proteine, carbohidrati, grasimi, fibre}, stare: 'neinceput' | 'partial' | 'complet', portiiMancate?, adaugat, modificat }], modificat }`
 - Intrările unei zile au din etapa 4, opțional: `ingredientePortie [[idAliment, grame pe porție]]`, `timp`, `blocat`, `ajustat`.
 - `planuriNutritie` (v9) — planurile de mese salvate, cheie text `u-…`: `{ id, nume, favorit, mese: [{ masa, idReteta, nume, portii, valoriPortie, ingredientePortie?, timp? }], creat, modificat }`. Ștergerea trece prin „Șterse recent”.
+- Setare nouă (etapa 5): `preferinteNutritie { dieta[], alergii[], stil[], excluse[] (id-uri de alimente), preferate[], timpMaxim }`.
 - Setări noi (etapa 3 nutriție): `tinteNutritie { kcal, proteine?, carbohidrati?, grasimi?, fibre?, estimat? }`, `anNastere`, `sex` ('m' | 'f'), `activitate`, `scopNutritie`.
 - Alimentele și rețetele din bibliotecă nu stau în bază: sunt fișiere ale aplicației (se actualizează odată cu ea).
   Id-urile lor nu încep cu `u-`, deci nu se pot amesteca cu ale tale.
@@ -300,3 +302,21 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
   din ingrediente. Intrările mâncate sau parțiale nu se mai modifică (porții, cantități).
 - Un plan salvat păstrează rețetele, porțiile și cantitățile ajustate, fără stări și blocări; la încărcare se aplică
   aceeași regulă ca la generare.
+
+### Generarea inteligentă (etapa 5)
+
+- **Filtre stricte** (nu se relaxează niciodată): alergiile declarate — rețeta e scoasă dacă un ingredient *conține sau poate
+  conține* alergenul; ingredientele excluse; dieta (vegetarian, vegan, fără gluten, fără lactate); timpul maxim.
+  Rețetele cu un ingredient șters se scot (nu putem garanta ce conțin). Se aplică și la „Altă rețetă”.
+  La adăugarea manuală nu blocăm, dar afișăm un avertisment (roșu pentru alergii).
+- **Preferințe** (pot fi încălcate): bogat în proteine, puține calorii, buget, rapid, meal prep, alimente preferate,
+  rețete favorite. Rețetele din ultimele 2 zile sunt penalizate, nu interzise (raportul spune când s-au repetat).
+- **Optimizare**: pentru fiecare masă de generat se alege rețeta și porția (0,5–2, din sfert în sfert) minimizând un scor pe
+  toată ziua: abaterea relativă a caloriilor (la slăbire depășirea cântărește dublu, la masă lipsa ×1,5), proteinele
+  sub țintă (puternic), peste țintă cu mai mult de 4% (slab), carbohidrații și grăsimile, împărțirea caloriilor pe mese
+  (mic dejun 25%, gustări 10%, prânz 30%, cină 25%) și porțiile departe de 1; preferințele scad scorul.
+  24 de porniri aleatorii + îmbunătățire masă cu masă; se alege la întâmplare unul dintre planurile aproape la fel de bune.
+  Mesele blocate sau începute rămân și intră în totaluri.
+- **Raport**: totalurile față de ținte, „în țintă” la calorii ±10%, proteine ±10 g, carbohidrați ±15 g, grăsimi ±10 g,
+  plus explicații: mese fără rețete compatibile (cu motivele excluderii), puține rețete disponibile, repetări, ținte ratate.
+- Fără ținte setate: rețete alese după filtre și preferințe, câte o porție.

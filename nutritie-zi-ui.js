@@ -226,23 +226,59 @@ async function reincarcaPlanurile() {
   planuriMele.sort((a, b) => (b.favorit - a.favorit) || (b.modificat || 0) - (a.modificat || 0));
 }
 
+let raportGenerare = null; // { data, raport } — ultimul raport al generatorului, pentru ziua afișată
+
+function prefNutritie() { return setari.preferinteNutritie || preferinteGoale(); }
+
+function textPreferinte() {
+  const p = prefNutritie();
+  const parti = [`Obiectiv: ${(SCOPURI_NUTRITIE.find(s => s.id === (setari.scopNutritie || 'mentinere')) || {}).nume.toLowerCase()}`];
+  for (const d of p.dieta) parti.push(NUME_SCURT_ETICHETA[d]);
+  if (p.alergii.length) parti.push(`alergii: ${p.alergii.map(a => numeAlergen(a).split(' (')[0].toLowerCase()).join(', ')}`);
+  if (p.timpMaxim) parti.push(`≤ ${p.timpMaxim} min`);
+  if (p.excluse.length) parti.push(`${plural(p.excluse.length, 'aliment exclus', 'alimente excluse')}`);
+  if (p.stil.length) parti.push(`prefer: ${p.stil.map(s => NUME_SCURT_ETICHETA[s].toLowerCase()).join(', ')}`);
+  if (p.preferate.length) parti.push(`${plural(p.preferate.length, 'aliment preferat', 'alimente preferate')}`);
+  return parti.join(' · ');
+}
+
 function deseneazaGeneratorZi() {
   const nr = ziNutritie.mese.length;
   const pastrate = ziNutritie.mese.filter(i => !intrareModificabila(i)).length;
-  $('zi-generator').replaceChildren(
+  const tinte = setari.tinteNutritie;
+  const raport = raportGenerare && raportGenerare.data === dataZiNutritie ? raportGenerare.raport : null;
+  $('zi-generator').replaceChildren(...[
     buton({ text: nr ? 'Generează din nou planul zilei' : 'Generează planul meu de mese', icon: 'zar', tip: 'principal', lat: true, clasa: 'btn-mare', onclick: genereazaZiua }),
-    el('p', { class: 'nota nota-mica', text: nr
-      ? `O rețetă pentru fiecare din cele 5 mese, aleasă la întâmplare din bibliotecă, fără repetări.${pastrate ? ` Mesele blocate sau începute (${pastrate}) rămân neschimbate.` : ' Blochează o masă cu lacătul ca să o păstrezi.'}`
-      : 'Alege la întâmplare câte o rețetă pentru fiecare din cele 5 mese, fără repetări. Favoritele au șanse mai mari.' }),
+    el('p', { class: 'nota nota-mica', text: tinte
+      ? `Alege rețetele și porțiile pentru cele 5 mese ca totalul să se apropie de țintele tale (${fmtNr(tinte.kcal)} kcal${tinte.proteine ? `, ${tinte.proteine} g proteine` : ''}), fără repetări.${pastrate ? ` Mesele blocate sau începute (${pastrate}) rămân și intră în calcul.` : ' Blochează o masă cu lacătul ca să o păstrezi.'}`
+      : 'Fără ținte, rețetele se aleg doar după preferințe (câte o porție). Setează-ți țintele ca planul să se potrivească cu caloriile și proteinele tale.' }),
+    el('button', { type: 'button', class: 'preferinte-rezumat', onclick: deschidePreferinteGenerator }, [
+      iconita('filtru'), el('span', { text: textPreferinte() }), el('b', { text: 'Preferințe' })]),
+    raport ? deseneazaRaport(raport) : null,
     el('div', { class: 'rand-butoane' }, [
       buton({ text: 'Salvează planul', icon: 'descarca', tip: 'secundar', mic: true, onclick: deschideSalvarePlan }),
       buton({ text: `Planuri${planuriMele.length ? ` (${planuriMele.length})` : ''}`, icon: 'lista', eticheta: `Planurile mele${planuriMele.length ? ` (${planuriMele.length})` : ''}`, tip: 'secundar', mic: true, onclick: deschidePlanurile }),
     ]),
-  );
+  ].filter(Boolean));
+}
+
+function deseneazaRaport(raport) {
+  const NUME_C = { kcal: 'Calorii', proteine: 'Proteine', carbohidrati: 'Carbo', grasimi: 'Grăsimi' };
+  return el('div', { class: 'raport-generare' }, [
+    raport.abateri.length ? el('div', { class: 'raport-abateri' }, raport.abateri.map(a => el('span', { class: 'raport-abatere' + (a.inTinta ? ' in-tinta' : '') }, [
+      el('i', { text: a.inTinta ? '✓' : '!' }),
+      `${NUME_C[a.camp]} ${fmtNr(a.valoare)}/${fmtNr(a.tinta)}${a.camp === 'kcal' ? '' : ' g'}`,
+    ]))) : null,
+    ...raport.mesaje.map(m => el('p', { class: `nota nota-mica raport-${m.tip}`, text: m.text })),
+    raport.inTinta ? el('p', { class: 'nota nota-mica', text: 'Planul e în toleranța țintelor (calorii ±10%, proteine ±10 g, carbohidrați ±15 g, grăsimi ±10 g).' }) : null,
+  ].filter(Boolean));
 }
 
 function optiuniGenerator() {
-  return { retete: toateRetetele(), valoriPentru: r => valoriPortie(r, indexNutritie), preferate: new Set(setari.retetePreferate || []), idNou: idNutritieNou };
+  // „Altă rețetă” respectă și ea filtrele stricte (alergii, ingrediente excluse, dietă, timp).
+  const { candidate } = filtreazaReteteGen(toateRetetele(), indexNutritie, prefNutritie());
+  const retete = Object.values(candidate).flat().map(x => x.r);
+  return { retete, valoriPentru: r => valoriPortie(r, indexNutritie), preferate: new Set(setari.retetePreferate || []), idNou: idNutritieNou };
 }
 
 async function genereazaZiua() {
@@ -253,19 +289,24 @@ async function genereazaZiua() {
     if (!da) return;
   }
   const inainte = ziNutritie;
-  const rez = genereazaPlanZi({ zi: ziNutritie, ...optiuniGenerator() });
+  const zile = [];
+  for (const k of [1, 2]) { try { zile.push(await citesteZiNutritie(mutaData(dataZiNutritie, -k))); } catch (_) { /* fără istoric */ } }
+  const rez = genereazaInteligent({ zi: ziNutritie, retete: toateRetetele(), idx: indexNutritie, tinte: setari.tinteNutritie,
+    scop: setari.scopNutritie || 'mentinere', pref: prefNutritie(), recente: reteteRecente(zile, dataZiNutritie),
+    preferateReteta: new Set(setari.retetePreferate || []), idNou: idNutritieNou });
   if (!(await salveazaZiua({ ...ziNutritie, mese: rez.mese }, 'Planul nu a putut fi salvat.'))) return;
+  raportGenerare = { data: dataZiNutritie, raport: rez.raport };
   randeazaZiNutritie();
-  const parti = [];
-  if (rez.pastrate.length) parti.push(`${plural(rez.pastrate.length, 'masă păstrată', 'mese păstrate')}`);
-  if (rez.lipsa.length) parti.push(`fără rețete pentru: ${rez.lipsa.map(numeMasa).join(', ')}`);
-  notifica(`Plan generat${parti.length ? ` (${parti.join('; ')})` : ''}.`, rez.lipsa.length ? 'eroare' : 'succes', 5000,
-    { text: 'Anulează', onclick: async () => { if (await salveazaZiua(inainte)) randeazaZiNutritie(); } });
+  const probleme = rez.raport.mesaje.filter(m => m.tip !== 'info').length;
+  notifica(rez.lipsa.length ? 'Plan generat, dar unele mese au rămas goale. Vezi explicația de sub buton.'
+    : probleme ? 'Plan generat. Nu toate țintele au putut fi atinse; vezi explicația de sub buton.' : 'Plan generat.',
+  rez.lipsa.length ? 'eroare' : 'succes', 5000,
+  { text: 'Anulează', onclick: async () => { raportGenerare = null; if (await salveazaZiua(inainte)) randeazaZiNutritie(); } });
 }
 
 async function regenereazaMasa(i) {
   const noua = regenereazaIntrare({ zi: ziNutritie, idIntrare: i.id, ...optiuniGenerator() });
-  if (!noua) { notifica(`Nu mai există altă rețetă pentru ${numeMasa(i.masa).toLowerCase()} care să nu fie deja în ziua aceasta.`, 'eroare'); return; }
+  if (!noua) { notifica(`Nu mai există altă rețetă pentru ${numeMasa(i.masa).toLowerCase()} care să respecte preferințele stricte și să nu fie deja în ziua aceasta.`, 'eroare'); return; }
   const inainte = ziNutritie;
   if (!(await salveazaZiua(noua))) return;
   randeazaZiNutritie();
@@ -357,6 +398,103 @@ async function incarcaPlanInZi(p) {
   randeazaZiNutritie();
   notifica(`Plan încărcat${rez.sarite.length ? ` (păstrate: ${rez.sarite.map(numeMasa).join(', ')})` : ''}.`, 'succes', 5000,
     { text: 'Anulează', onclick: async () => { if (await salveazaZiua(inainte)) randeazaZiNutritie(); } });
+}
+
+// Avertisment la adăugarea manuală: rețeta încalcă o alergie sau o regulă strictă (adăugarea rămâne decizia ta).
+function avertismentConflicte(r) {
+  const c = conflicteReteta(r, indexNutritie, prefNutritie());
+  const parti = [];
+  if (c.alergii.length) parti.push(`conține sau poate conține ${c.alergii.map(a => numeAlergen(a).split(' (')[0].toLowerCase()).join(', ')} (alergie declarată)`);
+  if (c.excluse.length) parti.push(`are ${c.excluse.map(id => (indexNutritie.get(id) || {}).nume || id).join(', ')} (exclus)`);
+  if (c.dieta.length) parti.push(`nu e ${c.dieta.map(d => NUME_SCURT_ETICHETA[d].toLowerCase()).join(', ')}`);
+  if (c.timp) parti.push(`durează peste ${prefNutritie().timpMaxim} minute`);
+  if (!parti.length) return null;
+  return el('p', { class: 'nota ' + (c.alergii.length ? 'nota-pericol' : 'nota-avertizare'), text: `Atenție: rețeta ${parti.join('; ')}.` });
+}
+
+// ---------- Preferințele generatorului (etapa 5) ----------
+function selectorAlimente(lista, eticheta, laSchimbare) {
+  const cont = el('div', { class: 'selector-alimente' });
+  const input = el('input', { type: 'search', placeholder: 'Caută aliment', autocomplete: 'off', 'aria-label': eticheta });
+  const alese = el('div', { class: 'chipuri chipuri-mici' });
+  const sugestii = el('div', { class: 'chipuri chipuri-mici' });
+  const deseneaza = () => {
+    alese.replaceChildren(...lista.map(id => el('button', { type: 'button', class: 'chip chip-mic activ chip-icon', 'aria-label': `Scoate ${(indexNutritie.get(id) || {}).nume || id}`,
+      onclick: () => { lista.splice(lista.indexOf(id), 1); laSchimbare(); deseneaza(); } }, [el('span', { text: (indexNutritie.get(id) || {}).nume || 'aliment șters' }), iconita('x', 'iconita iconita-mica')])));
+    const cuv = normalizeazaText(input.value).split(/\s+/).filter(Boolean);
+    const potrivite = cuv.length ? toateAlimentele().filter(a => !lista.includes(a.id) && cuv.every(c => normalizeazaText(a.nume).includes(c))).slice(0, 8) : [];
+    sugestii.replaceChildren(...potrivite.map(a => el('button', { type: 'button', class: 'chip chip-mic chip-icon', onclick: () => {
+      lista.push(a.id); input.value = ''; laSchimbare(); deseneaza(); input.focus();
+    } }, [iconita('plus', 'iconita iconita-mica'), el('span', { text: a.nume })])));
+  };
+  input.addEventListener('input', deseneaza);
+  deseneaza();
+  cont.append(alese, el('div', { class: 'cautare mt' }, [iconita('cauta'), input]), sugestii);
+  return cont;
+}
+
+function deschidePreferinteGenerator() {
+  const p = JSON.parse(JSON.stringify(prefNutritie()));
+  let scop = setari.scopNutritie || 'mentinere';
+  const sectiune = (titlu, nota, continut) => el('section', { class: 'pref-sectiune' }, [el('h3', { class: 'detaliu-titlu', text: titlu }), nota ? el('p', { class: 'nota nota-mica', text: nota }) : null, continut]);
+  const grupChip = (optiuni, lista, eticheta) => {
+    const g = el('div', { class: 'chipuri chipuri-mici', role: 'group', 'aria-label': eticheta });
+    const d = () => g.replaceChildren(...optiuni.map(([id, nume]) => el('button', { type: 'button', class: 'chip chip-mic' + (lista.includes(id) ? ' activ' : ''),
+      'aria-pressed': String(lista.includes(id)), text: nume, onclick: () => {
+        if (lista.includes(id)) lista.splice(lista.indexOf(id), 1); else lista.push(id);
+        d();
+      } })));
+    d();
+    return g;
+  };
+  const chipuriScop = el('div', { class: 'chipuri chipuri-mici', role: 'group', 'aria-label': 'Obiectiv' });
+  const dScop = () => chipuriScop.replaceChildren(...SCOPURI_NUTRITIE.map(s => el('button', { type: 'button', class: 'chip chip-mic' + (scop === s.id ? ' activ' : ''),
+    'aria-pressed': String(scop === s.id), text: s.nume, onclick: () => { scop = s.id; dScop(); } })));
+  dScop();
+  const selectTimp = el('select', { 'aria-label': 'Timp maxim de preparare' }, [
+    el('option', { value: '', text: 'Oricât', selected: !p.timpMaxim }),
+    ...TIMPI_MAXIMI.map(t => el('option', { value: String(t), text: `Cel mult ${t} minute`, selected: p.timpMaxim === t })),
+  ]);
+  const numarEl = el('p', { class: 'nota pref-numar' });
+  const actualizeazaNumar = () => {
+    const pr = curataPreferinteNutritie({ ...p, timpMaxim: selectTimp.value ? Number(selectTimp.value) : null });
+    const { candidate } = filtreazaReteteGen(toateRetetele(), indexNutritie, pr);
+    const n = MESE.map(m => `${numeMasa(m.id)}: ${candidate[m.id].length}`);
+    numarEl.textContent = `Rețete disponibile după filtrele stricte — ${n.join(' · ')}`;
+    numarEl.classList.toggle('nota-avertizare', MESE.some(m => candidate[m.id].length === 0));
+  };
+  selectTimp.addEventListener('change', actualizeazaNumar);
+  const cont = el('div', { class: 'formular preferinte-generator' });
+  const observa = () => actualizeazaNumar();
+  cont.addEventListener('click', () => setTimeout(observa, 0));
+  cont.append(
+    sectiune('Obiectiv', 'Masă musculară: prioritate proteinelor. Slăbire: nu depășește caloriile, păstrând proteinele. Menținere: echilibrat.', chipuriScop),
+    sectiune('Alergii (reguli stricte)', 'Rețetele care conțin sau „pot conține” un alergen bifat nu apar niciodată în planurile generate, nici dacă nu se ating țintele.',
+      grupChip(ALERGENI.map(a => [a.id, a.nume.split(' (')[0]]), p.alergii, 'Alergii')),
+    sectiune('Dietă (reguli stricte)', null, grupChip(DIETE_STRICTE.map(d => [d, NUME_SCURT_ETICHETA[d]]), p.dieta, 'Dietă')),
+    sectiune('Timp maxim de preparare (regulă strictă)', null, el('label', { class: 'camp' }, [selectTimp])),
+    sectiune('Ingrediente excluse (reguli stricte)', 'Pentru gusturi, nu pentru alergii: alergiile se bifează mai sus.', selectorAlimente(p.excluse, 'Caută aliment de exclus', observa)),
+    sectiune('Preferințe (contează, dar pot fi încălcate)', null, grupChip(PREFERINTE_STIL.map(s => [s, NUME_SCURT_ETICHETA[s]]), p.stil, 'Preferințe')),
+    sectiune('Alimente preferate', 'Rețetele cu aceste alimente au șanse mai mari.', selectorAlimente(p.preferate, 'Caută aliment preferat', observa)),
+    numarEl,
+    el('p', { class: 'nota nota-mica', text: 'Generatorul potrivește rețete cu ținte; nu e o dietă recomandată medical. Pentru alergii severe verifică mereu eticheta produselor folosite.' }),
+  );
+  actualizeazaNumar();
+  const d = deschideDialog({
+    titlu: 'Preferințe pentru plan',
+    continut: cont,
+    butoane: [
+      buton({ text: 'Renunță', tip: 'fantoma', onclick: () => d.inchide() }),
+      buton({ text: 'Salvează', tip: 'principal', onclick: () => {
+        setari.preferinteNutritie = curataPreferinteNutritie({ ...p, timpMaxim: selectTimp.value ? Number(selectTimp.value) : null });
+        setari.scopNutritie = scop;
+        salveazaSetari();
+        d.inchide();
+        deseneazaGeneratorZi();
+        notifica('Preferințe salvate. Se aplică la următoarea generare.', 'succes');
+      } }),
+    ],
+  });
 }
 
 // ---------- Acțiuni pe intrări ----------
@@ -568,6 +706,7 @@ function deschideAdaugareInZi(r, { masa = r.masa, data = dataZiNutritie } = {}) 
       ]),
       valori,
       lipsa ? el('p', { class: 'nota nota-avertizare', text: 'Unele ingrediente nu mai există în bibliotecă și nu sunt incluse în valori.' }) : null,
+      avertismentConflicte(r),
     ]),
     butoane: [
       buton({ text: 'Renunță', tip: 'fantoma', onclick: () => d.inchide() }),

@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "25";
+  --versiune-css: "26";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -1451,3 +1451,29 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .plan-mese { list-style: none; margin: 4px 0 0; padding: 0; font-size: 13px; display: flex; flex-direction: column; gap: 2px; }
 .plan-mese li { display: grid; grid-template-columns: 84px 1fr; gap: var(--s2); }
 .zi-generator .rand-butoane > .btn { min-width: 0; }
+
+/* ---------- Nutriție → generarea inteligentă (etapa 5) ---------- */
+.nota-pericol { color: var(--pericol); font-weight: 600; }
+.preferinte-rezumat {
+  display: flex; align-items: center; gap: var(--s2); width: 100%; margin-top: var(--s3); padding: var(--s2) var(--s3);
+  border: 1px solid var(--bordura); border-radius: var(--raza); background: var(--suprafata-2); color: var(--text-2);
+  font: inherit; font-size: 13px; text-align: left; cursor: pointer;
+}
+.preferinte-rezumat .iconita { width: 18px; height: 18px; flex: 0 0 auto; color: var(--discret); }
+.preferinte-rezumat span { flex: 1; min-width: 0; }
+.preferinte-rezumat b { color: var(--accent); font-weight: 600; flex: 0 0 auto; }
+.raport-generare { margin-top: var(--s3); padding: var(--s3); border-radius: var(--raza); background: var(--suprafata-2); display: flex; flex-direction: column; gap: 6px; }
+.raport-generare .nota { margin: 0; }
+.raport-abateri { display: flex; flex-wrap: wrap; gap: 6px; }
+.raport-abatere { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; font-size: 12px; font-variant-numeric: tabular-nums;
+  background: rgba(255, 181, 71, 0.14); color: var(--avertizare); }
+.raport-abatere.in-tinta { background: var(--accent-slab); color: var(--accent); }
+.raport-abatere i { font-style: normal; font-weight: 800; }
+.raport-avertizare { color: var(--avertizare); }
+.raport-eroare { color: var(--pericol); }
+.pref-sectiune { margin-bottom: var(--s4); }
+.pref-sectiune .detaliu-titlu { margin: 0 0 4px; }
+.pref-sectiune .nota { margin: 0 0 var(--s2); }
+.pref-numar { font-size: 12px; }
+.selector-alimente .chipuri { margin-top: 6px; }
+.selector-alimente .cautare { margin-top: var(--s2); }
