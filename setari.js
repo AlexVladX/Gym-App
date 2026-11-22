@@ -7,9 +7,11 @@
 // estimare: anNastere, sex ('m' | 'f'), activitate, scopNutritie (vezi nutritie-zi.js). Toate opționale.
 // preferinteNutritie (etapa 5): { dieta[], alergii[], stil[], excluse[], preferate[], timpMaxim } (vezi nutritie-generator.js).
 // mod (Faza 1 din 3.0): 'gym' | 'mealprep' — modul aplicației ales ultima dată (vezi tema.js).
+// cafeleZilnice (Faza 4): cafeaua care se pune singură în fiecare zi (vezi cafea.js); limitaCofeina: mg pe zi (implicit 400, EFSA).
 const SETARI_IMPLICITE = { minRep: 8, maxRep: 12, pasKg: 2.5, ecranAprins: true, pauzaSec: 90, pauzaAutomata: true, semnal: true,
   inaltimeCm: null, obiectiv: null, obiectivSaptamanal: 3, retetePreferate: [],
-  tinteNutritie: null, anNastere: null, sex: null, activitate: null, scopNutritie: null, preferinteNutritie: null, mod: 'gym' };
+  tinteNutritie: null, anNastere: null, sex: null, activitate: null, scopNutritie: null, preferinteNutritie: null, mod: 'gym',
+  cafeleZilnice: [], limitaCofeina: 400 };
 const setari = { ...SETARI_IMPLICITE };
 
 // Corectează valorile venite din stocare sau dintr-un backup; ce nu e valid revine la implicit.
@@ -43,6 +45,8 @@ function curataSetari(sursa) {
   if (sursa.mod === 'gym' || sursa.mod === 'mealprep') rez.mod = sursa.mod;
   const pref = curataPreferinteNutritie(sursa.preferinteNutritie);
   if (pref) rez.preferinteNutritie = pref;
+  if (Array.isArray(sursa.cafeleZilnice)) rez.cafeleZilnice = curataCafeleZilnice(sursa.cafeleZilnice);
+  if (intreg(sursa.limitaCofeina, 50, 1000)) rez.limitaCofeina = sursa.limitaCofeina;
   return rez;
 }
 

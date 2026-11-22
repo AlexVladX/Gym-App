@@ -150,8 +150,14 @@ function combinaHarta(baza, local, server) {
   return r.ok ? { ok: true, valoare: r.valoare } : { ok: false };
 }
 
+// Liste de texte unde doar se adaugă (cafelele zilnice scoase dintr-o zi): reuniune, fără conflict.
+function combinaReuniune(baza, local, server) {
+  const l = Array.isArray(local) ? local : [], s = Array.isArray(server) ? server : [];
+  return { ok: true, valoare: [...new Set([...s, ...l])] };
+}
+
 const SPECIAL_COMBINARE = {
-  zileNutritie: { mese: combinaListaDupaId },
+  zileNutritie: { mese: combinaListaDupaId, cafele: combinaListaDupaId, cafeleSarite: combinaReuniune },
   listeCumparaturi: { cumparate: combinaHarta, eliminate: combinaHarta, cantitati: combinaHarta, personalizate: combinaListaDupaId },
 };
 

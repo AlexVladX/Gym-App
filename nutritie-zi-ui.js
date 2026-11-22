@@ -27,6 +27,8 @@ function titluZi(data) {
 async function incarcaZiNutritie(data = dataZiNutritie) {
   dataZiNutritie = data;
   await reincarcaPlanurile();
+  // Cafeaua zilnică (Faza 4) se scrie în istoric (zilele de până azi) o dată pe zi.
+  await completeazaCafeleZilnice().catch(err => console.warn(err));
   try {
     ziNutritie = await citesteZiNutritie(data);
   } catch (err) {
@@ -52,6 +54,7 @@ async function randeazaZiNutritie({ reincarca = false } = {}) {
   if (reincarca || ziNutritie.data !== dataZiNutritie) await incarcaZiNutritie(dataZiNutritie);
   deseneazaNavZi();
   deseneazaSumarZi();
+  deseneazaCafeaZi();
   deseneazaGeneratorZi();
   deseneazaMeseZi();
   // Acțiunile pe mese pornite din vederea săptămânii folosesc aceleași funcții; după ele, redesenăm săptămâna.

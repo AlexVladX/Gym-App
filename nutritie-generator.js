@@ -169,6 +169,13 @@ function celMaiBunPas(sel, poz, info, ctx) {
   return best;
 }
 
+// Valorile cafelei planificate în zi (cafea.js; în Node se încarcă de acolo).
+function valoriCafeaGen(zi) {
+  if (!zi || !Array.isArray(zi.cafele) || !zi.cafele.length) return { kcal: 0, proteine: 0, carbohidrati: 0, grasimi: 0, fibre: 0 };
+  const f = typeof valoriCafeaPlanificate === 'function' ? valoriCafeaPlanificate : require('./cafea.js').valoriCafeaPlanificate;
+  return f(zi);
+}
+
 function alegeAleatorGen(lista, rng) { return lista[Math.floor(rng() * lista.length)]; }
 
 // zi: ziua curentă (mesele blocate sau începute rămân). retete: toate rețetele (bibliotecă + ale tale).
@@ -182,6 +189,9 @@ function genereazaInteligent({ zi, retete, idx, tinte, scop = 'mentinere', pref,
   const meseCuPastrate = new Set(pastrate.map(i => i.masa));
   const fix = { kcal: 0, proteine: 0, carbohidrati: 0, grasimi: 0 };
   for (const i of pastrate) for (const c of Object.keys(fix)) fix[c] += (i.valoriPortie[c] || 0) * i.portii;
+  // Cafeaua planificată în zi (Faza 4) contează ca deja fixă: mesele completează restul țintei.
+  const cafea = valoriCafeaGen(zi);
+  for (const c of Object.keys(fix)) fix[c] += cafea[c] || 0;
   const { candidate, excluse } = filtreazaReteteGen(retete, idx, p);
   const folositePastrate = new Set(pastrate.map(i => i.idReteta));
   const deGenerat = ORDINE_MESE_GEN.filter(m => !meseCuPastrate.has(m));
@@ -237,16 +247,18 @@ function genereazaInteligent({ zi, retete, idx, tinte, scop = 'mentinere', pref,
   }
   const noi = ales ? ales.sel.map(s => Z.intrareMasa({ id: idNou(), masa: s.masa, reteta: s.info.r, valoriPortieReteta: s.info.v, portii: s.portii, acum })) : [];
   const mese = [...pastrate, ...noi].sort((a, b) => ORDINE_MESE_GEN.indexOf(a.masa) - ORDINE_MESE_GEN.indexOf(b.masa));
-  const raport = raportPlanGen({ mese, tinte: ctx.tinte, candidate, excluse, lipsa, pastrate: [...meseCuPastrate], recente, pref: p, scop });
+  const raport = raportPlanGen({ mese, tinte: ctx.tinte, candidate, excluse, lipsa, pastrate: [...meseCuPastrate], recente, pref: p, scop, cafea });
   return { mese, pastrate: [...meseCuPastrate], lipsa, raport };
 }
 
 // Raportul: totalurile față de ținte, ce e în toleranță și explicațiile.
-function raportPlanGen({ mese, tinte, candidate, excluse, lipsa, pastrate, recente, pref }) {
+function raportPlanGen({ mese, tinte, candidate, excluse, lipsa, pastrate, recente, pref, cafea = null }) {
   const tot = { kcal: 0, proteine: 0, carbohidrati: 0, grasimi: 0, fibre: 0 };
   for (const i of mese) for (const c of Object.keys(tot)) tot[c] += (i.valoriPortie[c] || 0) * i.portii;
+  if (cafea) for (const c of Object.keys(tot)) tot[c] += cafea[c] || 0;
   const abateri = [];
   const mesaje = [];
+  if (cafea && cafea.kcal >= 1) mesaje.push({ tip: 'info', text: `Totalurile includ cafeaua din zi (${Math.round(cafea.kcal)} kcal); mesele au completat restul.` });
   if (tinte) {
     const add = (camp, tinta, toleranta) => {
       if (!(tinta > 0)) return;

@@ -6,7 +6,8 @@
 //   alergeni (cei 14 din UE): gluten, crustacee, oua, peste, arahide, soia, lapte, nuci (fructe cu coajă),
 //            telina, mustar, susan, sulfiti, lupin, moluste
 //   origine animală: carne | peste | lactate | oua | miere | null
-//   extra: { buc: [grame, 'unitate', 'unități'], nota: 'aproximare…', urme: [alergeni posibili] }
+//   extra: { buc: [grame, 'unitate', 'unități'], nota: 'aproximare…', urme: [alergeni posibili],
+//            cofeina: mg la 100 g (din FoodData Central, id-ul în fdc) }
 
 module.exports = [
   // ---------- Carne și pește ----------
@@ -229,6 +230,13 @@ module.exports = [
   ['vanilie', 'Extract de vanilie', '02050', 'altele', 'invizibil', '#6B4423', [], null],
   ['zahar', 'Zahăr', '19335', 'altele', 'pudra', '#FAFAF7', [], null],
   ['zahar-pudra', 'Zahăr pudră', '19336', 'altele', 'pudra', '#FFFFFF', [], null],
+  // ---------- Cafea (Faza 4) ----------
+  // Cofeina (mg/100 g) nu e în ABBREV.txt: e copiată din USDA FoodData Central, SR Legacy (aceleași date SR28),
+  // pagina alimentului cu id-ul fdc de mai jos (nutrientul „Caffeine”).
+  ['cafea-espresso', 'Cafea espresso', '14210', 'altele', 'lichid', '#3B2418', [], null, { cofeina: 212, fdc: 171891 }],
+  ['cafea-filtru', 'Cafea la filtru', '14209', 'altele', 'lichid', '#4A2E1E', [], null, { cofeina: 40, fdc: 171890 }],
+  ['cafea-instant', 'Cafea instant (praf)', '14214', 'altele', 'pudra', '#5A3A24', [], null, { cofeina: 3140, fdc: 171893 }],
+  ['cafea-decaf', 'Cafea decofeinizată la filtru', '14201', 'altele', 'lichid', '#5B3D2A', [], null, { cofeina: 1, fdc: 171889 }],
   ['drojdie', 'Drojdie proaspătă', '18374', 'altele', 'invizibil', '#E3D2A6', [], null],
   ['vin-alb', 'Vin alb sec', '14106', 'altele', 'lichid', '#EFE6B0', ['sulfiti'], null],
   ['cimbru', 'Cimbru uscat', '02042', 'altele', 'verdeata', '#8E9A63', [], null],

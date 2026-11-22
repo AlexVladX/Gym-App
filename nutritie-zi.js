@@ -125,12 +125,25 @@ function portiiMancateIntrare(i) {
 }
 function valoriMancateIntrare(i) { return valoriInmultite(i.valoriPortie, portiiMancateIntrare(i)); }
 
-function totaluriZi(zi) {
+// Cafeaua (Faza 4) e în cafea.js; în Node o încărcăm de acolo.
+function calculeCafea() {
+  if (typeof totalCafeaZi === 'function') return { totalCafeaZi, curataListaCafele, curataCafeleSarite };
+  return require('./cafea.js');
+}
+
+// Totalurile zilei: mesele plus cafeaua (planificat = tot ce e în zi, mâncat = ce ai mâncat și cafeaua băută).
+// numar/terminate numără doar mesele. azi: pentru cafeaua zilnică (băută până azi, planificată în viitor).
+function totaluriZi(zi, azi) {
   let planificat = valoriZero(), mancat = valoriZero();
   const mese = (zi && zi.mese) || [];
   for (const i of mese) {
     planificat = valoriAdunate(planificat, valoriPlanificateIntrare(i));
     mancat = valoriAdunate(mancat, valoriMancateIntrare(i));
+  }
+  if (zi && Array.isArray(zi.cafele) && zi.cafele.length) {
+    const c = calculeCafea().totalCafeaZi(zi, azi);
+    planificat = valoriAdunate(planificat, c.planificat);
+    mancat = valoriAdunate(mancat, c.baut);
   }
   const terminate = mese.filter(i => i.stare === 'complet').length;
   return { planificat, mancat, numar: mese.length, terminate };
@@ -202,7 +215,14 @@ function curataZiNutritie(z) {
   if (!Number.isFinite(Date.parse(z.data + 'T12:00:00'))) return null;
   const mese = Array.isArray(z.mese) ? z.mese.map(curataIntrareMasa).filter(Boolean) : [];
   const vazute = new Set();
-  return { ...z, mese: mese.filter(i => (vazute.has(i.id) ? false : (vazute.add(i.id), true))) };
+  const rez = { ...z, mese: mese.filter(i => (vazute.has(i.id) ? false : (vazute.add(i.id), true))) };
+  // Cafeaua (Faza 4): câmpuri opționale; zilele vechi nu le au.
+  if ('cafele' in z || 'cafeleSarite' in z) {
+    const C = calculeCafea();
+    if ('cafele' in z) rez.cafele = C.curataListaCafele(z.cafele);
+    if ('cafeleSarite' in z) rez.cafeleSarite = C.curataCafeleSarite(z.cafeleSarite);
+  }
+  return rez;
 }
 
 function curataIngredientePortie(lista) {
@@ -357,7 +377,8 @@ function totaluriSaptamana(zile, tinte) {
   const reteteFolosite = new Map();
   for (const zi of zile) {
     const t = totaluriZi(zi);
-    planificat = valoriAdunate(planificat, t.planificat);
+    // Media pe zilele cu mese: o zi doar cu cafea nu intră în planificat (n-ar fi împărțită la nimic).
+    if (t.numar) planificat = valoriAdunate(planificat, t.planificat);
     mancat = valoriAdunate(mancat, t.mancat);
     if (t.numar) cuMese++;
     if (t.mancat.kcal > 0) cuMancare++;

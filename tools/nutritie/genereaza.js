@@ -56,6 +56,11 @@ const alimente = lista.map(([id, nume, ndb, cat, aspect, culoare, alergeni, anim
   if (extra.buc) a.buc = extra.buc;
   if (extra.urme) a.urme = extra.urme;
   if (extra.nota) a.nota = extra.nota;
+  if (extra.cofeina !== undefined) {
+    if (!(Number.isFinite(extra.cofeina) && extra.cofeina >= 0) || !Number.isInteger(extra.fdc)) throw new Error(`${id}: cofeina fără sursă FDC`);
+    a.cofeina = extra.cofeina;
+    a.fdc = extra.fdc;
+  }
   return a;
 });
 

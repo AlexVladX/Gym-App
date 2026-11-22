@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "37";
+  --versiune-css: "38";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -1835,3 +1835,38 @@ html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
 .estimari-reteta ul { margin: 6px 0; padding-left: 18px; }
 .estimari-reteta li { margin-bottom: 4px; }
 .estimari-reteta .nota { margin: 0; }
+
+/* ---------- Faza 4: cafea ---------- */
+.iconita-titlu { width: 20px; height: 20px; vertical-align: -3px; margin-right: 6px; color: var(--accent); }
+.cafea-cofeina { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); flex-wrap: wrap; margin-bottom: 6px; }
+.cafea-cofeina-text strong { font-family: var(--font-cifre); font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.cafea-cofeina-text strong.peste { color: var(--avertizare); }
+.cafea-cofeina-text span { color: var(--discret); font-size: 14px; }
+.cafea-bara { margin-bottom: var(--s3); }
+.zi-bara .cafea-bara-baut { background: #8B5A3C; }
+[data-mod="mealprep"] .zi-bara .cafea-bara-baut { background: #7A4A2E; }
+.cafea-avertizare { display: flex; align-items: flex-start; gap: 4px; margin: 0 0 var(--s2); color: var(--avertizare); }
+.cafea-atentie { color: var(--avertizare); }
+.cafea-lista { list-style: none; margin: 0 0 var(--s3); padding: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.cafea-rand { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--s2); background: var(--suprafata-2); border-radius: var(--raza); padding: var(--s2); }
+.cafea-rand.oprita { opacity: 0.6; }
+.cafea-principal { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: var(--s2); min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.cafea-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--accent-slab); color: var(--accent); }
+.cafea-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cafea-text strong { font-size: 15px; overflow-wrap: anywhere; }
+.cafea-text .nota, .cafea-cifre .nota { margin: 0; font-size: 12px; }
+.cafea-cifre { display: flex; flex-direction: column; align-items: flex-end; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cafea-baut-btn { padding: 0 var(--s3); }
+.cafea-baut-btn.activ { background: var(--accent-slab); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+.cafea-cantitate { width: 110px; flex: none; }
+.cafea-zahar-rapid { margin-bottom: var(--s2); }
+.cafea-zilnica-rand { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); flex-wrap: wrap; }
+.cafea-zilnica-rand .nota { margin: 0; flex: 1; min-width: 160px; }
+.cafea-previzualizare { padding: var(--s3); border-radius: var(--raza-mica); background: var(--suprafata-2); }
+.cafea-previzualizare .nota { margin: 4px 0 0; }
+.cafea-prev-mare strong { font-family: var(--font-cifre); font-size: 22px; font-weight: 800; }
+.card-cafea-acasa .rand-butoane { margin-top: var(--s2); flex-wrap: wrap; }
+@media (max-width: 380px) {
+  .cafea-rand { grid-template-columns: 1fr; }
+  .cafea-baut-btn { width: 100%; }
+}

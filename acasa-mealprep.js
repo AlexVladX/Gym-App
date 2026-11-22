@@ -12,6 +12,7 @@ async function randeazaAcasaMasa() {
   const zile = zileSaptamana(azi);
   let ziAzi, zileSapt, deCumparat = null;
   try {
+    await completeazaCafeleZilnice().catch(err => console.warn(err));
     zileSapt = await Promise.all(zile.map(d => citesteZiNutritie(d)));
     ziAzi = zileSapt[zile.indexOf(azi)];
     deCumparat = await articoleDeCumparat().catch(err => { console.warn(err); return null; });
@@ -24,6 +25,7 @@ async function randeazaAcasaMasa() {
   const tinte = setari.tinteNutritie;
   const carduri = [
     cardCaloriiMasa(ziAzi, tinte),
+    cardCafeaAcasa(ziAzi),
     cardUrmatoareaMasa(ziAzi),
     cardMeseleZilei(ziAzi),
     cardSaptamanaMasa(zile, zileSapt, tinte, azi),

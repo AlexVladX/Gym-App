@@ -430,7 +430,18 @@ function stergeRetetaMea(id, eticheta) {
 // ----- Ziua de nutriție (v8) -----
 async function citesteZiNutritie(data) {
   const z = await cere('zileNutritie', 'readonly', st => st.get(data));
-  return (z && curataZiNutritie(z)) || { data, mese: [] };
+  const zi = (z && curataZiNutritie(z)) || { data, mese: [] };
+  // Cafeaua zilnică (Faza 4) apare în orice zi de la data ei de început; se scrie în bază când salvezi ziua
+  // (sau, pentru zilele de până azi, la completarea istoricului din cafea-ui.js).
+  if (typeof aplicaCafeleZilnice === 'function' && setari.cafeleZilnice && setari.cafeleZilnice.length) {
+    return aplicaCafeleZilnice(zi, setari.cafeleZilnice).zi;
+  }
+  return zi;
+}
+// Ziua exact cum e salvată (fără cafeaua zilnică adăugată în memorie).
+async function citesteZiNutritieSalvata(data) {
+  const z = await cere('zileNutritie', 'readonly', st => st.get(data));
+  return (z && curataZiNutritie(z)) || null;
 }
 function salveazaZiNutritie(zi) {
   return cere('zileNutritie', 'readwrite', st => st.put({ ...zi, modificat: Date.now() }));
