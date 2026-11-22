@@ -15,13 +15,14 @@
 //   pozeRetete   — (v7) poza ta pentru o rețetă (din bibliotecă sau proprie): { id (= id-ul rețetei), imagine Blob, latime, inaltime, creat }
 //   zileNutritie — (v8) mesele unei zile, cheie: data 'AAAA-LL-ZZ' (vezi nutritie-zi.js)
 //   planuriNutritie — (v9) planurile de mese salvate, cheie: id text „u-…” (vezi nutritie-zi.js)
+//   listeCumparaturi — (v10) ce ai făcut pe o listă de cumpărături (bifat, scos, cantități, articole proprii), cheie: 'de_pana'
 //
 // Regula de compatibilitate: înregistrările vechi nu se rescriu niciodată la actualizare.
 // Câmpurile noi sunt opționale și primesc valori implicite la citire.
 
 const DB_NUME = 'jurnal-antrenament';
-const DB_VERSIUNE = 9;
-const STORES_DATE = ['sesiuni', 'exercitii', 'masuratori', 'rutine', 'alimente', 'retete', 'zileNutritie', 'planuriNutritie'];
+const DB_VERSIUNE = 10;
+const STORES_DATE = ['sesiuni', 'exercitii', 'masuratori', 'rutine', 'alimente', 'retete', 'zileNutritie', 'planuriNutritie', 'listeCumparaturi'];
 const MAX_INSTANTANEE = 5;
 
 let bazaPromise = null;
@@ -49,6 +50,7 @@ function deschideBaza() {
       creeaza('pozeRetete', { keyPath: 'id' });
       creeaza('zileNutritie', { keyPath: 'data' });
       creeaza('planuriNutritie', { keyPath: 'id' });
+      creeaza('listeCumparaturi', { keyPath: 'id' });
     };
     cerere.onsuccess = () => {
       const bd = cerere.result;
@@ -207,11 +209,12 @@ async function golesteCosulVechi(acum = Date.now()) {
 async function diagnosticBaza() {
   const brut = {};
   for (const nume of [...STORES_DATE, 'poze', 'pozeRetete', 'cos']) brut[nume] = await cere(nume, 'readonly', st => st.getAll());
-  const [sesiuni, masuratori, rutine, poze, alimente, retete, pozeRetete, zileNutritie, planuriNutritie] = await Promise.all([toateSesiunile(), toateMasuratorile(),
-    toateRutinele(), toatePozele(), toateAlimenteleMele(), toateReteteleMele(), toatePozeleRetetelor(), toateZileleNutritie(), toatePlanurileNutritie()]);
+  const [sesiuni, masuratori, rutine, poze, alimente, retete, pozeRetete, zileNutritie, planuriNutritie, listeCumparaturi] = await Promise.all([toateSesiunile(), toateMasuratorile(),
+    toateRutinele(), toatePozele(), toateAlimenteleMele(), toateReteteleMele(), toatePozeleRetetelor(), toateZileleNutritie(), toatePlanurileNutritie(), cere('listeCumparaturi', 'readonly', st => st.getAll()).then(l => l.map(curataListaCumparaturi).filter(Boolean))]);
   const lizibile = { sesiuni: sesiuni.length, masuratori: masuratori.length, rutine: rutine.length, poze: poze.length,
     exercitii: brut.exercitii.filter(e => e && typeof e.nume === 'string').length, cos: brut.cos.length,
-    alimente: alimente.length, retete: retete.length, pozeRetete: pozeRetete.length, zileNutritie: zileNutritie.length, planuriNutritie: planuriNutritie.length };
+    alimente: alimente.length, retete: retete.length, pozeRetete: pozeRetete.length, zileNutritie: zileNutritie.length, planuriNutritie: planuriNutritie.length,
+    listeCumparaturi: listeCumparaturi.length };
   return Object.fromEntries(Object.keys(brut).map(k => [k, { total: brut[k].length, lizibile: lizibile[k] }]));
 }
 
@@ -411,6 +414,15 @@ async function toateZileleNutritie() {
   return lista.map(curataZiNutritie).filter(Boolean);
 }
 
+// ----- Listele de cumpărături (v10) -----
+async function citesteListaCumparaturi(de, pana) {
+  const l = await cere('listeCumparaturi', 'readonly', st => st.get(`${de}_${pana}`));
+  return (l && curataListaCumparaturi(l)) || stareListaGoala(de, pana);
+}
+function salveazaListaCumparaturi(l) {
+  return cere('listeCumparaturi', 'readwrite', st => st.put({ ...l, modificat: Date.now() }));
+}
+
 // ----- Planurile de mese salvate (v9) -----
 async function toatePlanurileNutritie() {
   const lista = await cere('planuriNutritie', 'readonly', st => st.getAll());
@@ -462,9 +474,9 @@ function scrieMeta(cheie, valoare) {
 // Datele brute din stores (fără setări). Setările se adaugă în backup.js.
 // Citim direct, nu prin funcțiile filtrate de mai sus, ca backupul să conțină tot ce e în bază.
 async function exportaDate() {
-  const [sesiuni, exercitii, masuratori, rutine, alimente, retete, zileNutritie, planuriNutritie] = await Promise.all(
+  const [sesiuni, exercitii, masuratori, rutine, alimente, retete, zileNutritie, planuriNutritie, listeCumparaturi] = await Promise.all(
     STORES_DATE.map(nume => cere(nume, 'readonly', st => st.getAll())));
-  return { sesiuni, exercitii, masuratori, rutine, alimente, retete, zileNutritie, planuriNutritie };
+  return { sesiuni, exercitii, masuratori, rutine, alimente, retete, zileNutritie, planuriNutritie, listeCumparaturi };
 }
 
 // Pozele, așa cum sunt în bază (cu imaginea ca Blob); backup.js le transformă în text pentru fișier.

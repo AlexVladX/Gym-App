@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "30";
+  --versiune-css: "31";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -1556,3 +1556,23 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .rand-luna strong { text-align: right; font-variant-numeric: tabular-nums; }
 .rand-luna .nota { grid-column: 1 / -1; margin: 0; font-size: 12px; }
 #ecran-progres > .segment button { font-size: 14px; padding: 0 2px; }
+
+/* ---------- Nutriție → Lista de cumpărături (etapa 10) ---------- */
+#ecran-nutritie > .segment { padding: 3px; }
+#ecran-nutritie > .segment button { font-size: 13px; padding: 0 1px; letter-spacing: -0.01em; }
+.lista-sumar { margin: 0 0 6px; color: var(--text-2); font-size: 14px; }
+.lista-sumar strong { font-family: var(--font-cifre); font-size: 20px; color: var(--text); font-variant-numeric: tabular-nums; }
+.lista-articole { list-style: none; margin: 0; padding: 0; }
+.articol { display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: var(--s2); padding: 4px 0; border-top: 1px solid var(--bordura); }
+.articol-text { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; min-height: 44px; justify-content: center;
+  padding: 0; border: none; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.articol-nume { font-size: 15px; overflow-wrap: anywhere; }
+.articol-cantitate { font-size: 13px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.articol-cantitate.editat { color: var(--accent); }
+.articol-text .nota { margin: 0; }
+.articol.cumparat .articol-nume { color: var(--discret); text-decoration: line-through; text-decoration-color: rgba(255, 255, 255, 0.3); }
+.articol.cumparat .articol-cantitate { color: var(--discret); }
+.lista-surse { list-style: none; margin: 0 0 var(--s3); padding: 0; font-size: 13px; }
+.lista-surse li { display: flex; flex-direction: column; padding: 6px 0; border-top: 1px solid var(--bordura); }
+.lista-surse .nota { margin: 0; }
+#nutritie-lista .rand-butoane { flex-wrap: wrap; }

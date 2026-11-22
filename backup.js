@@ -105,6 +105,7 @@ function textRezumat(r) {
   if (r.pozeRetete) parti.push(plural(r.pozeRetete, 'poză de rețetă', 'poze de rețete'));
   if (r.zileNutritie) parti.push(plural(r.zileNutritie, 'zi cu mese notate', 'zile cu mese notate'));
   if (r.planuriNutritie) parti.push(plural(r.planuriNutritie, 'plan de mese', 'planuri de mese'));
+  if (r.listeCumparaturi) parti.push(plural(r.listeCumparaturi, 'listă de cumpărături', 'liste de cumpărături'));
   return parti.join(', ');
 }
 
@@ -266,7 +267,7 @@ async function deseneazaStareStocare() {
 async function stergeTot() {
   const text = await cereText({
     titlu: 'Ștergi toate datele?',
-    text: 'Se șterg definitiv toate antrenamentele, măsurătorile, pozele, rutinele, rețetele, alimentele, mesele notate și planurile de mese, antrenamentul în curs, copiile automate și „Șterse recent” de pe acest telefon. Exportă întâi un backup dacă vrei să le păstrezi. Scrie ȘTERGE ca să confirmi.',
+    text: 'Se șterg definitiv toate antrenamentele, măsurătorile, pozele, rutinele, rețetele, alimentele, mesele notate, planurile de mese și listele de cumpărături, antrenamentul în curs, copiile automate și „Șterse recent” de pe acest telefon. Exportă întâi un backup dacă vrei să le păstrezi. Scrie ȘTERGE ca să confirmi.',
     eticheta: 'Confirmare',
     ok: 'Șterge tot', pericol: true, confirmareExacta: 'ȘTERGE',
   });

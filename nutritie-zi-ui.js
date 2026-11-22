@@ -270,6 +270,10 @@ function deseneazaGeneratorZi() {
       buton({ text: 'Salvează planul', icon: 'descarca', tip: 'secundar', mic: true, onclick: deschideSalvarePlan }),
       buton({ text: `Planuri${planuriMele.length ? ` (${planuriMele.length})` : ''}`, icon: 'lista', eticheta: `Planurile mele${planuriMele.length ? ` (${planuriMele.length})` : ''}`, tip: 'secundar', mic: true, onclick: deschidePlanurile }),
     ]),
+    nr ? buton({ text: 'Lista de cumpărături pentru ziua asta', icon: 'lista', tip: 'fantoma', mic: true, lat: true, onclick: () => {
+      perioadaLista = dataZiNutritie === dataLocala() ? 'azi' : dataZiNutritie === mutaData(dataLocala(), 1) ? 'maine' : 'zi';
+      arataFilaNutritie('lista');
+    } }) : null,
   ].filter(Boolean));
 }
 

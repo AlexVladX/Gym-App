@@ -19,6 +19,7 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `nutritie-zi.js` | Nutriție (etapa 3): ținte (estimare Mifflin-St Jeor), mesele zilei, planificat vs. mâncat, validarea zilelor (fără DOM) |
 | `nutritie-generator.js` | Nutriție (etapa 5): generarea inteligentă a planului zilei — filtre stricte, preferințe, optimizare pe ținte, raport (fără DOM) |
 | `nutritie-analiza.js` | Nutriție (etapa 9): analiza pe perioadă — medii, distribuția macro, săptămâni, luni, obiective, consecvență (fără DOM) |
+| `nutritie-cumparaturi.js` | Nutriție (etapa 10): lista de cumpărături — adună ingredientele meselor neîncepute pe aliment, categorii, rotunjire, suprapune bifele/scoaterile/cantitățile tale, export text (fără DOM) |
 | `nutritie-imagini.js` | Nutriție: fotografia rețetei din bibliotecă (Pexels, locală, WebP), atribuirea și imaginea de rezervă |
 | `catalog.js` | Biblioteca unificată: catalog + exercițiile și preferințele tale, grupe, alternative, validarea exercițiilor proprii |
 | `ui.js` | Componente comune: `el`, iconițe, butoane, notificări, dialoguri, stări goale, formatări |
@@ -36,6 +37,7 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `biblioteca.js` | Ecranul Exerciții: listă, filtre, detalii, formular, reîncadrarea grupei vechi, selectorul rapid, rutine |
 | `nutritie.js` | Ecranul Nutriție: rețete și alimente (listă, filtre, detalii, editor, favorite, poza rețetei) |
 | `nutritie-analiza-ui.js` | Progres → Nutriție: perioade (7/30/90/personalizat), grafice și cardurile analizei |
+| `nutritie-cumparaturi-ui.js` | Nutriție → Listă: perioade (azi/mâine/restul săptămânii/săptămâna viitoare), bife, scoatere cu anulare, cantități modificate, articole proprii, export/copiere |
 | `nutritie-saptamana-ui.js` | Nutriție → Săptămâna: cele 7 zile, totaluri, generarea săptămânii/zilei, copieri, săptămâni salvate |
 | `nutritie-zi-ui.js` | Nutriție → Ziua mea: sumarul zilei, cele 5 mese, stările, adăugarea rețetelor, dialogul țintelor |
 | `backup.js` | Export, restaurare, copii automate, stare stocare, ștergerea datelor |
@@ -375,3 +377,10 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
 - Grafice: pe zile (mâncat, planificatul în spate, linia țintei; calorii sau oricare macro), medii pe săptămână
   (luni–duminică), procentul zilelor în țintă pe săptămâni. Medii pe lună în listă.
 - `deseneazaBare` acceptă acum `umbra` pe bară și `referinta` (linie punctată), fără să schimbe graficele existente.
+
+## Lista de cumpărături (etapa 10)
+
+- Lista **nu se salvează gata făcută**: la fiecare afișare se reconstruiește din zilele din `zileNutritie`, deci urmează orice schimbare a planului (înlocuire, porții, ingrediente ajustate, mese generate).
+- Intră doar mesele **neîncepute**; cele mâncate sau începute sunt numărate separat și semnalate. Mesele fără ingrediente cunoscute (rețetă ștearsă) sunt semnalate, nu ghicite.
+- Store-ul `listeCumparaturi` (DB v10, cheie `de_pana`) ține doar ce ai făcut tu pe lista unui interval: `cumparate`, `eliminate` (pe id de aliment), `cantitati` ({grame, laPlan} — dacă planul cere acum altă cantitate decât la momentul editării, apare „planul cere acum …”), `personalizate` (articole proprii). Intră în backup/restaurare.
+- Cantitățile din plan sunt grame de ingrediente crude, rotunjite în sus (5 g / 10 g / 50 g); alimentele cu bucăți arată și numărul de bucăți. Cantitatea scrisă de tine se afișează exact.

@@ -148,7 +148,7 @@ async function verificaDatele() {
   }
   const nume = { sesiuni: 'Antrenamente', masuratori: 'Măsurători', rutine: 'Rutine', exercitii: 'Exerciții folosite', poze: 'Poze',
     retete: 'Rețetele tale', alimente: 'Alimentele tale', pozeRetete: 'Poze de rețete', zileNutritie: 'Zile cu mese notate',
-    planuriNutritie: 'Planuri de mese', cos: 'Șterse recent' };
+    planuriNutritie: 'Planuri de mese', listeCumparaturi: 'Liste de cumpărături', cos: 'Șterse recent' };
   const probleme = Object.entries(d).filter(([k, v]) => k !== 'cos' && v.total !== v.lizibile);
   rez.replaceChildren(
     el('div', { class: 'tabel-compara' }, Object.entries(nume).map(([k, n]) => el('div', { class: 'tabel-compara-rand verificare' }, [

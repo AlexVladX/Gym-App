@@ -9,6 +9,7 @@
 //                             și, din modulul de nutriție, opțional alimente, retete, pozeRetete (ignorate de versiunile vechi)
 //                             și, din etapa 3 a nutriției, opțional zileNutritie (mesele zilelor; vezi nutritie-zi.js)
 //                             și, din etapa 4, opțional planuriNutritie (planurile de mese salvate)
+//                             și, din etapa 10, opțional listeCumparaturi (bifele și articolele tale de pe liste)
 // Câmpurile necunoscute ale fiecărei înregistrări se păstrează (compatibilitate înainte).
 
 const VERSIUNE_BACKUP = 3;
@@ -249,11 +250,15 @@ function valideazaBackup(brut) {
     const curataPlan = typeof curataPlanNutritie === 'function' ? curataPlanNutritie : require('./nutritie-zi.js').curataPlanNutritie;
     date.planuriNutritie = unicDupaId(curata(brut.planuriNutritie, curataPlan));
   }
+  if (Array.isArray(brut.listeCumparaturi)) {
+    const curataLista = typeof curataListaCumparaturi === 'function' ? curataListaCumparaturi : require('./nutritie-cumparaturi.js').curataListaCumparaturi;
+    date.listeCumparaturi = unicDupaId(curata(brut.listeCumparaturi, curataLista));
+  }
   if (brut.setari && typeof brut.setari === 'object' && !Array.isArray(brut.setari)) date.setari = brut.setari;
 
   const lung = x => (Array.isArray(x) ? x.length : 0);
   const total = brut.sesiuni.length + brut.exercitii.length + brut.masuratori.length +
-    lung(brut.rutine) + lung(brut.poze) + lung(brut.alimente) + lung(brut.retete) + lung(brut.pozeRetete) + lung(brut.zileNutritie) + lung(brut.planuriNutritie);
+    lung(brut.rutine) + lung(brut.poze) + lung(brut.alimente) + lung(brut.retete) + lung(brut.pozeRetete) + lung(brut.zileNutritie) + lung(brut.planuriNutritie) + lung(brut.listeCumparaturi);
   if (total > 0 && ignorate === total) {
     return { ok: false, eroare: 'Nicio înregistrare din fișier nu a putut fi citită. Fișierul pare deteriorat.' };
   }
@@ -272,6 +277,7 @@ function valideazaBackup(brut) {
       pozeRetete: date.pozeRetete ? date.pozeRetete.length : null,
       zileNutritie: date.zileNutritie ? date.zileNutritie.length : null,
       planuriNutritie: date.planuriNutritie ? date.planuriNutritie.length : null,
+      listeCumparaturi: date.listeCumparaturi ? date.listeCumparaturi.length : null,
       exportat: typeof brut.exportat === 'string' ? brut.exportat : null,
     },
   };

@@ -114,6 +114,11 @@ function deseneazaActiuniSapt() {
     el('button', { type: 'button', class: 'preferinte-rezumat', onclick: deschidePreferinteGenerator }, [iconita('filtru'), el('span', { text: textPreferinte() }), el('b', { text: 'Preferințe' })]),
     el('div', { class: 'rand-butoane' }, [
       buton({ text: 'Copiază săpt. trecută', icon: 'copiaza', tip: 'secundar', mic: true, onclick: copiazaSaptamanaTrecuta }),
+      buton({ text: 'Cumpărături', icon: 'lista', tip: 'secundar', mic: true, eticheta: 'Lista de cumpărături pentru săptămâna afișată', onclick: () => {
+        const z = zileCurente();
+        perioadaLista = z.includes(dataLocala()) ? 'restul' : z[0] === zileSaptamana(mutaData(dataLocala(), 7))[0] ? 'urmatoare' : 'restul';
+        arataFilaNutritie('lista');
+      } }),
     ]),
     el('div', { class: 'rand-butoane' }, [
       buton({ text: 'Salvează', icon: 'descarca', tip: 'secundar', mic: true, eticheta: 'Salvează săptămâna', onclick: deschideSalvareSaptamana }),
