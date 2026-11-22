@@ -18,6 +18,7 @@ const VASE = ['farfurie', 'bol', 'pahar', 'borcan', 'tocator'];
 
 const FOTO = require('./foto.js');
 const FOTO_COMMONS = require('./foto-commons.js');
+const FOTO_UNSPLASH = require('./foto-unsplash.js');
 const idx = c.indexAlimente(ALIMENTE_BAZA);
 const toate = [];
 const erori = [];
@@ -36,6 +37,12 @@ for (const [masaFisier, fisier] of SURSE) {
         pagina: slug ? `https://www.pexels.com/photo/${slug}-${idSursa}/` : `https://www.pexels.com/photo/${idSursa}/` };
       if (autor) reteta.foto.autor = autor;
       if (profil) reteta.foto.profil = `https://www.pexels.com/@${profil}/`;
+      if (!fs.existsSync(path.join(__dirname, '..', '..', reteta.foto.fisier))) erori.push(`${r.id}: lipsește ${reteta.foto.fisier}`);
+    } else if (FOTO_UNSPLASH[r.id]) {
+      const [idSursa, slug, autor, profil] = FOTO_UNSPLASH[r.id];
+      reteta.foto = { fisier: `foto-retete/${r.id}.webp`, furnizor: 'Unsplash', idSursa,
+        pagina: `https://unsplash.com/photos/${slug}`, autor, profil: `https://unsplash.com/@${profil}`,
+        licenta: 'Licența Unsplash', linkLicenta: 'https://unsplash.com/license' };
       if (!fs.existsSync(path.join(__dirname, '..', '..', reteta.foto.fisier))) erori.push(`${r.id}: lipsește ${reteta.foto.fisier}`);
     } else if (FOTO_COMMONS[r.id]) {
       const [fisierCommons, autor, licenta, linkLicenta] = FOTO_COMMONS[r.id];
@@ -70,7 +77,7 @@ for (const [masaFisier, fisier] of SURSE) {
     toate.push(reteta);
   }
 }
-for (const id of [...Object.keys(FOTO), ...Object.keys(FOTO_COMMONS)]) if (!toate.some(r => r.id === id)) erori.push(`foto: rețeta ${id} nu există`);
+for (const id of [...Object.keys(FOTO), ...Object.keys(FOTO_COMMONS), ...Object.keys(FOTO_UNSPLASH)]) if (!toate.some(r => r.id === id)) erori.push(`foto: rețeta ${id} nu există`);
 if (erori.length) { console.error(erori.join('\n')); process.exit(1); }
 
 if (process.argv.includes('--raport')) {

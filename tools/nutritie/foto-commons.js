@@ -30,4 +30,6 @@ module.exports = {
   'ro-bors-legume': ['Borscht_with_potatoes,_cabbage_and_beans.jpg', 'Kagor', 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/'],
   'md-orez-cu-lapte': ['Arroz_con_leche_espolvoreado_con_canela_molida.jpg', 'Juan Emilio Prades Bel', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/'],
   'ro-ciorba-radauteana-light': ['Ciorba_radauteana.jpg', 'Romaniancook', 'CC BY-SA 4.0', 'https://creativecommons.org/licenses/by-sa/4.0/'],
+  'md-tofu-scramble': ['Tofu_scr.jpg', 'rusvaplauke', 'CC BY 2.0', 'https://creativecommons.org/licenses/by/2.0/'],
+  'ci-tortilla-spaniola': ['Tortilla_de_Patatas_(Corte_transversal).jpg', 'Tamorlan', 'CC BY-SA 3.0', 'https://creativecommons.org/licenses/by-sa/3.0/'],
 };

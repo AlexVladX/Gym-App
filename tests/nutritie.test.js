@@ -189,11 +189,17 @@ test('fotografiile rețetelor: fișiere WebP 800×600 existente, unice, cu surs�
     const f = im.fotoReteta(r);
     assert.ok(f, r.id);
     assert.equal(f.fisier, `foto-retete/${r.id}.webp`);
-    assert.ok(['Pexels', 'Wikimedia Commons'].includes(f.furnizor), r.id);
+    assert.ok(['Pexels', 'Wikimedia Commons', 'Unsplash'].includes(f.furnizor), r.id);
     if (f.furnizor === 'Pexels') {
       assert.match(f.idSursa, /^\d+$/);
       assert.ok(f.pagina.startsWith('https://www.pexels.com/photo/') && f.pagina.endsWith(`${f.idSursa}/`), r.id);
       if (f.profil) assert.ok(f.autor && f.profil.startsWith('https://www.pexels.com/@'), r.id);
+    } else if (f.furnizor === 'Unsplash') {
+      // doar fotografii gratuite (licența Unsplash), cu autor, profil și pagina originală
+      assert.ok(f.autor && f.profil.startsWith('https://unsplash.com/@'), r.id);
+      assert.ok(f.pagina.startsWith('https://unsplash.com/photos/') && f.pagina.endsWith(f.idSursa), r.id);
+      assert.equal(f.linkLicenta, 'https://unsplash.com/license');
+      assert.equal(im.textAtribuire(f), `Foto: ${f.autor} / Unsplash · Licența Unsplash`);
     } else {
       // licențele CC cer autorul, licența cu link și linkul la original
       assert.ok(f.autor && f.licenta && f.linkLicenta.startsWith('https://creativecommons.org/'), r.id);
