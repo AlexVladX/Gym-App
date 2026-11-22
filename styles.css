@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "21";
+  --versiune-css: "23";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -1344,3 +1344,27 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
   .camp-grame { width: 64px; }
 }
 .editor-reteta .camp .camp-scurt { flex: 0 0 auto !important; width: 96px; }
+
+/* Fotografiile rețetelor: cadru 4:3, colțuri rotunjite de la card, decupare fără deformare, încărcare animată. */
+.card-reteta-imagine, .reteta-imagine-mare { position: relative; }
+.reteta-imagine { aspect-ratio: 4 / 3; height: auto; object-fit: cover; object-position: center; background: var(--suprafata-2); }
+.reteta-imagine.se-incarca {
+  background: linear-gradient(100deg, var(--suprafata-2) 30%, var(--suprafata-3) 50%, var(--suprafata-2) 70%) 0 0 / 300% 100%;
+  animation: imagine-incarcare 1.3s ease-in-out infinite;
+  color: transparent;
+}
+@keyframes imagine-incarcare { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .reteta-imagine.se-incarca { animation: none; } }
+.reteta-imagine:not(.se-incarca) { animation: imagine-apare 260ms ease both; }
+@keyframes imagine-apare { from { opacity: 0; } to { opacity: 1; } }
+.card-reteta-imagine::after {
+  content: ""; position: absolute; inset: auto 0 0 0; height: 28%;
+  background: linear-gradient(to top, rgba(11, 13, 16, 0.35), transparent); pointer-events: none;
+}
+.atribuire-foto { margin: calc(-1 * var(--s2)) 0 var(--s3); text-align: right; }
+.atribuire-foto a { color: var(--discret); text-decoration: none; }
+.atribuire-foto a:hover, .atribuire-foto a:focus-visible { color: var(--text-2); text-decoration: underline; }
+
+/* Rețetă fără fotografie: rând cu invitația de a adăuga poza ta */
+.fara-foto { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 10px 0 4px; }
+.fara-foto .nota { margin: 0; flex: 1 1 180px; }

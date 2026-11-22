@@ -1,5 +1,5 @@
 // Ecranul Nutriție: biblioteca de rețete și de alimente, rețetele și alimentele tale, favoritele și pozele rețetelor.
-// Calculele sunt în nutritie-calcul.js, ilustrațiile în nutritie-ilustratii.js, datele de bază în
+// Calculele sunt în nutritie-calcul.js, imaginile (fotografii, rezervă) în nutritie-imagini.js, datele de bază în
 // nutritie-alimente.js (USDA SR28) și nutritie-retete.js.
 
 let alimenteMele = [];
@@ -66,26 +66,27 @@ function comutaPreferata(id) {
   return acum;
 }
 
-// Imaginea unei rețete: poza ta, dacă ai pus una; altfel ilustrația desenată din ingrediente.
-// Ilustrația se generează doar când cardul ajunge pe ecran (lista are 150+ rețete).
-let observatorImagini = null;
+// Imaginea unei rețete: poza ta, dacă ai pus una; altfel fotografia din bibliotecă; altfel imaginea de rezervă.
+// Fotografiile se încarcă doar când ajung aproape de ecran (loading="lazy"); până atunci cadrul are o
+// animație de încărcare. Dacă fișierul nu se poate încărca (ex. offline, înainte să fi fost văzut o dată),
+// se afișează imaginea de rezervă, nu un spațiu gol.
 function imagineReteta(r, clasa = 'reteta-imagine') {
+  const rezerva = () => urlImagineRezerva(numeMasa(r.masa));
   const poza = pozeRetetaUrl.get(r.id);
-  const img = el('img', { class: clasa, alt: '', decoding: 'async' });
+  const f = fotoReteta(r);
+  const img = el('img', { class: clasa, alt: f ? r.nume : '', decoding: 'async', loading: 'lazy',
+    width: String(FOTO_LATIME), height: String(FOTO_INALTIME) });
   if (poza) { img.src = poza; img.classList.add('poza-proprie'); return img; }
-  if (!('IntersectionObserver' in window)) { img.src = urlIlustratieReteta(r, indexNutritie); return img; }
-  if (!observatorImagini) {
-    observatorImagini = new IntersectionObserver(intrari => {
-      for (const i of intrari) {
-        if (!i.isIntersecting) continue;
-        const t = i.target;
-        observatorImagini.unobserve(t);
-        if (t._reteta) { t.src = urlIlustratieReteta(t._reteta, indexNutritie); t._reteta = null; }
-      }
-    }, { rootMargin: '300px 0px' });
-  }
-  img._reteta = r;
-  observatorImagini.observe(img);
+  if (!f) { img.src = rezerva(); img.classList.add('imagine-rezerva'); return img; }
+  img.classList.add('se-incarca');
+  img.addEventListener('load', () => img.classList.remove('se-incarca'), { once: true });
+  img.addEventListener('error', () => {
+    img.classList.remove('se-incarca');
+    img.classList.add('imagine-rezerva');
+    img.alt = '';
+    img.src = rezerva();
+  }, { once: true });
+  img.src = `./${f.fisier}?v=${versiuneIlustratii()}`;
   return img;
 }
 
@@ -304,6 +305,16 @@ function arataReteta(id, portiiAlese) {
 
   const continut = el('div', { class: 'detaliu-reteta' }, [
     el('div', { class: 'reteta-imagine-mare' }, [imagineReteta(r, 'reteta-imagine')]),
+    !pozeRetetaUrl.has(r.id) && fotoReteta(r)
+      ? el('p', { class: 'nota nota-mica atribuire-foto' }, [
+        el('a', { href: fotoReteta(r).pagina, target: '_blank', rel: 'noopener', text: textAtribuire(fotoReteta(r)) })])
+      : null,
+    // Rețetă fără fotografie: invitație vizibilă chiar sub imaginea de rezervă să pui poza ta.
+    !pozeRetetaUrl.has(r.id) && !fotoReteta(r)
+      ? el('div', { class: 'fara-foto' }, [
+        el('p', { class: 'nota nota-mica', text: 'Rețeta nu are încă fotografie. Poți pune o poză făcută de tine.' }),
+        buton({ text: 'Adaugă poza ta', icon: 'incarca', tip: 'principal', mic: true, onclick: () => d.inchide(() => alegePozaReteta(r.id)) })])
+      : null,
     el('div', { class: 'detaliu-cap' }, [
       el('div', { class: 'detaliu-etichete' }, [
         el('span', { class: 'eticheta-grupa', text: numeMasa(r.masa) }),
@@ -341,7 +352,7 @@ function arataReteta(id, portiiAlese) {
     note.length ? el('details', { class: 'note-sursa' }, [el('summary', { text: 'Note despre valori' }), ...note.map(n => el('p', { class: 'nota', text: n }))]) : null,
     el('p', { class: 'nota nota-mica', text: `Valori calculate din cantitățile ingredientelor (${SURSA_NUTRITIE.scurt}${alimenteMele.length ? ' și alimentele tale' : ''}). Sunt estimări.` }),
     el('div', { class: 'rand-butoane mt' }, [
-      buton({ text: pozeRetetaUrl.has(r.id) ? 'Schimbă poza' : 'Adaugă poza ta', icon: 'incarca', tip: 'secundar', mic: true, onclick: () => d.inchide(() => alegePozaReteta(r.id)) }),
+      !pozeRetetaUrl.has(r.id) && !fotoReteta(r) ? null : buton({ text: pozeRetetaUrl.has(r.id) ? 'Schimbă poza' : 'Înlocuiește cu poza ta', icon: 'incarca', tip: 'secundar', mic: true, onclick: () => d.inchide(() => alegePozaReteta(r.id)) }),
       pozeRetetaUrl.has(r.id) ? buton({ text: 'Scoate poza', icon: 'cos', tip: 'fantoma', mic: true, onclick: () => d.inchide(() => stergePozaRetetei(r)) }) : null,
     ]),
   ]);

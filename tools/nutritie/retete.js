@@ -12,6 +12,7 @@ const SURSE = [['mic-dejun', 'mic-dejun.js'], ['gustare-1', 'gustare-1.js'], ['p
   ['gustare-2', 'gustare-2.js'], ['cina', 'cina.js']];
 const VASE = ['farfurie', 'bol', 'pahar', 'borcan', 'tocator'];
 
+const FOTO = require('./foto.js');
 const idx = c.indexAlimente(ALIMENTE_BAZA);
 const toate = [];
 const erori = [];
@@ -21,6 +22,16 @@ for (const [masa, fisier] of SURSE) {
   for (const r of require(cale)) {
     const reteta = { id: r.id, nume: r.nume, masa, descriere: r.descriere, timp: r.timp, portii: r.portii,
       dificultate: r.dificultate, vas: r.vas, etichete: r.etichete, ingrediente: r.ingrediente, pasi: r.pasi };
+    if (FOTO[r.id]) {
+      const [idSursa, slug, autor, profil] = FOTO[r.id];
+      // slug/autor/profil pot lipsi: pagina /photo/<id>/ redirecționează la pagina completă a fotografiei,
+      // iar fără autor cunoscut atribuirea afișează doar „Foto: Pexels”.
+      reteta.foto = { fisier: `foto-retete/${r.id}.webp`, furnizor: 'Pexels', idSursa,
+        pagina: slug ? `https://www.pexels.com/photo/${slug}-${idSursa}/` : `https://www.pexels.com/photo/${idSursa}/` };
+      if (autor) reteta.foto.autor = autor;
+      if (profil) reteta.foto.profil = `https://www.pexels.com/@${profil}/`;
+      if (!fs.existsSync(path.join(__dirname, '..', '..', reteta.foto.fisier))) erori.push(`${r.id}: lipsește ${reteta.foto.fisier}`);
+    }
     const e = (m) => erori.push(`${r.id}: ${m}`);
     if (!/^[a-z0-9-]+$/.test(r.id || '')) e('id invalid');
     if (toate.some(x => x.id === r.id)) e('id dublu');
@@ -38,6 +49,7 @@ for (const [masa, fisier] of SURSE) {
     toate.push(reteta);
   }
 }
+for (const id of Object.keys(FOTO)) if (!toate.some(r => r.id === id)) erori.push(`foto.js: rețeta ${id} nu există`);
 if (erori.length) { console.error(erori.join('\n')); process.exit(1); }
 
 if (process.argv.includes('--raport')) {

@@ -6,7 +6,9 @@ const { ALIMENTE_BAZA, SURSA_NUTRITIE } = require('../nutritie-alimente.js');
 const { RETETE_BAZA } = require('../nutritie-retete.js');
 const c = require('../nutritie-calcul.js');
 const v = require('../validare.js');
-const il = require('../nutritie-ilustratii.js');
+const im = require('../nutritie-imagini.js');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const idx = c.indexAlimente(ALIMENTE_BAZA);
 const aproape = (x, y, eps = 1e-6) => assert.ok(Math.abs(x - y) < eps, `${x} ≠ ${y}`);
@@ -178,18 +180,45 @@ test('backupul: nutriția se restaurează doar dacă e în fișier', () => {
   assert.deepEqual([nou.rezumat.alimente, nou.rezumat.retete, nou.rezumat.pozeRetete], [1, 1, 1]);
 });
 
-test('ilustrațiile: SVG determinist, diferit de la o rețetă la alta, ingredientele invizibile ignorate', () => {
-  const r = RETETE_BAZA.find(x => x.id === 'pr-pui-orez-broccoli');
-  const a = il.svgReteta(r, idx);
-  assert.match(a, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 160 120">/);
-  assert.ok(a.endsWith('</svg>'));
-  assert.equal(il.svgReteta(r, idx), a);
-  const toate = new Set(RETETE_BAZA.map(x => il.svgReteta(x, idx)));
-  assert.equal(toate.size, RETETE_BAZA.length);
-  assert.ok(!/NaN|undefined/.test([...toate].join('')));
-  const viz = il.ingredienteVizibile(r, idx).map(x => x.id);
-  assert.ok(viz.includes('pui-piept') && viz.includes('orez') && !viz.includes('sare') && !viz.includes('ulei-masline'));
-  // O rețetă proprie cu un aliment necunoscut se desenează fără erori.
-  assert.match(il.svgReteta({ id: 'u-x', vas: 'bol', ingrediente: [['nu-exista', 10]] }, idx), /<\/svg>$/);
-  assert.match(il.urlIlustratieReteta(r, idx), /^data:image\/svg\+xml;charset=utf-8,/);
+test('fotografiile rețetelor: fișiere WebP 800×600 existente, unice, cu sursă (autor când e cunoscut)', () => {
+  const cuFoto = RETETE_BAZA.filter(r => r.foto);
+  assert.ok(cuFoto.length >= 6);
+  const fisiere = new Set(), surse = new Set();
+  for (const r of cuFoto) {
+    const f = im.fotoReteta(r);
+    assert.ok(f, r.id);
+    assert.equal(f.fisier, `foto-retete/${r.id}.webp`);
+    assert.equal(f.furnizor, 'Pexels');
+    assert.match(f.idSursa, /^\d+$/);
+    assert.ok(f.pagina.startsWith('https://www.pexels.com/photo/') && f.pagina.endsWith(`${f.idSursa}/`), r.id);
+    if (f.profil) assert.ok(f.autor && f.profil.startsWith('https://www.pexels.com/@'), r.id);
+    // aceeași fotografie nu se folosește pentru două rețete
+    assert.ok(!fisiere.has(f.fisier) && !surse.has(f.idSursa), r.id);
+    fisiere.add(f.fisier); surse.add(f.idSursa);
+    // fișierul: WebP (RIFF....WEBP), dimensiuni 800×600 din antetul VP8/VP8L/VP8X
+    const b = fs.readFileSync(path.join(__dirname, '..', f.fisier));
+    assert.equal(b.toString('ascii', 0, 4), 'RIFF');
+    assert.equal(b.toString('ascii', 8, 12), 'WEBP');
+    const tip = b.toString('ascii', 12, 16);
+    let w, h;
+    if (tip === 'VP8X') { w = 1 + b.readUIntLE(24, 3); h = 1 + b.readUIntLE(27, 3); }
+    else if (tip === 'VP8 ') { w = b.readUInt16LE(26) & 0x3fff; h = b.readUInt16LE(28) & 0x3fff; }
+    else { const v = b.readUInt32LE(21); w = (v & 0x3fff) + 1; h = ((v >> 14) & 0x3fff) + 1; }
+    assert.deepEqual([w, h], [im.FOTO_LATIME, im.FOTO_INALTIME], r.id);
+    assert.ok(b.length < 150 * 1024, `${r.id}: ${b.length} B`);
+  }
+  // fiecare fișier din foto-retete/ aparține unei rețete
+  for (const n of fs.readdirSync(path.join(__dirname, '..', 'foto-retete'))) assert.ok(fisiere.has(`foto-retete/${n}`), n);
+});
+
+test('imaginea de rezervă și validarea referinței foto', () => {
+  assert.equal(im.fotoReteta({ id: 'x' }), null);
+  assert.equal(im.fotoReteta({ foto: { fisier: 'https://altundeva.com/a.jpg' } }), null);
+  assert.equal(im.fotoReteta({ foto: { fisier: '../secret.webp' } }), null);
+  const u = im.urlImagineRezerva('Prânz');
+  assert.match(u, /^data:image\/svg\+xml;charset=utf-8,/);
+  assert.ok(decodeURIComponent(u).includes('PRÂNZ'));
+  assert.ok(!decodeURIComponent(im.urlImagineRezerva('<script>')).includes('<script>'));
+  assert.equal(im.textAtribuire({ autor: 'Ana', furnizor: 'Pexels' }), 'Foto: Ana / Pexels');
+  assert.equal(im.textAtribuire(null), '');
 });
