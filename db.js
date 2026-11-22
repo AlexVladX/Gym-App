@@ -21,7 +21,7 @@
 // Câmpurile noi sunt opționale și primesc valori implicite la citire.
 
 const DB_NUME = 'jurnal-antrenament';
-const DB_VERSIUNE = 10;
+const DB_VERSIUNE = 11;
 const STORES_DATE = ['sesiuni', 'exercitii', 'masuratori', 'rutine', 'alimente', 'retete', 'zileNutritie', 'planuriNutritie', 'listeCumparaturi'];
 const MAX_INSTANTANEE = 5;
 
@@ -51,9 +51,19 @@ function deschideBaza() {
       creeaza('zileNutritie', { keyPath: 'data' });
       creeaza('planuriNutritie', { keyPath: 'id' });
       creeaza('listeCumparaturi', { keyPath: 'id' });
+      // v11 (Gym App 3.0, Faza 2): sincronizarea cu contul. „sincron” = harta ultimei sincronizări
+      // (amprentă + versiune din cloud pentru fiecare înregistrare), „conflicte” = ce așteaptă alegerea ta.
+      creeaza('sincron', { keyPath: 'k' });
+      creeaza('conflicte', { keyPath: 'k' });
+      // Înregistrările cu cheie numerică locală primesc un id comun tuturor dispozitivelor („uid”).
+      for (const nume of ['sesiuni', 'masuratori', 'rutine', 'poze']) {
+        const st = cerere.transaction.objectStore(nume);
+        if (!st.indexNames.contains('uid')) st.createIndex('uid', 'uid', { unique: false });
+      }
     };
     cerere.onsuccess = () => {
       const bd = cerere.result;
+      urmaresteScrierile(bd);
       // Dacă aplicația e deschisă și în alt tab cu o versiune mai nouă, închidem conexiunea veche.
       bd.onversionchange = () => { bd.close(); bazaPromise = null; };
       rezolva(bd);
@@ -61,6 +71,22 @@ function deschideBaza() {
     cerere.onerror = () => { bazaPromise = null; respinge(cerere.error); };
     cerere.onblocked = () => console.warn('Actualizarea bazei de date așteaptă închiderea altui tab.');
   });
+}
+
+// Orice scriere terminată într-un store sincronizat anunță sincronizarea (cloud.js), care o trimite
+// după câteva secunde, dacă ești conectat la cont. Scrierile făcute chiar de sincronizare sunt marcate și nu contează.
+const STORES_SINCRONIZATE = new Set(['sesiuni', 'masuratori', 'rutine', 'poze', 'exercitii', 'alimente', 'retete', 'pozeRetete', 'zileNutritie', 'planuriNutritie', 'listeCumparaturi']);
+function urmaresteScrierile(bd) {
+  const original = bd.transaction.bind(bd);
+  bd.transaction = (stores, mod, ...rest) => {
+    const t = original(stores, mod, ...rest);
+    if (mod === 'readwrite' && [].concat(stores).some(s => STORES_SINCRONIZATE.has(s))) {
+      t.addEventListener('complete', () => {
+        if (!t.__dinSincron && typeof semnaleazaModificare === 'function') semnaleazaModificare();
+      });
+    }
+    return t;
+  };
 }
 
 function baza() {
@@ -538,9 +564,10 @@ function citesteInstantaneu(id) {
 // ----- Ștergerea tuturor datelor -----
 async function stergeToateDatele() {
   const bd = await baza();
-  const toate = [...STORES_DATE, 'ciorna', 'instantanee', 'meta', 'poze', 'pozeRetete', 'cos'];
+  const toate = [...STORES_DATE, 'ciorna', 'instantanee', 'meta', 'poze', 'pozeRetete', 'cos', 'sincron', 'conflicte'];
   return new Promise((rezolva, respinge) => {
     const tranzactie = bd.transaction(toate, 'readwrite');
+    tranzactie.__dinSincron = true; // ștergerea de pe telefon nu se trimite în cont
     for (const nume of toate) tranzactie.objectStore(nume).clear();
     tranzactie.oncomplete = () => rezolva();
     tranzactie.onerror = () => respinge(tranzactie.error);

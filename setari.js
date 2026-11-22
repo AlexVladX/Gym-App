@@ -60,6 +60,7 @@ function salveazaSetari() {
     localStorage.setItem('setari', JSON.stringify(setari));
     localStorage.setItem('pauzaSec', String(setari.pauzaSec)); // compatibil cu versiunea veche
   } catch (_) { /* stocare indisponibilă: setările rămân până la închidere */ }
+  if (typeof semnaleazaModificare === 'function') semnaleazaModificare();
 }
 
 function setariPentruBackup() {

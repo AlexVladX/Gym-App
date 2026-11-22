@@ -126,7 +126,8 @@ async function restaureaza(brut, sursa) {
     text: `${sursa}${exportat} conține ${textRezumat(rezumat)}. Datele actuale de pe telefon vor fi înlocuite.` +
       (ignorate ? ` Atenție: ${ignorate === 1 ? 'o înregistrare deteriorată va fi ignorată' : `${plural(ignorate, 'înregistrare', 'înregistrări deteriorate')} vor fi ignorate`}.` : '') +
       (pastrate.length ? ` Backupul nu conține ${pastrate.join(', ')}; acestea rămân cum sunt acum pe telefon.` : '') +
-      ' Înainte de restaurare se face automat o copie a datelor actuale, pe care o poți recupera din Setări.',
+      ' Înainte de restaurare se face automat o copie a datelor actuale, pe care o poți recupera din Setări.' +
+      (typeof sinc !== 'undefined' && sinc.utilizator && citesteMetaSincron().legat ? ' Ești conectat la cont: datele restaurate se sincronizează și pe celelalte dispozitive.' : ''),
     ok: 'Restaurează', pericol: true,
   });
   if (!da) return false;
@@ -269,7 +270,9 @@ async function deseneazaStareStocare() {
 async function stergeTot() {
   const text = await cereText({
     titlu: 'Ștergi toate datele?',
-    text: 'Se șterg definitiv toate antrenamentele, măsurătorile, pozele, rutinele, rețetele, alimentele, mesele notate, planurile de mese și listele de cumpărături, antrenamentul în curs, copiile automate și „Șterse recent” de pe acest telefon. Exportă întâi un backup dacă vrei să le păstrezi. Scrie ȘTERGE ca să confirmi.',
+    text: 'Se șterg definitiv toate antrenamentele, măsurătorile, pozele, rutinele, rețetele, alimentele, mesele notate, planurile de mese și listele de cumpărături, antrenamentul în curs, copiile automate și „Șterse recent” de pe acest telefon. Exportă întâi un backup dacă vrei să le păstrezi.' +
+      (typeof sinc !== 'undefined' && sinc.utilizator ? ' Ești conectat la cont: te deconectăm de pe acest telefon, iar datele din cont rămân neatinse (le poți aduce înapoi intrând din nou în cont).' : '') +
+      ' Scrie ȘTERGE ca să confirmi.',
     eticheta: 'Confirmare',
     ok: 'Șterge tot', pericol: true, confirmareExacta: 'ȘTERGE',
   });
@@ -277,6 +280,11 @@ async function stergeTot() {
   try {
     clearTimeout(timerCiorna);
     timerCiorna = null;
+    // Cu contul conectat, ștergerea NU trebuie să plece în cloud: întâi deconectarea și uitarea legăturii.
+    if (typeof sinc !== 'undefined' && sinc.utilizator) {
+      await contDeconectare().catch(err => console.warn(err));
+    }
+    if (typeof scrieMetaSincron === 'function') scrieMetaSincron({});
     await stergeToateDatele();
   } catch (err) {
     console.error(err);

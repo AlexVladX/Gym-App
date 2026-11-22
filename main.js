@@ -52,6 +52,7 @@ function arataEcran(id) {
   if (id === 'ecran-progres') arataFilaProgres(!$('progres-realizari').hidden ? 'realizari' : $('progres-istoric').hidden ? 'grafice' : 'istoric');
   if (id === 'ecran-masuratori') reincarcaMasuratori();
   if (id === 'ecran-setari') {
+    deseneazaCardCont();
     actualizeazaInfoBackup();
     deseneazaInstantanee();
     deseneazaStareStocare();
@@ -115,6 +116,7 @@ async function initializeaza() {
   verificaAntrenamentNeterminat();
 
   // În fundal, fără să întârzie afișarea:
+  pornesteCloud().catch(err => console.warn('Contul nu a pornit', err));
   cerePersistenta();
   copieAutomataSaptamanala();
 }
