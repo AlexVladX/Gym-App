@@ -14,9 +14,9 @@ const idx = c.indexAlimente(ALIMENTE_BAZA);
 const aproape = (x, y, eps = 1e-6) => assert.ok(Math.abs(x - y) < eps, `${x} ≠ ${y}`);
 
 test('biblioteca: cele 150 de rețete inițiale (30 pe masă) plus cele românești, cu toate câmpurile', () => {
-  const ro = RETETE_BAZA.filter(r => r.bucatarie === 'romaneasca');
+  const ro = RETETE_BAZA.filter(r => r.id.startsWith('ro-'));
   assert.equal(RETETE_BAZA.length, 150 + ro.length);
-  for (const m of c.MESE) assert.equal(RETETE_BAZA.filter(r => r.masa === m.id && r.bucatarie !== 'romaneasca').length, 30, m.id);
+  for (const m of c.MESE) assert.equal(RETETE_BAZA.filter(r => r.masa === m.id && !r.id.startsWith('ro-')).length, 30, m.id);
   assert.equal(new Set(RETETE_BAZA.map(r => r.id)).size, RETETE_BAZA.length);
   assert.equal(new Set(RETETE_BAZA.map(r => r.nume.toLowerCase())).size, RETETE_BAZA.length);
   for (const r of RETETE_BAZA) {
@@ -184,7 +184,7 @@ test('backupul: nutriția se restaurează doar dacă e în fișier', () => {
 test('fotografiile rețetelor: fișiere WebP 800×600 existente, unice, cu sursă (autor când e cunoscut)', () => {
   const cuFoto = RETETE_BAZA.filter(r => r.foto);
   assert.ok(cuFoto.length >= 6);
-  const fisiere = new Set(), surse = new Set();
+  const fisiere = new Set(), surse = new Map();
   for (const r of cuFoto) {
     const f = im.fotoReteta(r);
     assert.ok(f, r.id);
@@ -200,9 +200,12 @@ test('fotografiile rețetelor: fișiere WebP 800×600 existente, unice, cu surs�
       assert.ok(f.pagina.startsWith('https://commons.wikimedia.org/wiki/File:'), r.id);
       assert.match(im.textAtribuire(f), new RegExp(`${f.autor} / Wikimedia Commons · ${f.licenta.replace(/\./g, '\\.')}$`));
     }
-    // aceeași fotografie nu se folosește pentru două rețete
-    assert.ok(!fisiere.has(f.fisier) && !surse.has(f.idSursa), r.id);
-    fisiere.add(f.fisier); surse.add(f.idSursa);
+    // aceeași fotografie nu se folosește pentru două rețete diferite
+    // (excepție: variantele aceluiași fel, ex. rădăuțeană clasică/light)
+    const grup = r.varianta ? r.varianta.grup : r.id;
+    assert.ok(!fisiere.has(f.fisier), r.id);
+    assert.ok(!surse.has(f.idSursa) || surse.get(f.idSursa) === grup, r.id);
+    fisiere.add(f.fisier); surse.set(f.idSursa, grup);
     // fișierul: WebP (RIFF....WEBP), dimensiuni 800×600 din antetul VP8/VP8L/VP8X
     const b = fs.readFileSync(path.join(__dirname, '..', f.fisier));
     assert.equal(b.toString('ascii', 0, 4), 'RIFF');

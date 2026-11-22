@@ -40,6 +40,13 @@ module.exports = [
   ['pui-pulpa-piele', 'Pulpe de pui cu piele', '05075', 'carne', 'carne', '#E0B08A', [], 'carne',
     { nota: 'Cantitatea din rețete e partea comestibilă (carne și piele, fără os).' }],
 
+  ['porc-piept', 'Piept de porc (cu șorici)', '10005', 'carne', 'carne', '#E3B9A0', [], 'carne'],
+  ['ciolan-afumat', 'Ciolan afumat (partea comestibilă)', '10150', 'carne', 'carne', '#B86A50', [], 'carne',
+    { nota: 'Aproximare: USDA nu are ciolan afumat; s-au folosit valorile pentru jambon afumat (carne și grăsime). Cantitatea din rețete e fără os și șorici.' }],
+  ['vita-rasol', 'Rasol de vită (fluier)', '13227', 'carne', 'carne', '#9A5040', [], 'carne', { nota: 'Cantitatea din rețete e carnea fără os.' }],
+  ['burta-vita', 'Burtă de vită', '13341', 'carne', 'fasii', '#EDE4D3', [], 'carne'],
+  ['ficat-miel', 'Ficat de miel', '17199', 'carne', 'carne', '#7A3030', [], 'carne'],
+
   // ---------- Lactate și ouă ----------
   ['ou', 'Ouă', '01123', 'lactate', 'ou', '#F6C744', ['oua'], 'oua', { buc: [50, 'ou', 'ouă'] }],
   ['albus', 'Albuș de ou', '01124', 'lactate', 'omleta', '#F7F3E8', ['oua'], 'oua'],
@@ -91,6 +98,9 @@ module.exports = [
   ['popcorn', 'Popcorn (fără ulei, nesărat)', '19806', 'cereale', 'popcorn', '#F7F0DA', [], null],
   ['cartofi', 'Cartofi', '11352', 'legume', 'cartof', '#E6C47A', [], null],
   ['cartof-dulce', 'Cartof dulce', '11507', 'legume', 'cartof', '#E8894A', [], null],
+
+  ['foi-placinta', 'Foi de plăcintă (phyllo)', '18338', 'cereale', 'invizibil', '#F1E6CF', ['gluten'], null],
+  ['pesmet', 'Pesmet', '18079', 'cereale', 'pudra', '#D9B47A', ['gluten'], null],
 
   // ---------- Legume ----------
   ['broccoli', 'Broccoli', '11090', 'legume', 'buchete', '#4C9A3A', [], null],
@@ -148,6 +158,9 @@ module.exports = [
 
   ['telina-radacina', 'Rădăcină de țelină', '11141', 'legume', 'cuburi', '#E8E1C8', ['telina'], null],
 
+  ['fasole-uscata', 'Fasole albă boabe (uscată)', '16049', 'legume', 'boabe', '#EFE9DA', [], null],
+  ['dovleac-placinta', 'Dovleac de plăcintă', '11422', 'legume', 'cuburi', '#F0A040', [], null],
+
   // ---------- Fructe ----------
   ['avocado', 'Avocado', '09037', 'fructe', 'avocado', '#8DB255', [], null, { buc: [136, 'avocado', 'avocado'] }],
   ['banana', 'Banană', '09040', 'fructe', 'rondele', '#F5D76E', [], null, { buc: [118, 'banană', 'banane'] }],
@@ -173,6 +186,8 @@ module.exports = [
   ['rodie', 'Rodie (boabe)', '09286', 'fructe', 'bile-mici', '#C2273F', [], null],
   ['pepene', 'Pepene roșu', '09326', 'fructe', 'cuburi', '#F25C6B', [], null],
   ['cocos', 'Nucă de cocos răzuită', '12108', 'fructe', 'ras', '#F7F2E8', [], null],
+
+  ['visine', 'Vișine (fără sâmburi)', '09063', 'fructe', 'bile-mici', '#A8182E', [], null],
 
   // ---------- Nuci și semințe ----------
   ['migdale', 'Migdale', '12061', 'nuci', 'nuci', '#C08A55', ['nuci'], null],

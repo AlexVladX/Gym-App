@@ -215,6 +215,8 @@ module.exports = [
     id: 'md-orez-cu-lapte', nume: 'Orez cu lapte și stafide',
     descriere: 'Orez fiert încet în lapte, cu vanilie, scorțișoară și stafide.',
     timp: 30, portii: 1, dificultate: 'usor', vas: 'bol', etichete: ['buget'],
+    numeEn: 'Romanian rice pudding', fel: 'desert', bucatarie: 'romaneasca', timpPregatire: 5, timpGatire: 25,
+    gatit: { greutateGatita: 380, nota: 'Estimare: orezul absoarbe apa, laptele scade ≈20% la fiert.' },
     ingrediente: [['orez', 50], ['lapte', 300], ['vanilie', 2], ['scortisoara', 1], ['stafide', 20]],
     pasi: ['Fierbe orezul în 100 ml apă până o absoarbe.', 'Adaugă laptele și fierbe 20 de minute la foc mic, amestecând des.',
       'Adaugă vanilia și stafidele; servește cu scorțișoară.'],

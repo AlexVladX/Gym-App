@@ -137,6 +137,8 @@ module.exports = [
     id: 'pr-iahnie-fasole', nume: 'Iahnie de fasole',
     descriere: 'Fasole albă cu ceapă călită, morcov, pastă de roșii și boia, cu pâine. 4 porții. Fără produse animale.',
     timp: 40, portii: 4, dificultate: 'usor', vas: 'farfurie', etichete: ['meal-prep', 'buget'],
+    numeEn: 'Romanian white bean stew', fel: 'fel-principal', bucatarie: 'romaneasca', timpPregatire: 10, timpGatire: 30,
+    gatit: { greutateGatita: 1400, nota: 'Estimare: ingredientele (≈1,5 kg, fasole din conservă) plus 200 ml apă, minus ≈20% evaporare; pâinea inclusă. O porție ≈ 350 g.' },
     ingrediente: [['fasole-alba', 800], ['ceapa', 300], ['morcovi', 150], ['pasta-rosii', 60], ['ulei', 30], ['boia', 4], ['sare', 4], ['paine-integrala', 128]],
     pasi: ['Călește ceapa și morcovul ras în ulei, 10 minute.', 'Adaugă pasta de roșii, boiaua și 200 ml apă.',
       'Adaugă fasolea scursă și fierbe 15 minute.', 'Servește caldă sau rece, cu pâine.'],
