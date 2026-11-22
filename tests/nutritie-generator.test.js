@@ -142,3 +142,68 @@ test('preferințele: validare și conflictele unei rețete', () => {
   assert.deepEqual(conf.dieta, ['vegetarian']);
   assert.equal(conf.timp, r.timp > 10);
 });
+
+// ---------- Etapa 6: înlocuirea inteligentă ----------
+const PLAN6 = g.genereazaInteligent({ zi: ZI_GOALA, retete: RETETE_BAZA, idx, tinte: { kcal: 2600, proteine: 150, carbohidrati: 300, grasimi: 80 },
+  scop: 'mentinere', rng: rngFix(21), idNou: idGen(), porniri: 12 });
+
+test('înlocuire: alternative din aceeași masă, fără rețete deja în zi, ordonate după asemănare', () => {
+  for (const i of PLAN6.mese) {
+    const a = g.alternativeInlocuire({ intrare: i, zi: PLAN6, retete: RETETE_BAZA, idx, pref: g.preferinteGoale() });
+    const inZi = new Set(PLAN6.mese.map(x => x.idReteta));
+    for (const alt of [...a.potrivite, ...a.apropiate]) {
+      assert.equal(alt.r.masa, i.masa);
+      assert.ok(!inZi.has(alt.r.id));
+      assert.ok(g.PORTII_GEN.includes(alt.portii));
+    }
+    for (let k = 1; k < a.potrivite.length; k++) assert.ok(a.potrivite[k - 1].rang >= a.potrivite[k].rang);
+    // „potrivite” înseamnă toate cele 4 valori în toleranță; valorile sunt chiar ale rețetei × porția sugerată
+    for (const alt of a.potrivite) {
+      assert.ok(alt.toate);
+      assert.ok(Math.abs(alt.dif.kcal) <= Math.max(a.tinta.kcal * 0.1, 20));
+      assert.ok(Math.abs(alt.dif.proteine) <= 10 && Math.abs(alt.dif.carbohidrati) <= 15 && Math.abs(alt.dif.grasimi) <= 10);
+      const v = c.valoriPortie(alt.r, idx);
+      assert.ok(Math.abs(alt.valori.kcal - v.kcal * alt.portii) < 1e-6);
+    }
+    assert.ok(a.potrivite.length >= 1, `${i.masa}: cel puțin o alternativă potrivită`);
+  }
+});
+
+test('înlocuire: filtrele stricte se respectă', () => {
+  const pref = g.curataPreferinteNutritie({ alergii: ['lapte'], dieta: ['vegetarian'] });
+  for (const i of PLAN6.mese) {
+    const a = g.alternativeInlocuire({ intrare: i, zi: PLAN6, retete: RETETE_BAZA, idx, pref, toateMesele: true });
+    for (const alt of [...a.potrivite, ...a.apropiate]) {
+      const al = c.alergeniReteta(alt.r, idx);
+      assert.ok(!al.contine.includes('lapte') && !al.urme.includes('lapte'), alt.r.id);
+      assert.ok(c.eticheteReteta(alt.r, idx).includes('vegetarian'), alt.r.id);
+    }
+  }
+});
+
+test('înlocuire: aceeași masă are prioritate; „toate mesele” adaugă și alte rețete', () => {
+  const i = PLAN6.mese[2];
+  const doar = g.alternativeInlocuire({ intrare: i, zi: PLAN6, retete: RETETE_BAZA, idx, pref: g.preferinteGoale() });
+  const toate = g.alternativeInlocuire({ intrare: i, zi: PLAN6, retete: RETETE_BAZA, idx, pref: g.preferinteGoale(), toateMesele: true });
+  assert.ok(toate.totalCandidate > doar.totalCandidate);
+  // la scor egal, rețetele aceleiași mese sunt înaintea celorlalte (penalizare de rang)
+  const alte = toate.potrivite.filter(a => !a.aceeasiMasa);
+  for (const a of alte) assert.equal(a.rang, a.scor - 15);
+});
+
+test('înlocuire: fără potriviri reale nu se pretinde o potrivire', () => {
+  // o intrare imposibilă: 3000 kcal la o gustare
+  const i = { ...PLAN6.mese[1], valoriPortie: { kcal: 3000, proteine: 5, carbohidrati: 10, grasimi: 330, fibre: 0 }, portii: 1 };
+  const a = g.alternativeInlocuire({ intrare: i, zi: PLAN6, retete: RETETE_BAZA, idx, pref: g.preferinteGoale() });
+  assert.equal(a.potrivite.length, 0);
+  assert.ok(a.apropiate.every(x => !x.toate && x.scor < 75));
+});
+
+test('asemănarea: 100 pentru identic, 75 la limita toleranțelor', () => {
+  const t = { kcal: 500, proteine: 30, carbohidrati: 50, grasimi: 20 };
+  assert.equal(g.comparaValori({ ...t }, t).scor, 100);
+  const limita = g.comparaValori({ kcal: 550, proteine: 40, carbohidrati: 65, grasimi: 30 }, t);
+  assert.equal(limita.scor, 75);
+  assert.equal(limita.toate, true);
+  assert.equal(g.comparaValori({ kcal: 560, proteine: 30, carbohidrati: 50, grasimi: 20 }, t).toate, false);
+});

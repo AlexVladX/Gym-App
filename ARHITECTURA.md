@@ -320,3 +320,16 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
 - **Raport**: totalurile față de ținte, „în țintă” la calorii ±10%, proteine ±10 g, carbohidrați ±15 g, grăsimi ±10 g,
   plus explicații: mese fără rețete compatibile (cu motivele excluderii), puține rețete disponibile, repetări, ținte ratate.
 - Fără ținte setate: rețete alese după filtre și preferințe, câte o porție.
+
+### Înlocuirea inteligentă (etapa 6)
+
+- Butonul **Înlocuiește** apare doar pe mesele neîncepute și neblocate („Altă rețetă” rămâne alegerea la întâmplare).
+- Alternativele: rețete care respectă filtrele stricte (etapa 5), nu sunt deja în zi și nu sunt rețeta înlocuită;
+  întâi din aceeași masă (opțional și din celelalte mese, cu o penalizare de rang de 15).
+- Pentru fiecare se alege porția (0,5–2) cu valorile cele mai apropiate de masa înlocuită (porțiile × valorile ei).
+- **Asemănarea** (0–100): 100 − 25 × RMS ponderat al abaterilor raportate la toleranțe (calorii ±10%, min. 20 kcal;
+  proteine ±10 g; carbohidrați ±15 g; grăsimi ±10 g; ponderi 1,5 / 1,2 / 1 / 1). 75 = fiecare valoare la limita toleranței.
+- „Se potrivește” = toate patru în toleranță. Dacă nicio rețetă nu se potrivește, mesajul spune asta direct și arată
+  cel mult 3 cele mai apropiate (asemănare ≥ 40), marcate ca neechivalente.
+- La alegere poți ajusta porția (din sfert în sfert) cu comparația actualizată; înlocuirea păstrează celelalte mese,
+  refuză o masă care între timp a fost blocată sau începută și se poate anula imediat.

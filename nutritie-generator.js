@@ -285,10 +285,70 @@ function raportPlanGen({ mese, tinte, candidate, excluse, lipsa, pastrate, recen
   return { totaluri: tot, abateri, mesaje, inTinta: abateri.length > 0 && abateri.every(a => a.inTinta) };
 }
 
+// ---------- Etapa 6: înlocuirea inteligentă a unei mese ----------
+// Alternativele pentru o intrare din zi: rețete care respectă filtrele stricte, nu sunt deja în zi și au valori
+// cât mai apropiate de intrarea înlocuită (la porția cea mai potrivită, 0,5–2). Țintele de potrivire (flexibile):
+// calorii ±10%, proteine ±10 g, carbohidrați ±15 g, grăsimi ±10 g.
+// Scorul de asemănare (0–100): 100 = identic; 75 = fiecare valoare exact la limita toleranței.
+const CAMPURI_POTRIVIRE = ['kcal', 'proteine', 'carbohidrati', 'grasimi'];
+function tolerantaCamp(camp, tinta) {
+  if (camp === 'kcal') return Math.max(tinta * TOLERANTE_GEN.kcalProcent, 20);
+  return TOLERANTE_GEN[camp];
+}
+
+function comparaValori(valori, tinta) {
+  const dif = {}, inToleranta = {};
+  let suma = 0;
+  for (const c of CAMPURI_POTRIVIRE) {
+    dif[c] = valori[c] - tinta[c];
+    const t = tolerantaCamp(c, tinta[c]);
+    inToleranta[c] = Math.abs(dif[c]) <= t;
+    suma += (dif[c] / t) ** 2 * (c === 'kcal' ? 1.5 : c === 'proteine' ? 1.2 : 1);
+  }
+  const rms = Math.sqrt(suma / 4.7);
+  return { dif, inToleranta, toate: CAMPURI_POTRIVIRE.every(c => inToleranta[c]), scor: Math.max(0, Math.round(100 - 25 * rms)) };
+}
+
+// Valorile unei alternative la o porție dată și comparația cu ce înlocuiește.
+function potrivireLaPortie(info, portii, tinta) {
+  const valori = {};
+  for (const c of [...CAMPURI_POTRIVIRE, 'fibre']) valori[c] = info.v[c] * portii;
+  return { portii, valori, ...comparaValori(valori, tinta) };
+}
+
+function alternativeInlocuire({ intrare, zi, retete, idx, pref, toateMesele = false }) {
+  const tinta = {};
+  for (const c of [...CAMPURI_POTRIVIRE, 'fibre']) tinta[c] = (intrare.valoriPortie[c] || 0) * intrare.portii;
+  const { candidate, excluse } = filtreazaReteteGen(retete, idx, pref);
+  const inZi = new Set(((zi && zi.mese) || []).map(i => i.idReteta));
+  const rez = [];
+  for (const m of ORDINE_MESE_GEN) {
+    if (!toateMesele && m !== intrare.masa) continue;
+    for (const info of candidate[m]) {
+      if (inZi.has(info.r.id) || info.r.id === intrare.idReteta) continue;
+      let best = null;
+      for (const portii of PORTII_GEN) {
+        const p = potrivireLaPortie(info, portii, tinta);
+        // la scor egal preferăm porția mai apropiată de 1
+        const cheie = p.scor - Math.abs(portii - 1) * 0.5;
+        if (!best || cheie > best.cheie) best = { ...p, cheie };
+      }
+      const aceeasiMasa = m === intrare.masa;
+      rez.push({ r: info.r, info, aceeasiMasa, ...best, rang: best.scor - (aceeasiMasa ? 0 : 15) });
+    }
+  }
+  rez.sort((a, b) => (b.toate - a.toate) || (b.rang - a.rang) || a.r.nume.localeCompare(b.r.nume));
+  const potrivite = rez.filter(a => a.toate);
+  const apropiate = rez.filter(a => !a.toate);
+  const ex = excluse[intrare.masa];
+  return { tinta, potrivite, apropiate, totalCandidate: rez.length,
+    excluseFiltre: ex ? ex.alergii + ex.excluse + ex.dieta + ex.timp + ex.necunoscut : 0 };
+}
+
 if (typeof module !== 'undefined') {
   module.exports = {
     PONDERI_MESE, PORTII_GEN, DIETE_STRICTE, PREFERINTE_STIL, TIMPI_MAXIMI, TOLERANTE_GEN, ZILE_FARA_REPETARE,
     preferinteGoale, curataPreferinteNutritie, infoGenerator, filtreazaReteteGen, conflicteReteta, reteteRecente,
-    scorPlanGen, genereazaInteligent, raportPlanGen,
+    scorPlanGen, genereazaInteligent, raportPlanGen, comparaValori, potrivireLaPortie, alternativeInlocuire, tolerantaCamp,
   };
 }

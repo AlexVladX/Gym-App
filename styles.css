@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "26";
+  --versiune-css: "27";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -1477,3 +1477,22 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 .pref-numar { font-size: 12px; }
 .selector-alimente .chipuri { margin-top: 6px; }
 .selector-alimente .cautare { margin-top: var(--s2); }
+
+/* ---------- Nutriție → înlocuirea inteligentă (etapa 6) ---------- */
+.lista-alternative { display: flex; flex-direction: column; gap: var(--s3); margin-top: var(--s3); }
+.lista-alternative > .nota { margin: 0; }
+.alternativa { background: var(--suprafata-2); border-radius: var(--raza); padding: var(--s3); display: flex; flex-direction: column; gap: var(--s2); }
+.alternativa-slaba { border: 1px dashed rgba(255, 181, 71, 0.45); }
+.alternativa-cap { display: flex; align-items: center; gap: var(--s3); }
+.alternativa-cap .zi-intrare-text { flex: 1; }
+.asemanare { flex: 0 0 auto; padding: 4px 8px; border-radius: 999px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
+  background: var(--accent-slab); color: var(--accent); }
+.asemanare.slaba { background: rgba(255, 181, 71, 0.14); color: var(--avertizare); }
+.cmp-tabel { display: flex; flex-direction: column; font-size: 13px; }
+.cmp-rand { display: grid; grid-template-columns: 1.2fr 0.8fr 0.8fr 1fr; gap: 6px; padding: 4px 0; border-top: 1px solid var(--bordura); font-variant-numeric: tabular-nums; }
+.cmp-rand > :not(:first-child) { text-align: right; }
+.cmp-cap { border-top: none; color: var(--discret); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+.cmp-orig { color: var(--discret); }
+.cmp-dif { color: var(--accent); }
+.cmp-in-afara .cmp-dif { color: var(--avertizare); }
+.fara-potrivire strong { display: block; margin-bottom: 4px; }

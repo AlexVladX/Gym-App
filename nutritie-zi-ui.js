@@ -192,7 +192,8 @@ function randIntrare(i) {
       el('button', { type: 'button', class: 'btn btn-fantoma btn-icon btn-mic zi-lacat' + (i.blocat ? ' activ' : ''), 'aria-pressed': String(Boolean(i.blocat)),
         'aria-label': i.blocat ? `Deblochează ${i.nume}` : `Blochează ${i.nume} (nu se schimbă la generare)`, title: i.blocat ? 'Blocată' : 'Blochează',
         onclick: () => comutaBlocarea(i) }, [iconita(i.blocat ? 'lacat' : 'lacat-deschis')]),
-      modificabila ? buton({ text: 'Altă rețetă', icon: 'schimba', tip: 'fantoma', mic: true, onclick: () => regenereazaMasa(i) }) : null,
+      modificabila ? buton({ text: 'Înlocuiește', icon: 'schimba', tip: 'secundar', mic: true, eticheta: `Înlocuiește ${i.nume} cu o rețetă asemănătoare`, onclick: () => deschideInlocuire(i) }) : null,
+      modificabila ? buton({ text: 'Altă rețetă', icon: 'zar', tip: 'fantoma', mic: true, eticheta: `Altă rețetă la întâmplare în locul ${i.nume}`, onclick: () => regenereazaMasa(i) }) : null,
       ingrediente.length ? el('details', { class: 'zi-ingrediente' }, [
         el('summary', { text: `Ingrediente (${ingrediente.length})` }),
         el('ul', { class: 'lista-ingrediente' }, ingrediente),
@@ -410,6 +411,129 @@ function avertismentConflicte(r) {
   if (c.timp) parti.push(`durează peste ${prefNutritie().timpMaxim} minute`);
   if (!parti.length) return null;
   return el('p', { class: 'nota ' + (c.alergii.length ? 'nota-pericol' : 'nota-avertizare'), text: `Atenție: rețeta ${parti.join('; ')}.` });
+}
+
+// ---------- Înlocuirea inteligentă (etapa 6) ----------
+const NUME_CAMP_POTRIVIRE = { kcal: 'Calorii', proteine: 'Proteine', carbohidrati: 'Carbohidrați', grasimi: 'Grăsimi' };
+const fmtDif = (v, u) => `${v > 0 ? '+' : v < 0 ? '−' : '±'}${fmtNr(Math.abs(v))}${u}`;
+
+function tabelComparatie(tinta, alt, timpOriginal, timpAlt) {
+  const rand = (nume, a, b, dif, ok, u) => el('div', { class: 'cmp-rand' + (ok === false ? ' cmp-in-afara' : '') }, [
+    el('span', { text: nume }), el('span', { class: 'cmp-orig', text: `${fmtNr(a)}${u}` }), el('strong', { text: `${fmtNr(b)}${u}` }),
+    el('span', { class: 'cmp-dif', text: dif === null ? '' : `${fmtDif(dif, u)}${ok ? ' ✓' : ''}` }),
+  ]);
+  return el('div', { class: 'cmp-tabel' }, [
+    el('div', { class: 'cmp-rand cmp-cap' }, [el('span'), el('span', { text: 'acum' }), el('span', { text: 'nou' }), el('span', { text: 'diferență' })]),
+    ...Object.keys(NUME_CAMP_POTRIVIRE).map(c => rand(NUME_CAMP_POTRIVIRE[c], tinta[c], alt.valori[c], alt.dif[c], alt.inToleranta[c], c === 'kcal' ? '' : ' g')),
+    rand('Timp', timpOriginal || 0, timpAlt || 0, timpOriginal && timpAlt ? timpAlt - timpOriginal : null, null, ' min'),
+  ]);
+}
+
+function deschideInlocuire(i) {
+  let toateMesele = false;
+  let arata = 5;
+  let decalaj = 0;
+  const lista = el('div', { class: 'lista-alternative' });
+  const comutator = el('div', { class: 'chipuri chipuri-mici', role: 'group', 'aria-label': 'Unde caut' });
+  const sus = el('div');
+  const deseneaza = () => {
+    const rez = alternativeInlocuire({ intrare: i, zi: ziNutritie, retete: toateRetetele(), idx: indexNutritie, pref: prefNutritie(), toateMesele });
+    comutator.replaceChildren(
+      el('button', { type: 'button', class: 'chip chip-mic' + (!toateMesele ? ' activ' : ''), 'aria-pressed': String(!toateMesele), text: `Doar ${numeMasa(i.masa).toLowerCase()}`, onclick: () => { toateMesele = false; decalaj = 0; arata = 5; deseneaza(); } }),
+      el('button', { type: 'button', class: 'chip chip-mic' + (toateMesele ? ' activ' : ''), 'aria-pressed': String(toateMesele), text: 'Și din alte mese', onclick: () => { toateMesele = true; decalaj = 0; arata = 5; deseneaza(); } }),
+    );
+    const t = rez.tinta;
+    sus.replaceChildren(el('p', { class: 'nota', text: `Acum: ${fmtPortii(i.portii)} · ${fmtNr(t.kcal)} kcal · P ${fmtNr(t.proteine)} g · C ${fmtNr(t.carbohidrati)} g · G ${fmtNr(t.grasimi)} g${i.timp ? ` · ${i.timp} min` : ''}` }));
+    const card = alt => el('article', { class: 'alternativa' + (alt.toate ? '' : ' alternativa-slaba') }, [
+      el('div', { class: 'alternativa-cap' }, [
+        imagineReteta(alt.r, 'zi-imagine'),
+        el('div', { class: 'zi-intrare-text' }, [
+          el('strong', { text: alt.r.nume }),
+          el('span', { class: 'nota', text: `${fmtPortii(alt.portii)} sugerate${alt.aceeasiMasa ? '' : ` · rețetă de ${numeMasa(alt.r.masa).toLowerCase()}`}` }),
+        ]),
+        el('span', { class: 'asemanare' + (alt.toate ? '' : ' slaba'), title: 'Asemănarea nutrițională', text: `${alt.scor}%` }),
+      ]),
+      tabelComparatie(t, alt, i.timp, alt.r.timp),
+      buton({ text: 'Alege', tip: alt.toate ? 'principal' : 'secundar', mic: true, lat: true, onclick: () => d.inchide(() => confirmaInlocuirea(i, alt)) }),
+    ]);
+    const parti = [];
+    if (rez.potrivite.length) {
+      const total = rez.potrivite.length;
+      const start = total > arata ? decalaj % total : 0;
+      const vizibile = [...rez.potrivite.slice(start), ...rez.potrivite.slice(0, start)].slice(0, arata);
+      parti.push(el('p', { class: 'nota', text: `${plural(total, 'rețetă se potrivește', 'rețete se potrivesc')} (calorii ±10%, proteine ±10 g, carbohidrați ±15 g, grăsimi ±10 g), ordonate după asemănare.` }));
+      parti.push(...vizibile.map(card));
+      if (total > arata) {
+        parti.push(el('div', { class: 'rand-butoane' }, [
+          buton({ text: 'Arată mai multe', icon: 'plus', tip: 'fantoma', mic: true, onclick: () => { arata += 5; deseneaza(); } }),
+          buton({ text: 'Alte sugestii', icon: 'schimba', tip: 'fantoma', mic: true, onclick: () => { decalaj += arata; deseneaza(); lista.scrollTop = 0; } }),
+        ]));
+      }
+    } else {
+      parti.push(el('div', { class: 'nota nota-avertizare fara-potrivire' }, [
+        el('strong', { text: 'Nicio rețetă nu are valori suficient de apropiate. ' }),
+        rez.totalCandidate
+          ? `Niciuna din cele ${rez.totalCandidate} rețete permise nu intră în toleranță la toate valorile, nici cu porția ajustată.${toateMesele ? '' : ' Poți căuta și în rețetele altor mese.'} Mai jos sunt cele mai apropiate, cu diferențele marcate — nu sunt echivalente.`
+          : `Nu există altă rețetă${toateMesele ? '' : ` de ${numeMasa(i.masa).toLowerCase()}`} care să respecte preferințele stricte și să nu fie deja în zi${rez.excluseFiltre ? ` (${rez.excluseFiltre} excluse de filtre)` : ''}.`,
+      ]));
+      parti.push(...rez.apropiate.filter(a => a.scor >= 40).slice(0, 3).map(card));
+    }
+    lista.replaceChildren(...parti);
+  };
+  deseneaza();
+  const d = deschideDialog({
+    titlu: `Înlocuiește: ${i.nume}`,
+    continut: el('div', {}, [sus, comutator, lista]),
+    butoane: [buton({ text: 'Închide', tip: 'fantoma', onclick: () => d.inchide() })],
+  });
+}
+
+function confirmaInlocuirea(i, alt) {
+  let portii = alt.portii;
+  const info = alt.info;
+  const tinta = {};
+  for (const c of ['kcal', 'proteine', 'carbohidrati', 'grasimi', 'fibre']) tinta[c] = (i.valoriPortie[c] || 0) * i.portii;
+  const tabel = el('div');
+  const textPortii = el('strong', { class: 'portii-valoare' });
+  const deseneaza = () => {
+    textPortii.textContent = String(portii).replace('.', ',');
+    tabel.replaceChildren(tabelComparatie(tinta, potrivireLaPortie(info, portii, tinta), i.timp, alt.r.timp));
+  };
+  const schimba = delta => { portii = Math.max(0.25, Math.min(10, Math.round((portii + delta) * 4) / 4)); deseneaza(); };
+  deseneaza();
+  const d = deschideDialog({
+    titlu: alt.r.nume,
+    continut: el('div', {}, [
+      el('p', { class: 'nota', text: `Înlocuiește ${i.nume} la ${numeMasa(i.masa).toLowerCase()}. Celelalte mese rămân neschimbate.` }),
+      el('div', { class: 'rand aliniat portii-rand' }, [
+        el('h3', { class: 'detaliu-titlu', text: 'Porții' }),
+        el('div', { class: 'stepper' }, [
+          buton({ icon: 'minus', tip: 'secundar', mic: true, eticheta: 'Mai puțin', onclick: () => schimba(-0.25) }),
+          textPortii,
+          buton({ icon: 'plus', tip: 'secundar', mic: true, eticheta: 'Mai mult', onclick: () => schimba(0.25) }),
+        ]),
+      ]),
+      tabel,
+      avertismentConflicte(alt.r),
+    ]),
+    butoane: [
+      buton({ text: 'Înapoi', tip: 'fantoma', onclick: () => d.inchide(() => deschideInlocuire(i)) }),
+      buton({ text: 'Înlocuiește', icon: 'schimba', tip: 'principal', onclick: async () => {
+        d.inchide();
+        await aplicaInlocuirea(i, alt.r, portii);
+      } }),
+    ],
+  });
+}
+
+async function aplicaInlocuirea(i, r, portii) {
+  const curenta = ziNutritie.mese.find(x => x.id === i.id);
+  if (!curenta || !intrareModificabila(curenta)) { notifica('Masa s-a schimbat între timp (blocată sau începută), așa că nu am înlocuit-o.', 'eroare'); return; }
+  const noua = intrareMasa({ id: idNutritieNou(), masa: i.masa, reteta: r, valoriPortieReteta: valoriPortie(r, indexNutritie), portii });
+  const inainte = ziNutritie;
+  if (!(await salveazaZiua({ ...ziNutritie, mese: ziNutritie.mese.map(x => (x.id === i.id ? noua : x)) }))) return;
+  randeazaZiNutritie();
+  notifica(`${i.nume} → ${r.nume}.`, 'succes', 5000, { text: 'Anulează', onclick: async () => { if (await salveazaZiua(inainte)) randeazaZiNutritie(); } });
 }
 
 // ---------- Preferințele generatorului (etapa 5) ----------
