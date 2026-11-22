@@ -21,7 +21,7 @@ const dataScurtaAnaliza = d => { const [, l, z] = d.split('-'); return `${Number
 const NUME_LUNI_AN = ['ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie', 'iulie', 'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'];
 
 async function randeazaAnalizaNutritie() {
-  const cont = $('progres-nutritie');
+  const cont = $('nutritie-analiza');
   if (!cont.childElementCount) cont.replaceChildren(stareIncarcare(3));
   let zile;
   try {
@@ -63,7 +63,7 @@ async function randeazaAnalizaNutritie() {
       text: fara ? 'Planifică și bifează mesele în Nutriție → Ziua mea; aici vei vedea caloriile, macronutrienții și cât de des îți atingi țintele.'
         : `Între ${afiseazaData(iv.de)} și ${afiseazaData(iv.pana)} nu există mese planificate sau notate. Alege altă perioadă.`,
       actiune: buton({ text: 'Deschide Nutriție', icon: 'nutritie', tip: 'secundar', onclick: deschideZiuaNutritie }) })]));
-    $('progres-nutritie').replaceChildren(...copii);
+    $('nutritie-analiza').replaceChildren(...copii);
     return;
   }
 
@@ -71,7 +71,7 @@ async function randeazaAnalizaNutritie() {
     cardObiectiveAnaliza(a, tinte), cardConsecventaAnaliza(a));
   copii.push(el('p', { class: 'nota nota-sursa', text: 'Fiecare masă păstrează valorile din momentul în care a fost adăugată, așa că istoricul nu se schimbă dacă editezi sau ștergi rețeta. Mediile de „mâncat” se fac pe zilele în care ai notat ceva. Estimări, nu recomandări medicale.' }));
   const vizibile = copii.filter(Boolean);
-  $('progres-nutritie').replaceChildren(...vizibile);
+  $('nutritie-analiza').replaceChildren(...vizibile);
   for (const c of vizibile) if (c.deseneaza) c.deseneaza();
 }
 

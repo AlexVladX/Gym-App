@@ -8,11 +8,26 @@ const TITLURI_ECRANE = {
   'ecran-progres': 'Progres',
   'ecran-masuratori': 'Corp',
   'ecran-setari': 'Setări',
+  'ecran-masa': 'Acasă',
 };
+
+// Butonul de navigare activ: același ecran și, pentru Nutriție (MEAL PREP), același grup de file.
+function actualizeazaNavigatia() {
+  const grup = typeof grupFilaNutritie === 'function' ? grupFilaNutritie(filaNutritie) : null;
+  document.querySelectorAll('.navigatie button').forEach(b => {
+    const activ = b.dataset.ecran === ecranCurent && (!b.dataset.grup || b.dataset.grup === grup);
+    b.classList.toggle('activ', activ);
+    if (activ) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
+}
+
+let ecranInainteDeSetari = null;
 
 let ecranCurent = 'ecran-acasa';
 
 function arataEcran(id) {
+  asiguraModulEcranului(id);
+  if (id === 'ecran-setari' && ecranCurent !== 'ecran-setari') ecranInainteDeSetari = ecranCurent;
   const schimbat = id !== ecranCurent;
   ecranCurent = id;
   document.querySelectorAll('.ecran').forEach(s => {
@@ -24,20 +39,17 @@ function arataEcran(id) {
       s.classList.add('intra');
     }
   });
-  document.querySelectorAll('.navigatie button').forEach(b => {
-    const activ = b.dataset.ecran === id;
-    b.classList.toggle('activ', activ);
-    if (activ) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
-  });
-  $('titlu-ecran').textContent = TITLURI_ECRANE[id] || 'Jurnal';
+  actualizeazaNavigatia();
+  $('titlu-ecran').textContent = id === 'ecran-nutritie' ? TITLU_GRUP_NUTRITIE[grupFilaNutritie(filaNutritie)] : (TITLURI_ECRANE[id] || 'Jurnal');
   $('btn-setari').classList.toggle('activ', id === 'ecran-setari');
   if (schimbat) window.scrollTo({ top: 0 });
 
   // Ecranele cu date se reîncarcă la fiecare deschidere (graficele au nevoie de dimensiunea reală).
   if (id === 'ecran-acasa') randeazaAcasa();
+  if (id === 'ecran-masa') randeazaAcasaMasa();
   if (id === 'ecran-biblioteca') { deseneazaFiltre(); randeazaBiblioteca(); }
   if (id === 'ecran-nutritie') randeazaNutritie();
-  if (id === 'ecran-progres') arataFilaProgres(!$('progres-nutritie').hidden ? 'nutritie' : !$('progres-realizari').hidden ? 'realizari' : $('progres-istoric').hidden ? 'grafice' : 'istoric');
+  if (id === 'ecran-progres') arataFilaProgres(!$('progres-realizari').hidden ? 'realizari' : $('progres-istoric').hidden ? 'grafice' : 'istoric');
   if (id === 'ecran-masuratori') reincarcaMasuratori();
   if (id === 'ecran-setari') {
     actualizeazaInfoBackup();
@@ -47,11 +59,21 @@ function arataEcran(id) {
 }
 
 async function initializeaza() {
-  document.querySelectorAll('.navigatie button').forEach(b =>
-    b.addEventListener('click', () => arataEcran(b.dataset.ecran)));
-  $('btn-setari').addEventListener('click', () => arataEcran(ecranCurent === 'ecran-setari' ? 'ecran-acasa' : 'ecran-setari'));
+  document.querySelectorAll('.navigatie button').forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.grup) { arataFilaNutritie(filaDinGrup(b.dataset.grup), { randeaza: false }); }
+    arataEcran(b.dataset.ecran);
+  }));
+  document.querySelectorAll('[data-mod-tinta]').forEach(b => b.addEventListener('click', () => schimbaMod(b.dataset.modTinta)));
+  $('btn-setari').addEventListener('click', () => {
+    if (ecranCurent !== 'ecran-setari') { arataEcran('ecran-setari'); return; }
+    const inapoi = ecranInainteDeSetari && ECRANE_MOD[ecranInainteDeSetari] === modCurent ? ecranInainteDeSetari : MODURI[modCurent].acasa;
+    arataEcran(inapoi);
+  });
 
   citesteSetari();
+  // tema.js a rulat înaintea butoanelor din antet: acum le marcăm și pe ele.
+  if (setari.mod !== modCurent) modCurent = modValid(setari.mod);
+  aplicaTema(modCurent);
   initSetari();
   initTimer();
   initSesiune();
@@ -87,7 +109,8 @@ async function initializeaza() {
   deseneazaExercitii();
   tineEcranulAprins();
   // Cu un antrenament în curs, aplicația se deschide direct pe el (în sală contează fiecare secundă).
-  arataEcran(stare.exercitii.length > 0 ? 'ecran-sesiune' : 'ecran-acasa');
+  // Altfel, pe ecranul Acasă al modului ales ultima dată (GYM MODE sau MEAL PREP).
+  arataEcran(stare.exercitii.length > 0 ? 'ecran-sesiune' : MODURI[modCurent].acasa);
   document.body.classList.remove('se-incarca');
   verificaAntrenamentNeterminat();
 

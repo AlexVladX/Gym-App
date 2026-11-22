@@ -95,7 +95,7 @@ function deseneazaSumarZi() {
   const cap = el('div', { class: 'card-cap' }, [
     el('h2', { text: 'Calorii și macronutrienți' }),
     el('div', { class: 'card-cap-actiuni' }, [
-      buton({ icon: 'grafic', tip: 'fantoma', mic: true, eticheta: 'Analiza nutriției (Progres)', onclick: () => { arataEcran('ecran-progres'); arataFilaProgres('nutritie'); } }),
+      buton({ icon: 'grafic', tip: 'fantoma', mic: true, eticheta: 'Analiza nutriției', onclick: () => arataFilaNutritie('analiza') }),
       buton({ text: tinte ? 'Ținte' : 'Setează ținte', icon: 'editeaza', tip: 'fantoma', mic: true, onclick: deschideTinteNutritie }),
     ]),
   ]);

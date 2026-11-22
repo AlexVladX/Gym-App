@@ -6,9 +6,10 @@
 // Nutriție (etapa 3): tinteNutritie { kcal, proteine?, carbohidrati?, grasimi?, fibre?, estimat? } și profilul pentru
 // estimare: anNastere, sex ('m' | 'f'), activitate, scopNutritie (vezi nutritie-zi.js). Toate opționale.
 // preferinteNutritie (etapa 5): { dieta[], alergii[], stil[], excluse[], preferate[], timpMaxim } (vezi nutritie-generator.js).
+// mod (Faza 1 din 3.0): 'gym' | 'mealprep' — modul aplicației ales ultima dată (vezi tema.js).
 const SETARI_IMPLICITE = { minRep: 8, maxRep: 12, pasKg: 2.5, ecranAprins: true, pauzaSec: 90, pauzaAutomata: true, semnal: true,
   inaltimeCm: null, obiectiv: null, obiectivSaptamanal: 3, retetePreferate: [],
-  tinteNutritie: null, anNastere: null, sex: null, activitate: null, scopNutritie: null, preferinteNutritie: null };
+  tinteNutritie: null, anNastere: null, sex: null, activitate: null, scopNutritie: null, preferinteNutritie: null, mod: 'gym' };
 const setari = { ...SETARI_IMPLICITE };
 
 // Corectează valorile venite din stocare sau dintr-un backup; ce nu e valid revine la implicit.
@@ -39,6 +40,7 @@ function curataSetari(sursa) {
   if (sursa.sex === 'm' || sursa.sex === 'f') rez.sex = sursa.sex;
   if (NIVELURI_ACTIVITATE.some(a => a.id === sursa.activitate)) rez.activitate = sursa.activitate;
   if (SCOPURI_NUTRITIE.some(s => s.id === sursa.scopNutritie)) rez.scopNutritie = sursa.scopNutritie;
+  if (sursa.mod === 'gym' || sursa.mod === 'mealprep') rez.mod = sursa.mod;
   const pref = curataPreferinteNutritie(sursa.preferinteNutritie);
   if (pref) rez.preferinteNutritie = pref;
   return rez;
@@ -67,6 +69,11 @@ function setariPentruBackup() {
 function aplicaSetariDinBackup(sursa) {
   Object.assign(setari, SETARI_IMPLICITE, curataSetari(sursa || {}));
   salveazaSetari();
+  // Tema urmează modul din backup; ecranul Setări (comun) rămâne deschis.
+  if (typeof aplicaTema === 'function' && setari.mod !== modCurent) {
+    modCurent = setari.mod; aplicaTema(modCurent);
+    if (typeof actualizeazaNavigatia === 'function') actualizeazaNavigatia();
+  }
   afiseazaSetari();
 }
 

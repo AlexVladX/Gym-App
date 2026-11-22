@@ -92,24 +92,43 @@ function imagineReteta(r, clasa = 'reteta-imagine') {
 }
 
 // ---------- File (Rețete / Alimente) ----------
-function arataFilaNutritie(fila) {
+// Fiecare buton din navigarea MEAL PREP deschide un grup de file; filele grupului apar sus doar dacă sunt mai multe.
+const GRUPURI_NUTRITIE = { nutritie: ['zi', 'analiza'], saptamana: ['saptamana'], lista: ['lista'], retete: ['retete', 'alimente'] };
+const ultimaFilaGrup = { nutritie: 'zi', saptamana: 'saptamana', lista: 'lista', retete: 'retete' };
+function grupFilaNutritie(fila) {
+  return Object.keys(GRUPURI_NUTRITIE).find(g => GRUPURI_NUTRITIE[g].includes(fila)) || 'nutritie';
+}
+function filaDinGrup(grup) { return ultimaFilaGrup[grup] || GRUPURI_NUTRITIE[grup][0]; }
+
+function arataFilaNutritie(fila, { randeaza = true } = {}) {
   filaNutritie = fila;
-  for (const [id, f] of [['tab-zi', 'zi'], ['tab-saptamana', 'saptamana'], ['tab-lista', 'lista'], ['tab-retete', 'retete'], ['tab-alimente', 'alimente']]) {
+  const grup = grupFilaNutritie(fila);
+  ultimaFilaGrup[grup] = fila;
+  let vizibile = 0;
+  for (const [id, f] of [['tab-zi', 'zi'], ['tab-analiza', 'analiza'], ['tab-saptamana', 'saptamana'], ['tab-lista', 'lista'], ['tab-retete', 'retete'], ['tab-alimente', 'alimente']]) {
     $(id).classList.toggle('activ', f === fila);
     $(id).setAttribute('aria-selected', String(f === fila));
+    $(id).hidden = grupFilaNutritie(f) !== grup;
+    if (!$(id).hidden) vizibile++;
   }
+  $('tab-zi').parentElement.hidden = vizibile < 2;
+  $('nutritie-analiza').hidden = fila !== 'analiza';
+  if (typeof actualizeazaNavigatia === 'function') actualizeazaNavigatia();
+  if (typeof TITLURI_ECRANE !== 'undefined' && ecranCurent === 'ecran-nutritie') $('titlu-ecran').textContent = TITLU_GRUP_NUTRITIE[grup];
   $('nutritie-zi').hidden = fila !== 'zi';
   $('nutritie-saptamana').hidden = fila !== 'saptamana';
   $('nutritie-lista').hidden = fila !== 'lista';
   $('nutritie-retete').hidden = fila !== 'retete';
   $('nutritie-alimente').hidden = fila !== 'alimente';
-  randeazaNutritie();
+  if (randeaza) randeazaNutritie();
 }
+const TITLU_GRUP_NUTRITIE = { nutritie: 'Nutriție', saptamana: 'Planificator mese', lista: 'Listă de cumpărături', retete: 'Rețete' };
 
 function randeazaNutritie() {
   if (filaNutritie === 'zi') { randeazaZiNutritie({ reincarca: true }); return; }
   if (filaNutritie === 'saptamana') { randeazaSaptamana(); return; }
   if (filaNutritie === 'lista') { randeazaListaCumparaturi(); return; }
+  if (filaNutritie === 'analiza') { randeazaAnalizaNutritie().catch(err => { console.error(err); notifica('Analiza nutriției nu a putut fi încărcată.', 'eroare'); }); return; }
   if (filaNutritie === 'alimente') { deseneazaFiltreAlimente(); randeazaAlimente(); } else { deseneazaFiltreRetete(); randeazaRetete(); }
 }
 
@@ -820,6 +839,7 @@ function deschideEditorAliment(a, { copie = false, numeSugerat = '' } = {}) {
 // ---------- Pornire ----------
 function initNutritie() {
   $('tab-zi').addEventListener('click', () => arataFilaNutritie('zi'));
+  $('tab-analiza').addEventListener('click', () => arataFilaNutritie('analiza'));
   $('tab-saptamana').addEventListener('click', () => { dataSaptamana = dataZiNutritie; arataFilaNutritie('saptamana'); });
   $('tab-lista').addEventListener('click', () => arataFilaNutritie('lista'));
   $('tab-retete').addEventListener('click', () => arataFilaNutritie('retete'));

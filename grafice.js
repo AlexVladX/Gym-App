@@ -1,12 +1,27 @@
 // Grafice pe canvas, fără biblioteci externe (aplicația merge offline și fără dependențe).
 // Graficele se redesenează singure la schimbarea lățimii și arată valoarea la atingere.
 
-const CULORI_GRAFIC = {
-  accent: '#B7F34A',
-  grila: 'rgba(255,255,255,0.06)',
-  text: '#8A919C',
-  tooltip: '#232831',
+// Culorile vin din tema activă (variabilele CSS --g-*, vezi styles.css și tema.js).
+// Valorile de mai jos sunt cele ale temei GYM MODE și se folosesc când variabila lipsește.
+const CULORI_GRAFIC_IMPLICITE = {
+  accent: '#B7F34A', grila: 'rgba(255,255,255,0.06)', text: '#8A919C', tooltip: '#232831', 'tooltip-text': '#FFFFFF',
+  'zona-sus': 'rgba(183,243,74,0.28)', 'zona-jos': 'rgba(183,243,74,0)', medie: 'rgba(200,208,218,0.45)', 'punct-interior': '#0B0D10',
+  linie: 'rgba(255,255,255,0.25)', umbra: 'rgba(255,255,255,0.10)', bara: 'rgba(183,243,74,0.35)', 'text-tare': '#FFFFFF',
+  gol: 'rgba(255,255,255,0.08)', referinta: 'rgba(255,255,255,0.45)', 'referinta-text': 'rgba(255,255,255,0.7)',
 };
+const CULORI_GRAFIC = { ...CULORI_GRAFIC_IMPLICITE };
+let culoriGraficCitite = false;
+function actualizeazaCuloriGrafic() {
+  culoriGraficCitite = true;
+  if (typeof document === 'undefined' || typeof getComputedStyle !== 'function') return;
+  const st = getComputedStyle(document.documentElement);
+  for (const k of Object.keys(CULORI_GRAFIC_IMPLICITE)) CULORI_GRAFIC[k] = st.getPropertyValue(`--g-${k}`).trim() || CULORI_GRAFIC_IMPLICITE[k];
+}
+// La schimbarea temei: toate graficele afișate se redesenează în culorile noi.
+function redeseneazaToateGraficele() {
+  actualizeazaCuloriGrafic();
+  for (const [canvas, g] of graficeActive) if (canvas.isConnected) redeseneaza(canvas, g);
+}
 
 const graficeActive = new Map(); // canvas -> { tip, puncte | bare, formateazaY, inaltime }
 
@@ -45,6 +60,7 @@ function redeseneaza(canvas, g) {
 
 // Pregătește canvas-ul pentru densitatea ecranului și întoarce contextul.
 function pregatesteCanvas(canvas, g) {
+  if (!culoriGraficCitite) actualizeazaCuloriGrafic();
   const latime = canvas.clientWidth || 320;
   g.latime = latime;
   const ratio = window.devicePixelRatio || 1;
@@ -68,7 +84,7 @@ function deseneazaEticheta(ctx, text, px, py, latime) {
   ctx.beginPath();
   if (ctx.roundRect) ctx.roundRect(bx, by, w, 24, 8); else ctx.rect(bx, by, w, 24);
   ctx.fill();
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = CULORI_GRAFIC['tooltip-text'];
   ctx.fillText(text, bx + 8, by + 16);
 }
 
@@ -130,8 +146,8 @@ function deseneaza(canvas, g) {
 
   // Zona de sub linie, cu degrade
   const degrade = ctx.createLinearGradient(0, pad.t, 0, inaltime - pad.b);
-  degrade.addColorStop(0, 'rgba(183,243,74,0.28)');
-  degrade.addColorStop(1, 'rgba(183,243,74,0)');
+  degrade.addColorStop(0, CULORI_GRAFIC['zona-sus']);
+  degrade.addColorStop(1, CULORI_GRAFIC['zona-jos']);
   ctx.beginPath();
   puncte.forEach((p, i) => i === 0 ? ctx.moveTo(X(p.x), Y(p.y)) : ctx.lineTo(X(p.x), Y(p.y)));
   ctx.lineTo(X(puncte[puncte.length - 1].x), inaltime - pad.b);
@@ -145,7 +161,7 @@ function deseneaza(canvas, g) {
     if (p.x < xMin || p.x > xMax) continue;
     ctx.beginPath();
     ctx.arc(X(p.x), Y(p.y), 2.2, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(200,208,218,0.45)';
+    ctx.fillStyle = CULORI_GRAFIC.medie;
     ctx.fill();
   }
 
@@ -162,7 +178,7 @@ function deseneaza(canvas, g) {
     for (const p of puncte) {
       ctx.beginPath();
       ctx.arc(X(p.x), Y(p.y), 3, 0, Math.PI * 2);
-      ctx.fillStyle = '#0B0D10';
+      ctx.fillStyle = CULORI_GRAFIC['punct-interior'];
       ctx.fill();
       ctx.lineWidth = 2;
       ctx.strokeStyle = CULORI_GRAFIC.accent;
@@ -184,7 +200,7 @@ function deseneaza(canvas, g) {
     const p = puncte[g.selectat];
     const px = X(p.x);
     const py = Y(p.y);
-    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.strokeStyle = CULORI_GRAFIC.linie;
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
@@ -247,22 +263,22 @@ function deseneazaBareIntern(canvas, g) {
     const selectata = g.selectat === i;
     if (b.umbra > 0 && max > 0) {
       const hu = Math.max(4, b.umbra / max * areaI);
-      ctx.fillStyle = 'rgba(255,255,255,0.10)';
+      ctx.fillStyle = CULORI_GRAFIC.umbra;
       ctx.beginPath();
       if (ctx.roundRect) ctx.roundRect(x, inaltime - pad.b - hu, latimeBara, hu, [6, 6, 2, 2]); else ctx.rect(x, inaltime - pad.b - hu, latimeBara, hu);
       ctx.fill();
     }
-    ctx.fillStyle = b.culoare || (b.evidentiata || selectata ? CULORI_GRAFIC.accent : 'rgba(183,243,74,0.35)');
-    if (b.culoare && selectata) ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = b.culoare || (b.evidentiata || selectata ? CULORI_GRAFIC.accent : CULORI_GRAFIC.bara);
+    if (b.culoare && selectata) ctx.fillStyle = CULORI_GRAFIC['text-tare'];
     if (h > 0) {
       ctx.beginPath();
       if (ctx.roundRect) ctx.roundRect(x, y, latimeBara, h, [6, 6, 2, 2]); else ctx.rect(x, y, latimeBara, h);
       ctx.fill();
     } else {
-      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.fillStyle = CULORI_GRAFIC.gol;
       ctx.fillRect(x, inaltime - pad.b - 2, latimeBara, 2);
     }
-    ctx.fillStyle = b.evidentiata ? '#FFFFFF' : CULORI_GRAFIC.text;
+    ctx.fillStyle = b.evidentiata ? CULORI_GRAFIC['text-tare'] : CULORI_GRAFIC.text;
     ctx.font = (b.evidentiata ? '600 ' : '') + '11px Inter, system-ui, sans-serif';
     if ((bare.length - 1 - i) % pasEtichete === 0) ctx.fillText(b.eticheta, cx, inaltime - 8);
   });
@@ -270,7 +286,7 @@ function deseneazaBareIntern(canvas, g) {
 
   if (ref && max > 0) {
     const y = Math.round(inaltime - pad.b - ref.valoare / max * areaI) + 0.5;
-    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+    ctx.strokeStyle = CULORI_GRAFIC.referinta;
     ctx.lineWidth = 1;
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
@@ -280,7 +296,7 @@ function deseneazaBareIntern(canvas, g) {
     ctx.setLineDash([]);
     if (ref.eticheta) {
       ctx.font = '600 10px Inter, system-ui, sans-serif';
-      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillStyle = CULORI_GRAFIC['referinta-text'];
       ctx.textAlign = 'right';
       ctx.fillText(ref.eticheta, latime - pad.r, y - 4);
       ctx.textAlign = 'left';

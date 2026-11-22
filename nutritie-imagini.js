@@ -25,12 +25,12 @@ function urlImagineRezerva(numeMasa = '') {
   if (_cacheRezerva.has(numeMasa)) return _cacheRezerva.get(numeMasa);
   const text = String(numeMasa).replace(/[<>&"]/g, '');
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120">` +
-    `<defs><radialGradient id="g" cx="50%" cy="38%" r="80%"><stop offset="0" stop-color="#232A33"/><stop offset="1" stop-color="#11151A"/></radialGradient></defs>` +
+    `<defs><radialGradient id="g" cx="50%" cy="38%" r="80%"><stop offset="0" stop-color="#FBF3EC"/><stop offset="1" stop-color="#EEDFD1"/></radialGradient></defs>` +
     `<rect width="160" height="120" fill="url(#g)"/>` +
-    `<g fill="none" stroke="#B7F34A" stroke-opacity=".55" stroke-width="1.3" stroke-linecap="round">` +
+    `<g fill="none" stroke="#D15612" stroke-opacity=".6" stroke-width="1.3" stroke-linecap="round">` +
     `<circle cx="80" cy="52" r="22"/><circle cx="80" cy="52" r="15" stroke-opacity=".3"/>` +
     `<path d="M47 36v12a3 3 0 0 0 6 0V36M50 48v20"/><path d="M110 36c-4 4-4 14 0 16v16"/></g>` +
-    (text ? `<text x="80" y="98" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8" letter-spacing="1.5" fill="#8C95A3">${text.toUpperCase()}</text>` : '') +
+    (text ? `<text x="80" y="98" text-anchor="middle" font-family="system-ui,sans-serif" font-size="8" letter-spacing="1.5" fill="#8C6A52">${text.toUpperCase()}</text>` : '') +
     `</svg>`;
   const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   _cacheRezerva.set(numeMasa, url);
