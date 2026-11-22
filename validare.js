@@ -7,6 +7,7 @@
 //                             și, din etapa 6, opțional poze: [{ id, data, unghi, imagine: 'data:image/jpeg;base64,…', latime, inaltime, creat }]
 //                             (o versiune mai veche a aplicației ignoră pozele, restul se citește la fel)
 //                             și, din modulul de nutriție, opțional alimente, retete, pozeRetete (ignorate de versiunile vechi)
+//                             și, din etapa 3 a nutriției, opțional zileNutritie (mesele zilelor; vezi nutritie-zi.js)
 // Câmpurile necunoscute ale fiecărei înregistrări se păstrează (compatibilitate înainte).
 
 const VERSIUNE_BACKUP = 3;
@@ -236,11 +237,18 @@ function valideazaBackup(brut) {
   if (Array.isArray(brut.alimente)) date.alimente = unicDupaId(curata(brut.alimente, curataAliment));
   if (Array.isArray(brut.retete)) date.retete = unicDupaId(curata(brut.retete, curataReteta));
   if (Array.isArray(brut.pozeRetete)) date.pozeRetete = unicDupaId(curata(brut.pozeRetete, curataPozaReteta));
+  if (Array.isArray(brut.zileNutritie)) {
+    const map = new Map();
+    // În browser funcția vine din nutritie-zi.js (încărcat înainte); în teste (Node) se încarcă aici.
+    const curataZi = typeof curataZiNutritie === 'function' ? curataZiNutritie : require('./nutritie-zi.js').curataZiNutritie;
+    for (const z of curata(brut.zileNutritie, curataZi)) map.set(z.data, z);
+    date.zileNutritie = [...map.values()];
+  }
   if (brut.setari && typeof brut.setari === 'object' && !Array.isArray(brut.setari)) date.setari = brut.setari;
 
   const lung = x => (Array.isArray(x) ? x.length : 0);
   const total = brut.sesiuni.length + brut.exercitii.length + brut.masuratori.length +
-    lung(brut.rutine) + lung(brut.poze) + lung(brut.alimente) + lung(brut.retete) + lung(brut.pozeRetete);
+    lung(brut.rutine) + lung(brut.poze) + lung(brut.alimente) + lung(brut.retete) + lung(brut.pozeRetete) + lung(brut.zileNutritie);
   if (total > 0 && ignorate === total) {
     return { ok: false, eroare: 'Nicio înregistrare din fișier nu a putut fi citită. Fișierul pare deteriorat.' };
   }
@@ -257,6 +265,7 @@ function valideazaBackup(brut) {
       alimente: date.alimente ? date.alimente.length : null,
       retete: date.retete ? date.retete.length : null,
       pozeRetete: date.pozeRetete ? date.pozeRetete.length : null,
+      zileNutritie: date.zileNutritie ? date.zileNutritie.length : null,
       exportat: typeof brut.exportat === 'string' ? brut.exportat : null,
     },
   };

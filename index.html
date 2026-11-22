@@ -13,9 +13,9 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
   <title>Jurnal de antrenament</title>
-  <link rel="stylesheet" href="styles.css?v=23">
+  <link rel="stylesheet" href="styles.css?v=24">
 </head>
-<body class="se-incarca" data-versiune="23">
+<body class="se-incarca" data-versiune="24">
   <header class="topbar">
     <div class="topbar-interior">
       <div class="marca">
@@ -124,11 +124,18 @@
     <!-- ================= Nutriție ================= -->
     <section id="ecran-nutritie" class="ecran" aria-labelledby="titlu-ecran">
       <div class="segment" role="tablist">
-        <button id="tab-retete" class="activ" type="button" role="tab" aria-selected="true">Rețete</button>
+        <button id="tab-zi" class="activ" type="button" role="tab" aria-selected="true">Ziua mea</button>
+        <button id="tab-retete" type="button" role="tab" aria-selected="false">Rețete</button>
         <button id="tab-alimente" type="button" role="tab" aria-selected="false">Alimente</button>
       </div>
 
-      <div id="nutritie-retete">
+      <div id="nutritie-zi">
+        <div id="zi-nav" class="card zi-nav"></div>
+        <div id="zi-sumar" class="card"></div>
+        <div id="zi-mese"></div>
+      </div>
+
+      <div id="nutritie-retete" hidden>
         <div class="card">
           <div class="cautare">
             <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4"/></svg>
@@ -532,33 +539,35 @@
     </button>
   </nav>
 
-  <script src="db.js?v=23"></script>
-  <script src="validare.js?v=23"></script>
-  <script src="exercitii.js?v=23"></script>
-  <script src="analiza.js?v=23"></script>
-  <script src="statistici.js?v=23"></script>
-  <script src="corp-calcul.js?v=23"></script>
-  <script src="realizari.js?v=23"></script>
-  <script src="nutritie-alimente.js?v=23"></script>
-  <script src="nutritie-retete.js?v=23"></script>
-  <script src="nutritie-calcul.js?v=23"></script>
-  <script src="nutritie-imagini.js?v=23"></script>
-  <script src="catalog.js?v=23"></script>
-  <script src="figuri.js?v=23"></script>
-  <script src="ui.js?v=23"></script>
-  <script src="grafice.js?v=23"></script>
-  <script src="setari.js?v=23"></script>
-  <script src="timer.js?v=23"></script>
-  <script src="sesiune.js?v=23"></script>
-  <script src="corp.js?v=23"></script>
-  <script src="progres.js?v=23"></script>
-  <script src="realizari-ui.js?v=23"></script>
-  <script src="istoric.js?v=23"></script>
-  <script src="biblioteca.js?v=23"></script>
-  <script src="nutritie.js?v=23"></script>
-  <script src="backup.js?v=23"></script>
-  <script src="siguranta.js?v=23"></script>
-  <script src="acasa.js?v=23"></script>
-  <script src="main.js?v=23"></script>
+  <script src="db.js?v=24"></script>
+  <script src="validare.js?v=24"></script>
+  <script src="exercitii.js?v=24"></script>
+  <script src="analiza.js?v=24"></script>
+  <script src="statistici.js?v=24"></script>
+  <script src="corp-calcul.js?v=24"></script>
+  <script src="realizari.js?v=24"></script>
+  <script src="nutritie-alimente.js?v=24"></script>
+  <script src="nutritie-retete.js?v=24"></script>
+  <script src="nutritie-calcul.js?v=24"></script>
+  <script src="nutritie-zi.js?v=24"></script>
+  <script src="nutritie-imagini.js?v=24"></script>
+  <script src="catalog.js?v=24"></script>
+  <script src="figuri.js?v=24"></script>
+  <script src="ui.js?v=24"></script>
+  <script src="grafice.js?v=24"></script>
+  <script src="setari.js?v=24"></script>
+  <script src="timer.js?v=24"></script>
+  <script src="sesiune.js?v=24"></script>
+  <script src="corp.js?v=24"></script>
+  <script src="progres.js?v=24"></script>
+  <script src="realizari-ui.js?v=24"></script>
+  <script src="istoric.js?v=24"></script>
+  <script src="biblioteca.js?v=24"></script>
+  <script src="nutritie.js?v=24"></script>
+  <script src="nutritie-zi-ui.js?v=24"></script>
+  <script src="backup.js?v=24"></script>
+  <script src="siguranta.js?v=24"></script>
+  <script src="acasa.js?v=24"></script>
+  <script src="main.js?v=24"></script>
 </body>
 </html>

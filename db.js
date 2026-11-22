@@ -13,13 +13,14 @@
 //   alimente     — (v7) alimentele tale (nutriție), cheie: id text „u-…”
 //   retete       — (v7) rețetele tale, cheie: id text „u-…”
 //   pozeRetete   — (v7) poza ta pentru o rețetă (din bibliotecă sau proprie): { id (= id-ul rețetei), imagine Blob, latime, inaltime, creat }
+//   zileNutritie — (v8) mesele unei zile, cheie: data 'AAAA-LL-ZZ' (vezi nutritie-zi.js)
 //
 // Regula de compatibilitate: înregistrările vechi nu se rescriu niciodată la actualizare.
 // Câmpurile noi sunt opționale și primesc valori implicite la citire.
 
 const DB_NUME = 'jurnal-antrenament';
-const DB_VERSIUNE = 7;
-const STORES_DATE = ['sesiuni', 'exercitii', 'masuratori', 'rutine', 'alimente', 'retete'];
+const DB_VERSIUNE = 8;
+const STORES_DATE = ['sesiuni', 'exercitii', 'masuratori', 'rutine', 'alimente', 'retete', 'zileNutritie'];
 const MAX_INSTANTANEE = 5;
 
 let bazaPromise = null;
@@ -45,6 +46,7 @@ function deschideBaza() {
       creeaza('alimente', { keyPath: 'id' });
       creeaza('retete', { keyPath: 'id' });
       creeaza('pozeRetete', { keyPath: 'id' });
+      creeaza('zileNutritie', { keyPath: 'data' });
     };
     cerere.onsuccess = () => {
       const bd = cerere.result;
@@ -203,11 +205,11 @@ async function golesteCosulVechi(acum = Date.now()) {
 async function diagnosticBaza() {
   const brut = {};
   for (const nume of [...STORES_DATE, 'poze', 'pozeRetete', 'cos']) brut[nume] = await cere(nume, 'readonly', st => st.getAll());
-  const [sesiuni, masuratori, rutine, poze, alimente, retete, pozeRetete] = await Promise.all([toateSesiunile(), toateMasuratorile(),
-    toateRutinele(), toatePozele(), toateAlimenteleMele(), toateReteteleMele(), toatePozeleRetetelor()]);
+  const [sesiuni, masuratori, rutine, poze, alimente, retete, pozeRetete, zileNutritie] = await Promise.all([toateSesiunile(), toateMasuratorile(),
+    toateRutinele(), toatePozele(), toateAlimenteleMele(), toateReteteleMele(), toatePozeleRetetelor(), toateZileleNutritie()]);
   const lizibile = { sesiuni: sesiuni.length, masuratori: masuratori.length, rutine: rutine.length, poze: poze.length,
     exercitii: brut.exercitii.filter(e => e && typeof e.nume === 'string').length, cos: brut.cos.length,
-    alimente: alimente.length, retete: retete.length, pozeRetete: pozeRetete.length };
+    alimente: alimente.length, retete: retete.length, pozeRetete: pozeRetete.length, zileNutritie: zileNutritie.length };
   return Object.fromEntries(Object.keys(brut).map(k => [k, { total: brut[k].length, lizibile: lizibile[k] }]));
 }
 
@@ -394,6 +396,19 @@ async function toateReteteleMele() {
 function stergeRetetaMea(id, eticheta) {
   return mutaInCos('retete', id, eticheta);
 }
+// ----- Ziua de nutriție (v8) -----
+async function citesteZiNutritie(data) {
+  const z = await cere('zileNutritie', 'readonly', st => st.get(data));
+  return (z && curataZiNutritie(z)) || { data, mese: [] };
+}
+function salveazaZiNutritie(zi) {
+  return cere('zileNutritie', 'readwrite', st => st.put({ ...zi, modificat: Date.now() }));
+}
+async function toateZileleNutritie() {
+  const lista = await cere('zileNutritie', 'readonly', st => st.getAll());
+  return lista.map(curataZiNutritie).filter(Boolean);
+}
+
 function salveazaPozaReteta(p) {
   return cere('pozeRetete', 'readwrite', st => st.put(p));
 }
@@ -433,9 +448,9 @@ function scrieMeta(cheie, valoare) {
 // Datele brute din stores (fără setări). Setările se adaugă în backup.js.
 // Citim direct, nu prin funcțiile filtrate de mai sus, ca backupul să conțină tot ce e în bază.
 async function exportaDate() {
-  const [sesiuni, exercitii, masuratori, rutine, alimente, retete] = await Promise.all(
+  const [sesiuni, exercitii, masuratori, rutine, alimente, retete, zileNutritie] = await Promise.all(
     STORES_DATE.map(nume => cere(nume, 'readonly', st => st.getAll())));
-  return { sesiuni, exercitii, masuratori, rutine, alimente, retete };
+  return { sesiuni, exercitii, masuratori, rutine, alimente, retete, zileNutritie };
 }
 
 // Pozele, așa cum sunt în bază (cu imaginea ca Blob); backup.js le transformă în text pentru fișier.

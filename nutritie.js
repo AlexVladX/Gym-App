@@ -6,7 +6,7 @@ let alimenteMele = [];
 let reteteMele = [];
 let indexNutritie = indexAlimente(ALIMENTE_BAZA);
 const pozeRetetaUrl = new Map(); // id rețetă → URL al pozei tale (object URL)
-let filaNutritie = 'retete';
+let filaNutritie = 'zi';
 const filtreRetete = { cautare: '', masa: '', etichete: new Set(), favorite: false, proprii: false };
 const filtreAlimente = { cautare: '', cat: '' };
 
@@ -93,16 +93,18 @@ function imagineReteta(r, clasa = 'reteta-imagine') {
 // ---------- File (Rețete / Alimente) ----------
 function arataFilaNutritie(fila) {
   filaNutritie = fila;
-  for (const [id, f] of [['tab-retete', 'retete'], ['tab-alimente', 'alimente']]) {
+  for (const [id, f] of [['tab-zi', 'zi'], ['tab-retete', 'retete'], ['tab-alimente', 'alimente']]) {
     $(id).classList.toggle('activ', f === fila);
     $(id).setAttribute('aria-selected', String(f === fila));
   }
+  $('nutritie-zi').hidden = fila !== 'zi';
   $('nutritie-retete').hidden = fila !== 'retete';
   $('nutritie-alimente').hidden = fila !== 'alimente';
   randeazaNutritie();
 }
 
 function randeazaNutritie() {
+  if (filaNutritie === 'zi') { randeazaZiNutritie({ reincarca: true }); return; }
   if (filaNutritie === 'alimente') { deseneazaFiltreAlimente(); randeazaAlimente(); } else { deseneazaFiltreRetete(); randeazaRetete(); }
 }
 
@@ -328,6 +330,8 @@ function arataReteta(id, portiiAlese) {
       placuta('Porții', String(r.portii), null),
       placuta('Dificultate', DIFICULTATI[r.dificultate] || '—', null),
     ]),
+    buton({ text: `Adaugă în ziua mea${dataZiNutritie === dataLocala() ? '' : ` (${afiseazaData(dataZiNutritie)})`}`, icon: 'plus', tip: 'principal', lat: true, clasa: 'mt',
+      onclick: () => d.inchide(() => deschideAdaugareInZi(r, { masa: r.masa, data: dataZiNutritie })) }),
     info.etichete.length ? el('div', { class: 'chipuri chipuri-mici mt' }, info.etichete.map(cipEticheta)) : null,
     el('h3', { class: 'detaliu-titlu', text: 'Valori nutriționale pe porție' }),
     panouNutritional(info.v, 'pe porție'),
@@ -810,6 +814,7 @@ function deschideEditorAliment(a, { copie = false, numeSugerat = '' } = {}) {
 
 // ---------- Pornire ----------
 function initNutritie() {
+  $('tab-zi').addEventListener('click', () => arataFilaNutritie('zi'));
   $('tab-retete').addEventListener('click', () => arataFilaNutritie('retete'));
   $('tab-alimente').addEventListener('click', () => arataFilaNutritie('alimente'));
   $('retete-cautare').addEventListener('input', e => { filtreRetete.cautare = e.target.value; randeazaRetete(); });

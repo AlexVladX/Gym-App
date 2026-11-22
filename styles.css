@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "23";
+  --versiune-css: "24";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -1368,3 +1368,60 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 /* Rețetă fără fotografie: rând cu invitația de a adăuga poza ta */
 .fara-foto { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 10px 0 4px; }
 .fara-foto .nota { margin: 0; flex: 1 1 180px; }
+
+/* ---------- Nutriție → Ziua mea (etapa 3) ---------- */
+.zi-nav { display: flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s3); }
+.zi-nav .zi-titlu { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.zi-nav .zi-titlu strong { font-size: 17px; text-transform: capitalize; }
+.zi-nav .zi-titlu .nota { margin: 0; font-size: 12px; }
+.zi-inapoi svg { transform: rotate(180deg); }
+.zi-kcal { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; margin-bottom: var(--s2); }
+.zi-kcal-mare { display: flex; align-items: baseline; gap: 6px; }
+.zi-kcal-mare strong { font-family: var(--font-cifre); font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+.zi-kcal-mare strong.peste { color: var(--avertizare); }
+.zi-kcal-mare span { color: var(--discret); font-size: 14px; }
+.zi-kcal-detalii { display: flex; gap: var(--s3); flex-wrap: wrap; font-size: 13px; color: var(--discret); }
+.zi-kcal-detalii b { color: var(--text); font-variant-numeric: tabular-nums; }
+.zi-bara { position: relative; display: block; height: 8px; border-radius: 4px; background: var(--suprafata-3); overflow: hidden; }
+.zi-bara i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; }
+.zi-bara .zi-bara-plan { background: rgba(255, 255, 255, 0.16); }
+.zi-bara-kcal { height: 100%; }
+.zi-bara-peste { position: absolute; right: 0; top: 0; bottom: 0; width: 4px; background: var(--avertizare); }
+.zi-macrouri { display: flex; flex-direction: column; gap: var(--s3); margin-top: var(--s4); }
+.zi-macro { display: grid; grid-template-columns: 1fr auto; gap: 4px var(--s2); align-items: center; font-size: 14px; }
+.zi-macro .zi-bara { grid-column: 1 / -1; height: 6px; }
+.zi-macro-valori { font-variant-numeric: tabular-nums; color: var(--text-2); text-align: right; }
+.zi-macro-valori b { color: var(--text); }
+.zi-macro-valori .nota { margin: 0; font-size: 12px; }
+.zi-legenda { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: var(--s3); }
+.zi-legenda i { display: inline-block; width: 10px; height: 6px; border-radius: 3px; }
+.zi-leg-mancat { background: var(--accent); }
+.zi-leg-plan { background: rgba(255, 255, 255, 0.25); }
+.zi-masa .card-cap .nota { margin: 0; font-variant-numeric: tabular-nums; }
+.zi-intrari { list-style: none; margin: 0 0 var(--s3); padding: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.zi-intrare { background: var(--suprafata-2); border-radius: var(--raza); padding: var(--s2); }
+.zi-intrare.stare-complet { box-shadow: inset 3px 0 0 var(--accent); }
+.zi-intrare.stare-partial { box-shadow: inset 3px 0 0 var(--avertizare); }
+.zi-intrare-principal, .selector-reteta {
+  display: flex; align-items: center; gap: var(--s3); width: 100%; padding: 0; border: none; background: none; color: inherit;
+  font: inherit; text-align: left; cursor: pointer;
+}
+.zi-imagine { width: 56px; height: 56px; flex: 0 0 56px; border-radius: var(--raza-mica); object-fit: cover; background: var(--suprafata-3); }
+.zi-intrare-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.zi-intrare-text strong { font-size: 15px; overflow-wrap: anywhere; }
+.zi-intrare-text .nota { margin: 0; font-size: 12px; }
+.zi-partial { font-size: 12px; color: var(--avertizare); }
+.zi-stari { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: var(--s2); }
+.zi-stare-btn {
+  min-height: 36px; border: 1px solid var(--bordura); border-radius: var(--raza-mica); background: var(--suprafata);
+  color: var(--discret); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; touch-action: manipulation;
+}
+.zi-stare-btn.activ.stare-neinceput { background: var(--suprafata-3); color: var(--text); border-color: var(--bordura-tare); }
+.zi-stare-btn.activ.stare-partial { background: rgba(255, 181, 71, 0.16); color: var(--avertizare); border-color: rgba(255, 181, 71, 0.5); }
+.zi-stare-btn.activ.stare-complet { background: var(--accent); color: var(--pe-accent); border-color: var(--accent); }
+.selector-retete { display: flex; flex-direction: column; gap: var(--s2); margin-top: var(--s3); max-height: 52vh; overflow-y: auto; }
+.selector-reteta { padding: var(--s2); border-radius: var(--raza); background: var(--suprafata-2); }
+.grila-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 var(--s3); }
+.estimare-tinte { margin-top: var(--s2); padding: var(--s3); border-radius: var(--raza); background: var(--suprafata-2); }
+.estimare-tinte summary { cursor: pointer; font-weight: 600; color: var(--text); }
+.estimare-tinte select { width: 100%; }
