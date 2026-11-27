@@ -10,6 +10,9 @@ const MESE = [
   { id: 'cina', nume: 'Cină', scurt: 'Cină' },
 ];
 
+// Cele 5 mese ale planului + „Altă masă” (doar pentru mese notate de tine, ex. din poză; generatorul nu o planifică).
+const MESE_TOATE = [...MESE, { id: 'alta', nume: 'Altă masă', scurt: 'Altă masă' }];
+
 const NUTRIENTI = [
   { id: 'kcal', nume: 'Calorii', unitate: 'kcal' },
   { id: 'proteine', nume: 'Proteine', unitate: 'g' },
@@ -213,7 +216,7 @@ function normalizeazaText(t) {
 
 if (typeof module !== 'undefined') {
   module.exports = {
-    MESE, NUTRIENTI, CATEGORII_ALIMENTE, ALERGENI, ORIGINI_ANIMALE, DIFICULTATI, ETICHETE, ETICHETE_DECLARATE,
+    MESE, MESE_TOATE, NUTRIENTI, CATEGORII_ALIMENTE, ALERGENI, ORIGINI_ANIMALE, DIFICULTATI, ETICHETE, ETICHETE_DECLARATE,
     esteGustare, valoriGoale, rotunjesteValori, indexAlimente, valoriAliment, adunaValori, inmultesteValori,
     valoriIngrediente, valoriPortie, distributieEnergie, alergeniReteta, originiReteta, eticheteReteta,
     textCantitate, normalizeazaText,

@@ -168,6 +168,7 @@ function textStareIntrare(i) {
 }
 
 function listaIngredienteIntrare(i) {
+  if (i.scanare) return i.scanare.articole.map(a => el('li', {}, [el('span', { text: a.nume }), el('strong', { text: a.grame != null ? fmtG(a.grame * i.portii) : `${fmtNr(a.cantitate)} ${a.unitate}` })]));
   const r = retetaDupaId(i.idReteta);
   const ing = i.ingredientePortie || (r ? r.ingrediente.map(([id, g]) => [id, g / (r.portii || 1)]) : []);
   return ing.map(([id, g]) => {
@@ -194,6 +195,7 @@ function randIntrare(i) {
         el('span', { class: 'zi-intrare-kcal' }, [el('b', { text: fmtNr(vPlan.kcal) }), ` kcal · ${fmtPortii(i.portii)}${i.timp ? ` · ${i.timp} min` : ''}`]),
         el('span', { class: 'nota', text: `P ${fmtNr(vPlan.proteine)} g · C ${fmtNr(vPlan.carbohidrati)} g · G ${fmtNr(vPlan.grasimi)} g${i.ajustat ? ' · cantități ajustate' : ''}` }),
         i.stare === 'partial' ? el('span', { class: 'zi-partial', text: textStareIntrare(i) }) : null,
+        i.scanare ? el('span', { class: 'zi-din-poza' }, [iconita('camera', 'iconita mica'), el('span', { text: ` din poză${i.ora ? ` · ${i.ora}` : ''}` })]) : null,
       ]),
     ]),
     el('div', { class: 'zi-intrare-actiuni' }, [
@@ -212,7 +214,7 @@ function randIntrare(i) {
 }
 
 function deseneazaMeseZi() {
-  const carduri = MESE.map(m => {
+  const carduri = MESE_TOATE.filter(m => m.id !== 'alta' || ziNutritie.mese.some(i => i.masa === 'alta')).map(m => {
     const intrari = ziNutritie.mese.filter(i => i.masa === m.id);
     const t = totaluriPeMasa(ziNutritie, m.id);
     return el('section', { class: 'card zi-masa', 'aria-label': m.nume }, [
@@ -221,8 +223,11 @@ function deseneazaMeseZi() {
         el('span', { class: 'nota', text: intrari.length ? `${fmtNr(t.mancat.kcal)} / ${fmtNr(t.planificat.kcal)} kcal` : '' }),
       ]),
       intrari.length ? el('ul', { class: 'zi-intrari' }, intrari.map(randIntrare)) : null,
-      buton({ text: intrari.length ? 'Adaugă încă o rețetă' : 'Adaugă o rețetă', icon: 'plus', tip: intrari.length ? 'fantoma' : 'secundar',
-        mic: true, lat: true, onclick: () => alegeRetetaPentruMasa(m.id) }),
+      el('div', { class: 'zi-adauga' }, [
+        m.id !== 'alta' ? buton({ text: intrari.length ? 'Adaugă încă o rețetă' : 'Adaugă o rețetă', icon: 'plus', tip: intrari.length ? 'fantoma' : 'secundar',
+          mic: true, onclick: () => alegeRetetaPentruMasa(m.id) }) : null,
+        buton({ text: 'Din poză', icon: 'camera', tip: 'fantoma', mic: true, eticheta: `Fotografiază ${m.nume.toLowerCase()}`, onclick: () => deschideScanare({ masa: m.id, data: dataZiNutritie }) }),
+      ]),
     ]);
   });
   $('zi-mese').replaceChildren(...carduri);
@@ -704,6 +709,7 @@ async function scoateIntrarea(i) {
 }
 
 function deschideIntrarea(i) {
+  if (i.scanare) return deschideIntrareScanata(i);
   const editabila = i.stare === 'neinceput';
   let portii = i.portii;
   // Cantitățile pe porție: cele salvate în zi; pentru intrările vechi (etapa 3), cele din rețeta de acum.

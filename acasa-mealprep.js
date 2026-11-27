@@ -108,7 +108,7 @@ function cardCaloriiMasa(zi, tinte) {
 // Prima masă din ordinea zilei care nu e mâncată complet.
 function urmatoareaIntrare(zi) {
   const mese = (zi && zi.mese) || [];
-  for (const m of MESE) {
+  for (const m of MESE_TOATE) {
     const i = mese.find(x => x.masa === m.id && x.stare !== 'complet');
     if (i) return i;
   }
@@ -157,7 +157,7 @@ function cardMeseleZilei(zi) {
   const { numar, terminate } = totaluriZi(zi);
   return el('div', { class: 'card' }, [
     titluCard('Mesele de azi', el('span', { class: 'nota', text: `${terminate}/${numar} mâncate` })),
-    el('ul', { class: 'acasa-mese' }, MESE.map(m => {
+    el('ul', { class: 'acasa-mese' }, MESE_TOATE.filter(m => m.id !== 'alta' || mese.some(i => i.masa === 'alta')).map(m => {
       const intrari = mese.filter(i => i.masa === m.id);
       if (!intrari.length) return el('li', { class: 'acasa-masa goala' }, [el('span', { class: 'acasa-masa-nume', text: m.nume }), el('span', { class: 'nota', text: '—' })]);
       const i = intrari[0];

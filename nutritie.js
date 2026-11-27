@@ -23,7 +23,7 @@ function idNutritieNou() {
   return `u-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 }
 
-function numeMasa(id) { return (MESE.find(m => m.id === id) || { nume: id }).nume; }
+function numeMasa(id) { return (MESE_TOATE.find(m => m.id === id) || { nume: id }).nume; }
 function numeAlergen(id) { return (ALERGENI.find(a => a.id === id) || { nume: id }).nume; }
 function numeCategorieAliment(id) { return (CATEGORII_ALIMENTE.find(c => c.id === id) || { nume: id }).nume; }
 const fmtG = v => `${String(Math.round(v * 10) / 10).replace('.', ',')} g`;

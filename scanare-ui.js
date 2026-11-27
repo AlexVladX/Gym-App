@@ -3,9 +3,10 @@
 
 const scanare = { ctrl: null, fisier: null, imagine: null, url: null, rezultat: null, articole: [], nota: '', cerere: null, inCurs: false, deschise: new Set(), avertizariCautare: [], manualDeschis: null };
 
-function deschideScanare() {
+// tinta (opțional): { masa, data } când pornești din „Ziua mea” pentru o masă anume.
+function deschideScanare(tinta = null) {
   inchideResurseScanare();
-  Object.assign(scanare, { fisier: null, imagine: null, rezultat: null, articole: [], nota: '', cerere: null, inCurs: false, deschise: new Set(), avertizariCautare: [], manualDeschis: null });
+  Object.assign(scanare, { fisier: null, imagine: null, rezultat: null, articole: [], nota: '', cerere: null, inCurs: false, deschise: new Set(), avertizariCautare: [], manualDeschis: null, tinta: tinta && typeof tinta === 'object' && !(tinta instanceof Event) ? tinta : null, salvare: null, probleme: [] });
   const zona = el('div', { class: 'scan-zona' });
   scanare.ctrl = deschideDialog({
     titlu: 'Fotografiază masa', continut: zona, butoane: [],
@@ -313,14 +314,108 @@ function pasRevizuireScanare() {
       el('div', { class: 'scan-chips' }, ascunse.map(x => el('button', { type: 'button', class: 'chip', onclick: () => adaugaArticolScanare(x) }, [iconita('plus', 'iconita mica'), el('span', { text: x })]))),
     ]) : null,
     buton({ text: 'Adaugă un aliment', icon: 'plus', tip: 'secundar', lat: true, onclick: () => adaugaArticolScanare('') }),
-    el('p', { class: 'scan-urmeaza nota nota-mica', text: 'În lucru: salvarea în ziua ta vine în etapa următoare. Deocamdată lista nu se salvează.' }),
+    scanare.probleme.length ? el('div', { class: 'scan-eroare scan-probleme', role: 'alert' }, [el('strong', { text: 'Înainte de salvare:' }), el('ul', {}, scanare.probleme.map(t => el('li', { text: t })))]) : null,
     r.utilizare ? el('p', { class: 'nota nota-mica', text: `Scanări azi: ${r.utilizare.azi} din ${r.utilizare.limita}${r.dinCache ? ' (rezultat refolosit, fără o scanare nouă)' : ''}.` })
       : (r.dinCache ? el('p', { class: 'nota nota-mica', text: 'Rezultat refolosit pentru aceeași poză, fără o scanare nouă.' }) : null),
   );
   butoaneScanare(
-    buton({ text: 'Închide', tip: 'fantoma', onclick: inchideScanare }),
-    buton({ text: 'Altă poză', icon: 'camera', tip: 'secundar', onclick: () => pasAlegereScanare() }),
+    buton({ text: textButonSalvareScanare(), icon: 'bifa', tip: 'principal', lat: true, onclick: incearcaSalvareScanare }),
+    buton({ text: 'Altă poză', icon: 'camera', tip: 'fantoma', lat: true, onclick: () => pasAlegereScanare() }),
   );
+}
+
+function textButonSalvareScanare() {
+  const data = (scanare.tinta && scanare.tinta.data) || dataLocala();
+  return data === dataLocala() ? 'Adaugă la nutriția de azi' : `Adaugă în ${afiseazaData(data)}`;
+}
+
+function incearcaSalvareScanare() {
+  scanare.probleme = problemeSalvareScanare(scanare.articole);
+  if (scanare.probleme.length) {
+    redeseneazaRevizuireScanare();
+    const b = zonaScanare().querySelector('.scan-probleme');
+    if (b) b.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    return;
+  }
+  pasConfirmareScanare();
+}
+
+// Ecranul 5: confirmarea — masa, numele, data și ora. Abia aici se salvează.
+function pasConfirmareScanare() {
+  const acum = new Date();
+  const oraAcum = `${String(acum.getHours()).padStart(2, '0')}:${String(acum.getMinutes()).padStart(2, '0')}`;
+  const t = scanare.tinta || {};
+  const st = scanare.salvare || { masa: t.masa || masaImplicitaScanare(oraAcum), nume: numeImplicitScanare(scanare.articole), data: t.data || dataLocala(), ora: oraAcum };
+  scanare.salvare = st;
+  const total = totalScanare(scanare.articole);
+  const chipuri = el('div', { class: 'scan-chips scan-mese', role: 'radiogroup', 'aria-label': 'Masa' });
+  const deseneazaChipuri = () => chipuri.replaceChildren(...MESE_TOATE.map(m => el('button', {
+    type: 'button', class: 'chip' + (st.masa === m.id ? ' activ' : ''), role: 'radio', 'aria-checked': String(st.masa === m.id),
+    onclick: () => { st.masa = m.id; deseneazaChipuri(); },
+  }, [el('span', { text: m.nume })])));
+  deseneazaChipuri();
+  const nume = el('input', { type: 'text', maxlength: '80', value: st.nume, class: 'scan-confirmare-nume', 'aria-label': 'Numele mesei' });
+  nume.addEventListener('input', () => { st.nume = nume.value; });
+  const data = el('input', { type: 'date', value: st.data, max: mutaData(dataLocala(), 7), 'aria-label': 'Data' });
+  data.addEventListener('change', () => { if (/^\d{4}-\d{2}-\d{2}$/.test(data.value)) { st.data = data.value; butoaneConfirmare(); } });
+  const ora = el('input', { type: 'time', value: st.ora, 'aria-label': 'Ora' });
+  ora.addEventListener('change', () => { st.ora = ora.value; });
+  const fmt = x => String(x).replace('.', ',');
+  puneInZona(zonaScanare(),
+    el('div', { class: 'scan-antet' }, [
+      el('img', { class: 'scan-poza scan-poza-mica', src: scanare.url, alt: 'Poza mesei' }),
+      el('div', {}, [
+        el('strong', { text: `${total.valori.kcal} kcal` }),
+        el('p', { class: 'nota', text: `P ${fmt(total.valori.proteine)} g · C ${fmt(total.valori.carbohidrati)} g · G ${fmt(total.valori.grasimi)} g · ${plural(scanare.articole.length, 'aliment', 'alimente')}` }),
+      ]),
+    ]),
+    el('div', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Masa' }), chipuri]),
+    el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Numele mesei' }), nume]),
+    el('div', { class: 'scan-data-ora' }, [
+      el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Data' }), data]),
+      el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Ora' }), ora]),
+    ]),
+    el('ul', { class: 'scan-rezumat nota nota-mica' }, scanare.articole.map(a => {
+      const v = valoriArticolScanare(a);
+      return el('li', {}, [el('span', { text: `${a.nume} · ${fmt(a.cantitate)} ${a.unitate === 'g' ? 'g' : (unitatiArticolScanare(a).find(u => u.id === a.unitate) || {}).nume || ''}`.trim() }), el('b', { text: `${Math.round(v.kcal)} kcal` })]);
+    })),
+    el('p', { class: 'nota nota-mica', text: 'Masa se salvează ca „Mâncată”, cu valorile de acum ale fiecărui aliment. Dacă un aliment din bibliotecă se schimbă mai târziu, masa aceasta rămâne la fel. O poți edita sau șterge din „Ziua mea”.' }),
+  );
+  const butoaneConfirmare = () => butoaneScanare(
+    buton({ text: st.data === dataLocala() ? 'Adaugă la nutriția de azi' : `Adaugă în ${afiseazaData(st.data)}`, icon: 'bifa', tip: 'principal', lat: true, onclick: salveazaScanareInZi }),
+    buton({ text: 'Înapoi', tip: 'fantoma', lat: true, onclick: () => pasRevizuireScanare() }),
+  );
+  butoaneConfirmare();
+  scanare.ctrl.caseta.scrollTop = 0;
+}
+
+async function salveazaScanareInZi() {
+  if (scanare.salvareInCurs) return;
+  const st = scanare.salvare;
+  let intrare;
+  try {
+    const articole = scanare.articole.map(instantaneuArticolScanare);
+    if (articole.some(x => !x)) throw new Error('Unele alimente nu au valori complete.');
+    intrare = intrareDinScanare({ id: idNutritieNou(), masa: st.masa, nume: st.nume, articole, ora: st.ora, portieIndividuala: scanare.rezultat.portieIndividuala });
+  } catch (err) { notifica(err.message, 'eroare'); return; }
+  scanare.salvareInCurs = true;
+  try {
+    const zi = (await citesteZiNutritieSalvata(st.data)) || { data: st.data, mese: [] };
+    await salveazaZiNutritie({ ...zi, data: st.data, mese: [...zi.mese, intrare] });
+  } catch (err) {
+    console.error(err);
+    scanare.salvareInCurs = false;
+    notifica(mesajEroareSalvare(err, 'Masa nu a putut fi salvată. Încearcă din nou.'), 'eroare');
+    return;
+  }
+  scanare.salvareInCurs = false;
+  const data = st.data;
+  inchideScanare();
+  notifica(`${intrare.nume}: ${Math.round(intrare.valoriPortie.kcal)} kcal adăugate la ${numeMasa(intrare.masa).toLowerCase()}${data === dataLocala() ? '' : `, ${afiseazaData(data)}`}.`, 'succes', 6000, {
+    text: 'Vezi ziua', onclick: () => { dataZiNutritie = data; arataEcran('ecran-nutritie'); arataFilaNutritie('zi'); },
+  });
+  if (typeof ecranCurent !== 'undefined' && ecranCurent === 'ecran-masa') randeazaAcasaMasa();
+  if (typeof ziNutritie !== 'undefined' && ziNutritie.data === data && typeof ecranCurent !== 'undefined' && ecranCurent === 'ecran-nutritie') randeazaZiNutritie({ reincarca: true });
 }
 
 function blocTotalScanare() {
@@ -471,7 +566,36 @@ function blocSursaScanare(a) {
   return el('div', { class: 'scan-sursa-bloc' }, [
     cap,
     av.length ? el('ul', { class: 'scan-avertizari' }, av.map(t => el('li', { text: t }))) : null,
+    poateIntraInBibliotecaScanare(a) && !deschis ? blocBibliotecaScanare(a) : null,
     deschis ? panouPotriviriScanare(a) : null,
+  ]);
+}
+
+// „Salvează în alimentele mele”: cu sursa, id-ul, linkul și data preluării; verifică întâi dacă îl ai deja.
+function blocBibliotecaScanare(a) {
+  if (a.salvatInBiblioteca) return el('p', { class: 'nota nota-mica scan-biblioteca-ok' }, [iconita('bifa', 'iconita mica'), el('span', { text: ' Salvat în alimentele tale.' })]);
+  const dup = duplicatAlimentScanare(alimenteMele, a);
+  if (dup) {
+    return el('div', { class: 'scan-biblioteca' }, [
+      el('span', { class: 'nota nota-mica', text: `Ai deja „${dup.nume}” în alimentele tale.` }),
+      buton({ text: 'Folosește-l', tip: 'fantoma', mic: true, onclick: () => {
+        actualizeazaArticolScanare(a.id, x => aplicaPotrivireScanare(x, potrivireDinAliment(dup, x)));
+        reimprospateazaCardScanare(a.id);
+      } }),
+    ]);
+  }
+  return el('div', { class: 'scan-biblioteca' }, [
+    buton({ text: 'Salvează în alimentele mele', icon: 'descarca', tip: 'fantoma', mic: true, eticheta: `Salvează ${a.nume} în alimentele mele`, onclick: async () => {
+      let al;
+      try { al = alimentDinScanare(a, idNutritieNou()); } catch (err) { notifica(err.message, 'eroare'); return; }
+      try {
+        await salveazaAlimentMeu(al);
+        await reincarcaNutritie();
+      } catch (err) { console.error(err); notifica(mesajEroareSalvare(err, 'Alimentul nu a putut fi salvat.'), 'eroare'); return; }
+      actualizeazaArticolScanare(a.id, x => ({ ...x, salvatInBiblioteca: al.id }));
+      reimprospateazaCardScanare(a.id);
+      notifica(`„${al.nume}” e acum în alimentele tale (Rețete → Alimente). Îl poți edita acolo: categorie, alergeni, note.`, 'succes', 5000);
+    } }),
   ]);
 }
 
@@ -530,6 +654,73 @@ function formularValoriScanare(a) {
     ]),
   ]);
   return f;
+}
+
+// ---------- O masă din poză deja salvată în zi ----------
+function deschideIntrareScanata(i) {
+  let articole = i.scanare.articole.map(a => ({ ...a }));
+  let masa = i.masa;
+  const fmt = x => String(Math.round(x * 10) / 10).replace('.', ',');
+  const lista = el('ul', { class: 'scan-salvate' });
+  const total = el('div', { class: 'scan-total' });
+  const nume = el('input', { type: 'text', maxlength: '80', value: i.nume, 'aria-label': 'Numele mesei' });
+  const selectMasa = el('select', { 'aria-label': 'Masa' }, MESE_TOATE.map(m => el('option', { value: m.id, text: m.nume })));
+  selectMasa.value = masa;
+  selectMasa.addEventListener('change', () => { masa = selectMasa.value; });
+  const eroare = el('p', { class: 'scan-eroare-mica', role: 'alert' });
+  const deseneazaTotal = () => {
+    const v = sumaArticoleScanate(articole);
+    total.replaceChildren(
+      el('div', { class: 'scan-total-sus' }, [el('span', { class: 'nota', text: 'Total masă' }), el('strong', { text: `${Math.round(v.kcal)} kcal` })]),
+      el('div', { class: 'scan-total-macro' }, [el('span', { text: `P ${fmt(v.proteine)} g` }), el('span', { text: `C ${fmt(v.carbohidrati)} g` }), el('span', { text: `G ${fmt(v.grasimi)} g` })]),
+    );
+  };
+  const deseneazaLista = () => {
+    lista.replaceChildren(...articole.map((a, k) => {
+      const valoriEl = el('span', { class: 'nota nota-mica', text: `${Math.round(a.valori.kcal)} kcal · P ${fmt(a.valori.proteine)} · C ${fmt(a.valori.carbohidrati)} · G ${fmt(a.valori.grasimi)}` });
+      let camp = el('span', { class: 'nota', text: `${fmt(a.cantitate || 0)} ${a.unitate || ''}` });
+      if (articolScanatEditabil(a)) {
+        camp = el('input', { type: 'number', inputmode: 'decimal', min: '0.1', max: '5000', step: 'any', value: String(a.cantitate), 'aria-label': `Cantitate ${a.nume}` });
+        camp.addEventListener('input', () => {
+          try { articole[k] = scaleazaArticolScanat(articole[k], parseFloat(String(camp.value).replace(',', '.'))); eroare.textContent = ''; }
+          catch (err) { eroare.textContent = err.message; return; }
+          const b = articole[k];
+          valoriEl.textContent = `${Math.round(b.valori.kcal)} kcal · P ${fmt(b.valori.proteine)} · C ${fmt(b.valori.carbohidrati)} · G ${fmt(b.valori.grasimi)}`;
+          deseneazaTotal();
+        });
+      }
+      return el('li', { class: 'scan-salvat' }, [
+        el('div', { class: 'scan-salvat-sus' }, [
+          el('strong', { text: a.nume }),
+          buton({ icon: 'cos', tip: 'fantoma', mic: true, eticheta: `Scoate ${a.nume}`, onclick: () => { articole = articole.filter((_, j) => j !== k); deseneazaLista(); deseneazaTotal(); } }),
+        ]),
+        el('div', { class: 'scan-salvat-cant' }, [camp, articolScanatEditabil(a) ? el('span', { class: 'nota', text: a.unitate || '' }) : null, a.estimat ? el('span', { class: 'scan-insigna', text: 'estimat din poză' }) : null]),
+        valoriEl,
+        el('span', { class: 'nota nota-mica', text: [a.sursa.eticheta || a.sursa.tip, a.sursa.nume].filter(Boolean).join(' · ') + (a.sursa.preluat ? ` · preluat ${a.sursa.preluat}` : '') }),
+      ]);
+    }));
+  };
+  deseneazaLista(); deseneazaTotal();
+  const d = deschideDialog({
+    titlu: 'Masă din poză',
+    continut: el('div', {}, [
+      el('p', { class: 'nota', text: `${numeMasa(i.masa)} · ${textStareIntrare(i)}${i.ora ? ` · ${i.ora}` : ''}` }),
+      el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Numele mesei' }), nume]),
+      el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Masa' }), selectMasa]),
+      total, lista, eroare,
+      el('p', { class: 'nota nota-mica', text: 'Valorile sunt cele salvate când ai adăugat masa; la o cantitate nouă se recalculează din aceleași valori (la 100 g sau pe porție), nu din baza de date de acum.' }),
+      el('div', { class: 'rand-butoane mt' }, [buton({ text: 'Scoate din zi', icon: 'cos', tip: 'fantoma', mic: true, onclick: () => d.inchide(() => scoateIntrarea(i)) })]),
+    ]),
+    butoane: [
+      buton({ text: 'Închide', tip: 'fantoma', onclick: () => d.inchide() }),
+      buton({ text: 'Salvează', tip: 'principal', onclick: async () => {
+        let noua;
+        try { noua = modificaIntrareScanata(i, { nume: nume.value, masa, articole }); } catch (err) { eroare.textContent = err.message; return; }
+        d.inchide();
+        await inlocuiesteIntrarea(noua);
+      } }),
+    ],
+  });
 }
 
 // Butonul mare de pe Acasă (MEAL PREP).

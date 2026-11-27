@@ -5,7 +5,8 @@
 //   { data: 'AAAA-LL-ZZ', mese: [intrare], modificat }
 //   intrare: { id, masa, idReteta, nume, portii, valoriPortie: { kcal, proteine, carbohidrati, grasimi, fibre },
 //              stare: 'neinceput' | 'partial' | 'complet', portiiMancate?, adaugat, modificat,
-//              (etapa 4, opționale) ingredientePortie: [[idAliment, grame pe porție]], timp (min), blocat }
+//              (etapa 4, opționale) ingredientePortie: [[idAliment, grame pe porție]], timp (min), blocat
+//              (masă din poză, opționale) sursa: 'scanare', ora: 'HH:MM', scanare: { articole: [copia valorilor], portieIndividuala } }
 //
 // Planurile salvate (store-ul planuriNutritie, cheie „id”, etapa 4):
 //   { id, nume, favorit, mese: [{ masa, idReteta, nume, portii, valoriPortie, ingredientePortie?, timp? }], creat, modificat }
@@ -204,6 +205,11 @@ function curataIntrareMasa(i) {
   }
   if ('timp' in i && !(Number.isFinite(i.timp) && i.timp > 0 && i.timp <= 1440)) delete rez.timp;
   if ('blocat' in i && typeof i.blocat !== 'boolean') delete rez.blocat;
+  if ('scanare' in i) {
+    const sc = curataSnapshotScanare(i.scanare);
+    if (sc) rez.scanare = sc; else delete rez.scanare;
+  }
+  if ('ora' in i && !(typeof i.ora === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(i.ora))) delete rez.ora;
   if (stare === 'partial') {
     const p = Number(i.portiiMancate);
     if (p > 0 && p < portii) rez.portiiMancate = p; else { rez.stare = 'neinceput'; delete rez.portiiMancate; }
@@ -252,8 +258,99 @@ function alegeRetetaAleatorie({ retete, masa, exclude = new Set(), preferate = n
   return candidate[candidate.length - 1];
 }
 
+// ---------- Mese din poză (scanare) ----------
+// Copia salvată a fiecărui aliment: valorile calculate în momentul salvării, cu sursa lor. Nu se recalculează
+// din baza de date dacă alimentul se schimbă mai târziu (istoricul rămâne cum a fost).
+const TIPURI_SURSA_SCANARE = ['local', 'reteta', 'usda', 'off', 'manual'];
+const LIMITA_INTRARE = { kcal: 10000, proteine: 1000, carbohidrati: 1000, grasimi: 1000, fibre: 1000 };
+
+function curataSnapshotScanare(s) {
+  if (!s || typeof s !== 'object' || !Array.isArray(s.articole)) return null;
+  const txt = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
+  const nr = (v, max) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= max ? v : null);
+  const valoriDin = (v, max, extra) => {
+    if (!v || typeof v !== 'object') return null;
+    const r = {};
+    for (const c of CAMPURI_VALORI) { const x = nr(v[c], c === 'kcal' ? max.kcal : max.alt); if (x == null) return null; r[c] = x; }
+    if (extra) for (const c of ['zahar', 'saturate']) { if (v[c] != null) { const x = nr(v[c], max.alt); if (x != null) r[c] = x; } }
+    return r;
+  };
+  const articole = [];
+  for (const a of s.articole.slice(0, 30)) {
+    if (!a || typeof a !== 'object' || !txt(a.nume, 80).trim()) continue;
+    const valori = valoriDin(a.valori, { kcal: 10000, alt: 1000 }, true);
+    if (!valori) continue;
+    const z = a.sursa && typeof a.sursa === 'object' ? a.sursa : {};
+    const r = {
+      nume: txt(a.nume, 80).trim(), cantitate: nr(a.cantitate, 5000), unitate: txt(a.unitate, 80), grame: nr(a.grame, 10000), estimat: a.estimat === true,
+      valori,
+      sursa: {
+        tip: TIPURI_SURSA_SCANARE.includes(z.tip) ? z.tip : 'manual', eticheta: txt(z.eticheta, 80), nume: txt(z.nume, 160), id: txt(z.id, 40),
+        url: typeof z.url === 'string' && /^https:\/\//.test(z.url) ? z.url.slice(0, 240) : '', preluat: /^\d{4}-\d{2}-\d{2}$/.test(z.preluat || '') ? z.preluat : '',
+      },
+    };
+    const per100 = valoriDin(a.per100, { kcal: 902, alt: 101 }, true);
+    if (per100) r.per100 = per100;
+    const vp = valoriDin(a.valoriPortie, { kcal: 10000, alt: 1000 }, false);
+    if (vp) r.valoriPortie = vp;
+    articole.push(r);
+  }
+  if (!articole.length) return null;
+  return { articole, portieIndividuala: s.portieIndividuala !== false };
+}
+
+const rot1Zi = x => Math.round(x * 10) / 10;
+function sumaArticoleScanate(articole) {
+  const t = { kcal: 0, proteine: 0, carbohidrati: 0, grasimi: 0, fibre: 0 };
+  for (const a of articole) for (const c of CAMPURI_VALORI) t[c] += a.valori[c];
+  for (const c of CAMPURI_VALORI) t[c] = rot1Zi(t[c]);
+  return t;
+}
+
+// Intrarea în zi pentru o masă din poză (marcată ca mâncată: ai confirmat-o după ce ai mâncat).
+function intrareDinScanare({ id, masa, nume, articole, ora, portieIndividuala = true, acum = Date.now() }) {
+  const sc = curataSnapshotScanare({ articole, portieIndividuala });
+  if (!sc) throw new Error('Nu există niciun aliment cu valori de salvat.');
+  if (sc.articole.length !== articole.length) throw new Error('Unele alimente nu au valori complete.');
+  const valoriPortie = sumaArticoleScanate(sc.articole);
+  for (const c of CAMPURI_VALORI) if (valoriPortie[c] > LIMITA_INTRARE[c]) throw new Error('Valorile depășesc limita unei mese (10 000 kcal). Verifică cantitățile.');
+  const numeCurat = String(nume || '').trim().slice(0, 80) || sc.articole.map(a => a.nume).join(', ').slice(0, 80);
+  const i = { id, masa, idReteta: null, nume: numeCurat, portii: 1, valoriPortie, stare: 'complet', adaugat: acum, modificat: acum, sursa: 'scanare', scanare: sc };
+  if (typeof ora === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(ora)) i.ora = ora;
+  return i;
+}
+
+// Cantitate nouă pentru un aliment salvat: se recalculează din copia salvată (valori la 100 g sau pe porție), nu din baza de date.
+function scaleazaArticolScanat(a, cantitate) {
+  const n = Number(cantitate);
+  if (!(n > 0 && n <= 5000)) throw new Error('Cantitate invalidă.');
+  if (a.valoriPortie && a.grame == null) {
+    const v = {};
+    for (const c of CAMPURI_VALORI) v[c] = rot1Zi(a.valoriPortie[c] * n);
+    return { ...a, cantitate: n, valori: v, estimat: false };
+  }
+  if (!a.per100 || !(a.grame > 0) || !(a.cantitate > 0)) throw new Error('Cantitatea acestui aliment nu se poate schimba.');
+  const grame = rot1Zi(a.grame * n / a.cantitate);
+  const v = {};
+  for (const c of [...CAMPURI_VALORI, 'zahar', 'saturate']) if (a.per100[c] != null) v[c] = rot1Zi(a.per100[c] * grame / 100);
+  return { ...a, cantitate: n, grame, valori: v, estimat: false };
+}
+
+function articolScanatEditabil(a) { return Boolean((a.valoriPortie && a.grame == null) || (a.per100 && a.grame > 0 && a.cantitate > 0)); }
+
+// Editarea unei mese din poză salvate: nume, masă, cantități, alimente scoase. Totalul se recalculează din copii.
+function modificaIntrareScanata(i, { nume, masa, articole, acum = Date.now() }) {
+  if (!i || !i.scanare) throw new Error('Nu e o masă din poză.');
+  if (!articole || !articole.length) throw new Error('Masa trebuie să aibă cel puțin un aliment. Ca s-o ștergi, folosește „Scoate din zi”.');
+  const sc = curataSnapshotScanare({ articole, portieIndividuala: i.scanare.portieIndividuala });
+  if (!sc || sc.articole.length !== articole.length) throw new Error('Unele alimente nu au valori complete.');
+  const valoriPortie = sumaArticoleScanate(sc.articole);
+  for (const c of CAMPURI_VALORI) if (valoriPortie[c] > LIMITA_INTRARE[c]) throw new Error('Valorile depășesc limita unei mese (10 000 kcal). Verifică cantitățile.');
+  return { ...i, nume: String(nume || i.nume).trim().slice(0, 80) || i.nume, masa: masa || i.masa, valoriPortie, scanare: sc, modificat: acum };
+}
+
 function ordoneazaDupaMasa(mese) {
-  const ordine = MESE_ZI.map(m => m.id);
+  const ordine = [...MESE_ZI.map(m => m.id), 'alta'];
   return [...mese].sort((a, b) => ordine.indexOf(a.masa) - ordine.indexOf(b.masa));
 }
 
@@ -413,6 +510,7 @@ function varstaDinAn(anNastere, azi = new Date()) {
 if (typeof module !== 'undefined') {
   module.exports = {
     STARI_MASA, NIVELURI_ACTIVITATE, SCOPURI_NUTRITIE, LIMITE_TINTE, FIBRE_PE_1000_KCAL,
+    curataSnapshotScanare, intrareDinScanare, scaleazaArticolScanat, articolScanatEditabil, modificaIntrareScanata, sumaArticoleScanate,
     estimeazaTinte, curataTinte, valoriZero, intrareMasa, valoriPlanificateIntrare, portiiMancateIntrare,
     valoriMancateIntrare, totaluriZi, totaluriPeMasa, ramasDinTinte, progresTinta, schimbaStareIntrare,
     curataIntrareMasa, curataZiNutritie, varstaDinAn,

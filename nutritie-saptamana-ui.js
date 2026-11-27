@@ -296,7 +296,7 @@ function deseneazaZileSapt() {
     const trecuta = esteTrecuta(data);
     const [, l, z] = data.split('-').map(Number);
     const rap = raporteSapt[data];
-    const mese = MESE.map(m => {
+    const mese = MESE_TOATE.filter(m => m.id !== 'alta' || zi.mese.some(i => i.masa === 'alta')).map(m => {
       const intrari = zi.mese.filter(i => i.masa === m.id);
       if (!intrari.length) return el('li', { class: 'sapt-masa goala' }, [el('span', { class: 'acasa-masa-nume', text: m.scurt }), el('span', { class: 'nota', text: '—' })]);
       return intrari.map(i => el('li', { class: `sapt-masa stare-${i.stare}` }, [

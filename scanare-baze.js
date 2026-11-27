@@ -330,6 +330,91 @@ function textValoriScanare(v) {
   return `${Math.round(v.kcal)} kcal · P ${f(v.proteine)} g · C ${f(v.carbohidrati)} g · G ${f(v.grasimi)} g`;
 }
 
+// ---------- Salvarea în zi (etapa 3) ----------
+const r1 = x => Math.round(x * 10) / 10;
+
+// Copia unui aliment pentru ziua ta: valorile de acum + sursa; valorile la 100 g / pe porție ca să poți corecta cantitatea mai târziu.
+function instantaneuArticolScanare(a) {
+  const v = valoriArticolScanare(a);
+  if (!v) return null;
+  const p = a.potrivire;
+  const u = unitatiArticolScanare(a).find(x => x.id === a.unitate);
+  const valori = { kcal: r1(v.kcal), proteine: r1(v.proteine), carbohidrati: r1(v.carbohidrati), grasimi: r1(v.grasimi), fibre: r1(v.fibre || 0) };
+  if (v.zahar != null) valori.zahar = r1(v.zahar);
+  if (v.saturate != null) valori.saturate = r1(v.saturate);
+  const r = {
+    nume: a.nume.trim(), cantitate: a.cantitate, unitate: u ? (u.id === 'g' ? 'g' : u.nume) : a.unitate, grame: p.tip === 'reteta' ? null : a.grame,
+    estimat: a.sursaGramaj === 'estimat', valori,
+    sursa: { tip: p.tip, eticheta: p.eticheta, nume: p.nume, id: p.tip === 'manual' ? '' : String(p.id), url: p.url || '', preluat: p.preluat || '' },
+  };
+  if (p.tip === 'reteta') r.valoriPortie = { ...p.valoriPortie };
+  else if (p.per100) {
+    r.per100 = { kcal: p.per100.kcal, proteine: p.per100.proteine, carbohidrati: p.per100.carbohidrati, grasimi: p.per100.grasimi, fibre: p.per100.fibre || 0 };
+    if (p.per100.zahar != null) r.per100.zahar = p.per100.zahar;
+    if (p.per100.saturate != null) r.per100.saturate = p.per100.saturate;
+  }
+  return r;
+}
+
+// Ce împiedică salvarea: fiecare aliment trebuie să aibă nume, cantitate și valori (nimic nu se salvează pe jumătate).
+function problemeSalvareScanare(articole) {
+  if (!articole.length) return ['Lista e goală. Adaugă cel puțin un aliment.'];
+  const p = [];
+  for (const a of articole) {
+    const nume = a.nume.trim() || 'Un aliment fără nume';
+    if (!a.nume.trim()) p.push('Un aliment nu are nume.');
+    else if (!(a.cantitate > 0)) p.push(`„${nume}” nu are cantitate.`);
+    else if (!valoriArticolScanare(a)) p.push(`„${nume}” nu are valori: alege sursa sau șterge-l.`);
+  }
+  return p;
+}
+
+// Masa propusă după oră (o poți schimba).
+function masaImplicitaScanare(ora) {
+  const [h, m] = String(ora || '12:00').split(':').map(Number);
+  const t = h * 60 + (m || 0);
+  if (t < 10 * 60 + 30) return 'mic-dejun';
+  if (t < 12 * 60) return 'gustare-1';
+  if (t < 15 * 60 + 30) return 'pranz';
+  if (t < 18 * 60) return 'gustare-2';
+  return 'cina';
+}
+
+function numeImplicitScanare(articole) {
+  const n = articole.map(a => a.nume.trim()).filter(Boolean);
+  if (!n.length) return 'Masă din poză';
+  const t = n.length > 3 ? `${n.slice(0, 3).join(', ')} +${n.length - 3}` : n.join(', ');
+  return (t.charAt(0).toUpperCase() + t.slice(1)).slice(0, 80);
+}
+
+// ---------- Biblioteca ta de alimente (etapa 3) ----------
+// Doar alimentele cu valori dintr-o bază de date (USDA / Open Food Facts) sau scrise de tine; niciodată estimări AI.
+function poateIntraInBibliotecaScanare(a) { return Boolean(a.potrivire && ['usda', 'off', 'manual'].includes(a.potrivire.tip)); }
+
+function duplicatAlimentScanare(alimenteMele, a) {
+  const p = a.potrivire;
+  if (!p) return null;
+  const { normalizeazaText } = calculScanareBaze();
+  return (alimenteMele || []).find(x => x.provenienta && p.tip !== 'manual' && x.provenienta.tip === p.tip && String(x.provenienta.id) === String(p.id))
+    || (alimenteMele || []).find(x => normalizeazaText(x.nume) === normalizeazaText(a.nume)) || null;
+}
+
+function alimentDinScanare(a, id, acum = Date.now()) {
+  const p = a.potrivire;
+  if (!poateIntraInBibliotecaScanare(a)) throw new Error('Doar alimentele cu valori din USDA, Open Food Facts sau scrise de tine se pot salva.');
+  const v = p.per100;
+  const al = {
+    id, nume: a.nume.trim().slice(0, 80), cat: 'altele', alergeni: [], urme: [], animal: null, culoare: '#C2B9A5', aspect: 'bile',
+    kcal: v.kcal, proteine: v.proteine, carbohidrati: v.carbohidrati, grasimi: v.grasimi, fibre: v.fibre != null ? v.fibre : 0,
+    sursa: p.tip === 'manual' ? 'Valori scrise de tine' : p.nume,
+    provenienta: { tip: p.tip, id: p.tip === 'manual' ? '' : String(p.id), url: p.url || '', preluat: p.preluat || '', verificat: p.tip !== 'manual', numeSursa: p.nume },
+    creat: acum, modificat: acum,
+  };
+  if (v.fibre == null) al.provenienta.faraFibre = true;
+  if (p.marca) al.marca = String(p.marca).slice(0, 80);
+  return al;
+}
+
 // ---------- Cache local pentru căutările externe (30 de zile, max. 80) ----------
 function cheieCautareScanare(c) { return `${c.ambalat ? 'a' : 'g'}|${(c.marca || '').toLowerCase()}|${c.text.toLowerCase()}`; }
 function citesteCacheCautari(stocare, cheie, acum = Date.now()) {
@@ -357,4 +442,6 @@ if (typeof module !== 'undefined') module.exports = {
   scorExternScanare, ordoneazaExterneScanare, unitatiArticolScanare, initializeazaCantitateScanare, seteazaCantitateScanare,
   seteazaUnitateScanare, aplicaPotrivireScanare, avertizariPotrivireScanare, cautaLocalScanare, valoriArticolScanare, totalScanare, textValoriScanare,
   cheieCautareScanare, citesteCacheCautari, scrieCacheCautari,
+  instantaneuArticolScanare, problemeSalvareScanare, masaImplicitaScanare, numeImplicitScanare,
+  poateIntraInBibliotecaScanare, duplicatAlimentScanare, alimentDinScanare,
 };
