@@ -13,10 +13,10 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
   <title>Jurnal de antrenament</title>
-  <link rel="stylesheet" href="styles.css?v=39">
-  <script src="tema.js?v=39"></script>
+  <link rel="stylesheet" href="styles.css?v=40">
+  <script src="tema.js?v=40"></script>
 </head>
-<body class="se-incarca" data-versiune="39">
+<body class="se-incarca" data-versiune="40">
   <header class="topbar">
     <div class="topbar-interior">
       <div class="marca">
@@ -441,6 +441,11 @@
           <span>Semnal la finalul pauzei (sunet; vibrație pe Android)</span>
           <input id="set-semnal" type="checkbox" role="switch">
         </label>
+        <label class="rand aliniat comutator mt">
+          <span>Pauza pe ecranul de blocare (notificare)</span>
+          <input id="set-notif" type="checkbox" role="switch">
+        </label>
+        <p class="nota" id="set-notif-nota">Arată ora la care se termină pauza și anunță finalul ei. Pe Android, notificarea are și butonul „Serie făcută”. Pe iPhone merge doar cu aplicația adăugată pe ecranul principal (iOS 16.4+), fără buton.</p>
         <div class="separator"></div>
         <label class="rand aliniat comutator">
           <span>Ține ecranul aprins în timpul antrenamentului</span>
@@ -584,48 +589,48 @@
     </button>
   </nav>
 
-  <script src="db.js?v=39"></script>
-  <script src="validare.js?v=39"></script>
-  <script src="exercitii.js?v=39"></script>
-  <script src="analiza.js?v=39"></script>
-  <script src="statistici.js?v=39"></script>
-  <script src="corp-calcul.js?v=39"></script>
-  <script src="realizari.js?v=39"></script>
-  <script src="nutritie-alimente.js?v=39"></script>
-  <script src="nutritie-retete.js?v=39"></script>
-  <script src="nutritie-calcul.js?v=39"></script>
-  <script src="nutritie-zi.js?v=39"></script>
-  <script src="cafea.js?v=39"></script>
-  <script src="nutritie-generator.js?v=39"></script>
-  <script src="nutritie-analiza.js?v=39"></script>
-  <script src="nutritie-cumparaturi.js?v=39"></script>
-  <script src="nutritie-imagini.js?v=39"></script>
-  <script src="catalog.js?v=39"></script>
-  <script src="figuri.js?v=39"></script>
-  <script src="ui.js?v=39"></script>
-  <script src="grafice.js?v=39"></script>
-  <script src="setari.js?v=39"></script>
-  <script src="timer.js?v=39"></script>
-  <script src="sesiune.js?v=39"></script>
-  <script src="corp.js?v=39"></script>
-  <script src="progres.js?v=39"></script>
-  <script src="realizari-ui.js?v=39"></script>
-  <script src="istoric.js?v=39"></script>
-  <script src="biblioteca.js?v=39"></script>
-  <script src="nutritie.js?v=39"></script>
-  <script src="nutritie-zi-ui.js?v=39"></script>
-  <script src="cafea-ui.js?v=39"></script>
-  <script src="nutritie-saptamana-ui.js?v=39"></script>
-  <script src="nutritie-analiza-ui.js?v=39"></script>
-  <script src="nutritie-cumparaturi-ui.js?v=39"></script>
-  <script src="acasa-mealprep.js?v=39"></script>
-  <script src="backup.js?v=39"></script>
-  <script src="siguranta.js?v=39"></script>
-  <script src="acasa.js?v=39"></script>
-  <script src="cloud-config.js?v=39"></script>
-  <script src="sincron.js?v=39"></script>
-  <script src="cloud.js?v=39"></script>
-  <script src="cloud-ui.js?v=39"></script>
-  <script src="main.js?v=39"></script>
+  <script src="db.js?v=40"></script>
+  <script src="validare.js?v=40"></script>
+  <script src="exercitii.js?v=40"></script>
+  <script src="analiza.js?v=40"></script>
+  <script src="statistici.js?v=40"></script>
+  <script src="corp-calcul.js?v=40"></script>
+  <script src="realizari.js?v=40"></script>
+  <script src="nutritie-alimente.js?v=40"></script>
+  <script src="nutritie-retete.js?v=40"></script>
+  <script src="nutritie-calcul.js?v=40"></script>
+  <script src="nutritie-zi.js?v=40"></script>
+  <script src="cafea.js?v=40"></script>
+  <script src="nutritie-generator.js?v=40"></script>
+  <script src="nutritie-analiza.js?v=40"></script>
+  <script src="nutritie-cumparaturi.js?v=40"></script>
+  <script src="nutritie-imagini.js?v=40"></script>
+  <script src="catalog.js?v=40"></script>
+  <script src="figuri.js?v=40"></script>
+  <script src="ui.js?v=40"></script>
+  <script src="grafice.js?v=40"></script>
+  <script src="setari.js?v=40"></script>
+  <script src="timer.js?v=40"></script>
+  <script src="sesiune.js?v=40"></script>
+  <script src="corp.js?v=40"></script>
+  <script src="progres.js?v=40"></script>
+  <script src="realizari-ui.js?v=40"></script>
+  <script src="istoric.js?v=40"></script>
+  <script src="biblioteca.js?v=40"></script>
+  <script src="nutritie.js?v=40"></script>
+  <script src="nutritie-zi-ui.js?v=40"></script>
+  <script src="cafea-ui.js?v=40"></script>
+  <script src="nutritie-saptamana-ui.js?v=40"></script>
+  <script src="nutritie-analiza-ui.js?v=40"></script>
+  <script src="nutritie-cumparaturi-ui.js?v=40"></script>
+  <script src="acasa-mealprep.js?v=40"></script>
+  <script src="backup.js?v=40"></script>
+  <script src="siguranta.js?v=40"></script>
+  <script src="acasa.js?v=40"></script>
+  <script src="cloud-config.js?v=40"></script>
+  <script src="sincron.js?v=40"></script>
+  <script src="cloud.js?v=40"></script>
+  <script src="cloud-ui.js?v=40"></script>
+  <script src="main.js?v=40"></script>
 </body>
 </html>

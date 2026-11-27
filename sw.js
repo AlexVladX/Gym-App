@@ -4,7 +4,7 @@
 //
 // La fiecare publicare: mărește VERSIUNE aici, în index.html (?v=… și data-versiune)
 // și în styles.css (--versiune-css). Toate trei trebuie să fie egale.
-const VERSIUNE = '39';
+const VERSIUNE = '40';
 const CACHE = `jurnal-v${VERSIUNE}`;
 const FISIERE_FIXE = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 const FISIERE_VERSIONATE = [
@@ -98,4 +98,15 @@ self.addEventListener('fetch', e => {
       caches.match(e.request.url).then(r =>
         r || (e.request.mode === 'navigate' ? caches.match('./index.html') : Response.error())))
   );
+});
+
+// Notificarea pauzei: butonul „Serie făcută” bifează seria următoare; un tap pe notificare deschide aplicația.
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(lista => {
+    const client = lista[0];
+    if (e.action === 'serie' && client) { client.postMessage({ tip: 'serie-facuta' }); return; }
+    if (client) return client.focus();
+    return self.clients.openWindow('./');
+  }));
 });

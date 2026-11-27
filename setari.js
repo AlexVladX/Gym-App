@@ -8,7 +8,7 @@
 // preferinteNutritie (etapa 5): { dieta[], alergii[], stil[], excluse[], preferate[], timpMaxim } (vezi nutritie-generator.js).
 // mod (Faza 1 din 3.0): 'gym' | 'mealprep' — modul aplicației ales ultima dată (vezi tema.js).
 // cafeleZilnice (Faza 4): cafeaua care se pune singură în fiecare zi (vezi cafea.js); limitaCofeina: mg pe zi (implicit 400, EFSA).
-const SETARI_IMPLICITE = { minRep: 8, maxRep: 12, pasKg: 2.5, ecranAprins: true, pauzaSec: 90, pauzaAutomata: true, semnal: true,
+const SETARI_IMPLICITE = { minRep: 8, maxRep: 12, pasKg: 2.5, ecranAprins: true, pauzaSec: 90, pauzaAutomata: true, semnal: true, notificariPauza: false,
   inaltimeCm: null, obiectiv: null, obiectivSaptamanal: 3, retetePreferate: [],
   tinteNutritie: null, anNastere: null, sex: null, activitate: null, scopNutritie: null, preferinteNutritie: null, mod: 'gym',
   cafeleZilnice: [], limitaCofeina: 400 };
@@ -25,6 +25,7 @@ function curataSetari(sursa) {
   if (typeof sursa.ecranAprins === 'boolean') rez.ecranAprins = sursa.ecranAprins;
   if (typeof sursa.pauzaAutomata === 'boolean') rez.pauzaAutomata = sursa.pauzaAutomata;
   if (typeof sursa.semnal === 'boolean') rez.semnal = sursa.semnal;
+  if (typeof sursa.notificariPauza === 'boolean') rez.notificariPauza = sursa.notificariPauza;
   if (intreg(sursa.pauzaSec, 10, 600)) rez.pauzaSec = sursa.pauzaSec;
   if (intreg(sursa.obiectivSaptamanal, 1, 7)) rez.obiectivSaptamanal = sursa.obiectivSaptamanal;
   const numar = (v, min, max) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
@@ -91,6 +92,7 @@ function afiseazaSetari() {
   $('set-pauza').value = setari.pauzaSec;
   $('set-pauza-auto').checked = setari.pauzaAutomata;
   $('set-semnal').checked = setari.semnal;
+  $('set-notif').checked = setari.notificariPauza && notificariPermise();
   $('set-obiectiv-sapt').value = setari.obiectivSaptamanal;
 }
 
@@ -112,6 +114,7 @@ function citesteCampuriSetari() {
   setari.ecranAprins = $('set-ecran').checked;
   setari.pauzaAutomata = $('set-pauza-auto').checked;
   setari.semnal = $('set-semnal').checked;
+  setari.notificariPauza = $('set-notif').checked;
   const obiectivSapt = parseInt($('set-obiectiv-sapt').value, 10);
   if (obiectivSapt >= 1 && obiectivSapt <= 7) setari.obiectivSaptamanal = obiectivSapt;
   else notifica('Obiectivul săptămânal trebuie să fie între 1 și 7 antrenamente.', 'eroare');

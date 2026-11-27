@@ -383,6 +383,24 @@ function bifeazaSerie(ex, s, i) {
   if (setari.pauzaAutomata && !pePauza() && (!ss || ss.ultimul)) porneshteTimerul();
 }
 
+// Prima serie nebifată din antrenament (pentru notificarea pauzei și butonul „Serie făcută”).
+function urmatoareaSerie() {
+  for (const ex of stare.exercitii) {
+    const i = ex.serii.findIndex(x => !x.facut);
+    if (i >= 0) return { ex, s: ex.serii[i], i };
+  }
+  return null;
+}
+function urmatoareaSerieText() {
+  const u = urmatoareaSerie();
+  return u ? `Urmează: ${u.ex.nume}, seria ${u.i + 1}` : '';
+}
+function bifeazaUrmatoareaSerie() {
+  const u = urmatoareaSerie();
+  if (!u) { notifica('Toate seriile sunt bifate.', 'info'); return; }
+  bifeazaSerie(u.ex, u.s, u.i);
+}
+
 // Seria de pe aceeași poziție din ultima sesiune cu acest exercițiu (pentru coloana „Anterior").
 function serieAnterioara(ex, i) {
   const ultima = ultimaSesiuneCu(istoric, ex.nume);
