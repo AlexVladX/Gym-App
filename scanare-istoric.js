@@ -204,10 +204,7 @@ async function deschideIstoricScanari(idDeschis = null) {
       img || el('p', { class: 'nota nota-mica', text: 'Poza nu (mai) e păstrată; valorile au rămas.' }),
       el('h3', { class: 'detaliu-titlu', text: s.nume }),
       el('p', { class: 'nota', text: [s.data ? afiseazaData(s.data) : '', s.ora, s.masa ? numeMasa(s.masa) : ''].filter(Boolean).join(' · ') }),
-      el('div', { class: 'scan-total' }, [
-        el('div', { class: 'scan-total-sus' }, [el('span', { class: 'nota', text: 'Total' }), el('strong', { text: `${Math.round(s.total.kcal)} kcal` })]),
-        el('div', { class: 'scan-total-macro' }, [el('span', { text: `P ${fmt(s.total.proteine)} g` }), el('span', { text: `C ${fmt(s.total.carbohidrati)} g` }), el('span', { text: `G ${fmt(s.total.grasimi)} g` })]),
-      ]),
+      el('div', { class: 'scan-total' }, [panouNutritional(s.total, 'în total')]),
       el('ul', { class: 'scan-salvate' }, s.articole.map(a => el('li', { class: 'scan-salvat' }, [
         el('strong', { text: a.nume }),
         el('span', { class: 'nota nota-mica', text: `${fmt(a.cantitate || 0)} ${a.unitate || ''}${a.estimat ? ' (estimat din poză)' : ''} · ${Math.round(a.valori.kcal)} kcal · P ${fmt(a.valori.proteine)} · C ${fmt(a.valori.carbohidrati)} · G ${fmt(a.valori.grasimi)}` }),

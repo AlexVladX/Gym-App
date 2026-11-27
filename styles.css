@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "50";
+  --versiune-css: "51";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -2056,3 +2056,8 @@ html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
 .scan-rezultate-aliment { margin-top: var(--s2); max-height: 340px; }
 .scan-rezultate-aliment:empty { display: none; }
 .scan-varianta-noua { border-style: dashed; }
+
+/* Graficul de macronutrienți în scanare: panoul din rețete, pe fundalul cardului de total */
+.scan-total .nutri-panou { background: transparent; padding: 0; margin: 0; }
+.scan-total-lipsa { margin-top: var(--s2); }
+.select-sortare { display: block; width: 100%; }

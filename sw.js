@@ -4,7 +4,7 @@
 //
 // La fiecare publicare: mărește VERSIUNE aici, în index.html (?v=… și data-versiune)
 // și în styles.css (--versiune-css). Toate trei trebuie să fie egale.
-const VERSIUNE = '50';
+const VERSIUNE = '51';
 const CACHE = `jurnal-v${VERSIUNE}`;
 const FISIERE_FIXE = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-180.png', './icon-192.png', './icon-512.png'];
 const FISIERE_VERSIONATE = [

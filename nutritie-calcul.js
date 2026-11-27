@@ -13,6 +13,28 @@ const MESE = [
 // Cele 5 mese ale planului + „Altă masă” (doar pentru mese notate de tine, ex. din poză; generatorul nu o planifică).
 const MESE_TOATE = [...MESE, { id: 'alta', nume: 'Altă masă', scurt: 'Altă masă' }];
 
+// Sortarea listelor de rețete (valori pe porție) și alimente (la 100 g) după macronutrienți.
+const SORTARI_NUTRITIE = [
+  { id: '', nume: 'Ordinea obișnuită' },
+  { id: 'proteine-desc', nume: 'Cele mai multe proteine' },
+  { id: 'proteine-kcal', nume: 'Cele mai multe proteine la 100 kcal' },
+  { id: 'carbohidrati-asc', nume: 'Cei mai puțini carbohidrați' },
+  { id: 'carbohidrati-desc', nume: 'Cei mai mulți carbohidrați' },
+  { id: 'grasimi-asc', nume: 'Cele mai puține grăsimi' },
+  { id: 'grasimi-desc', nume: 'Cele mai multe grăsimi' },
+  { id: 'fibre-desc', nume: 'Cele mai multe fibre' },
+  { id: 'kcal-asc', nume: 'Cele mai puține calorii' },
+  { id: 'kcal-desc', nume: 'Cele mai multe calorii' },
+];
+// Valoarea după care se sortează (mai mare = mai sus în listă).
+function valoareSortareNutritie(v, cheie) {
+  if (!v || !cheie) return 0;
+  if (cheie === 'proteine-kcal') return v.kcal > 0 ? v.proteine / v.kcal * 100 : 0;
+  const [camp, dir] = cheie.split('-');
+  const x = Number(v[camp]) || 0;
+  return dir === 'asc' ? -x : x;
+}
+
 const NUTRIENTI = [
   { id: 'kcal', nume: 'Calorii', unitate: 'kcal' },
   { id: 'proteine', nume: 'Proteine', unitate: 'g' },
@@ -216,7 +238,7 @@ function normalizeazaText(t) {
 
 if (typeof module !== 'undefined') {
   module.exports = {
-    MESE, MESE_TOATE, NUTRIENTI, CATEGORII_ALIMENTE, ALERGENI, ORIGINI_ANIMALE, DIFICULTATI, ETICHETE, ETICHETE_DECLARATE,
+    MESE, MESE_TOATE, NUTRIENTI, SORTARI_NUTRITIE, valoareSortareNutritie, CATEGORII_ALIMENTE, ALERGENI, ORIGINI_ANIMALE, DIFICULTATI, ETICHETE, ETICHETE_DECLARATE,
     esteGustare, valoriGoale, rotunjesteValori, indexAlimente, valoriAliment, adunaValori, inmultesteValori,
     valoriIngrediente, valoriPortie, distributieEnergie, alergeniReteta, originiReteta, eticheteReteta,
     textCantitate, normalizeazaText,

@@ -13,10 +13,10 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
   <title>Jurnal de antrenament</title>
-  <link rel="stylesheet" href="styles.css?v=50">
-  <script src="tema.js?v=50"></script>
+  <link rel="stylesheet" href="styles.css?v=51">
+  <script src="tema.js?v=51"></script>
 </head>
-<body class="se-incarca" data-versiune="50">
+<body class="se-incarca" data-versiune="51">
   <header class="topbar">
     <div class="topbar-interior">
       <div class="marca">
@@ -164,6 +164,7 @@
           </div>
           <div id="retete-mese" class="chipuri chipuri-mici chipuri-defilare mt" role="group" aria-label="Masa"></div>
           <div id="retete-etichete" class="chipuri chipuri-mici chipuri-defilare mt" role="group" aria-label="Filtre dietetice"></div>
+          <select id="retete-sortare" class="select-sortare mt" aria-label="Sortează rețetele după valori nutriționale"></select>
           <div class="rand aliniat mt">
             <span id="retete-numar" class="nota"></span>
             <button id="btn-retete-filtre" class="btn btn-fantoma btn-mic" type="button" hidden>Șterge filtrele</button>
@@ -182,6 +183,7 @@
             <input id="alimente-cautare" type="search" placeholder="Caută aliment" autocomplete="off" aria-label="Caută aliment">
           </div>
           <div id="alimente-categorii" class="chipuri chipuri-mici chipuri-defilare mt" role="group" aria-label="Categorie"></div>
+          <select id="alimente-sortare" class="select-sortare mt" aria-label="Sortează alimentele după valori nutriționale"></select>
           <div class="rand aliniat mt">
             <span id="alimente-numar" class="nota"></span>
             <button id="btn-aliment-nou" class="btn btn-secundar btn-mic" type="button">
@@ -592,52 +594,52 @@
     </button>
   </nav>
 
-  <script src="db.js?v=50"></script>
-  <script src="validare.js?v=50"></script>
-  <script src="exercitii.js?v=50"></script>
-  <script src="analiza.js?v=50"></script>
-  <script src="statistici.js?v=50"></script>
-  <script src="corp-calcul.js?v=50"></script>
-  <script src="realizari.js?v=50"></script>
-  <script src="nutritie-alimente.js?v=50"></script>
-  <script src="nutritie-retete.js?v=50"></script>
-  <script src="nutritie-calcul.js?v=50"></script>
-  <script src="nutritie-zi.js?v=50"></script>
-  <script src="cafea.js?v=50"></script>
-  <script src="nutritie-generator.js?v=50"></script>
-  <script src="nutritie-analiza.js?v=50"></script>
-  <script src="nutritie-cumparaturi.js?v=50"></script>
-  <script src="nutritie-imagini.js?v=50"></script>
-  <script src="catalog.js?v=50"></script>
-  <script src="figuri.js?v=50"></script>
-  <script src="ui.js?v=50"></script>
-  <script src="grafice.js?v=50"></script>
-  <script src="setari.js?v=50"></script>
-  <script src="timer.js?v=50"></script>
-  <script src="sesiune.js?v=50"></script>
-  <script src="corp.js?v=50"></script>
-  <script src="progres.js?v=50"></script>
-  <script src="realizari-ui.js?v=50"></script>
-  <script src="istoric.js?v=50"></script>
-  <script src="biblioteca.js?v=50"></script>
-  <script src="nutritie.js?v=50"></script>
-  <script src="nutritie-zi-ui.js?v=50"></script>
-  <script src="cafea-ui.js?v=50"></script>
-  <script src="nutritie-saptamana-ui.js?v=50"></script>
-  <script src="nutritie-analiza-ui.js?v=50"></script>
-  <script src="nutritie-cumparaturi-ui.js?v=50"></script>
-  <script src="scanare.js?v=50"></script>
-  <script src="scanare-baze.js?v=50"></script>
-  <script src="scanare-ui.js?v=50"></script>
-  <script src="scanare-istoric.js?v=50"></script>
-  <script src="acasa-mealprep.js?v=50"></script>
-  <script src="backup.js?v=50"></script>
-  <script src="siguranta.js?v=50"></script>
-  <script src="acasa.js?v=50"></script>
-  <script src="cloud-config.js?v=50"></script>
-  <script src="sincron.js?v=50"></script>
-  <script src="cloud.js?v=50"></script>
-  <script src="cloud-ui.js?v=50"></script>
-  <script src="main.js?v=50"></script>
+  <script src="db.js?v=51"></script>
+  <script src="validare.js?v=51"></script>
+  <script src="exercitii.js?v=51"></script>
+  <script src="analiza.js?v=51"></script>
+  <script src="statistici.js?v=51"></script>
+  <script src="corp-calcul.js?v=51"></script>
+  <script src="realizari.js?v=51"></script>
+  <script src="nutritie-alimente.js?v=51"></script>
+  <script src="nutritie-retete.js?v=51"></script>
+  <script src="nutritie-calcul.js?v=51"></script>
+  <script src="nutritie-zi.js?v=51"></script>
+  <script src="cafea.js?v=51"></script>
+  <script src="nutritie-generator.js?v=51"></script>
+  <script src="nutritie-analiza.js?v=51"></script>
+  <script src="nutritie-cumparaturi.js?v=51"></script>
+  <script src="nutritie-imagini.js?v=51"></script>
+  <script src="catalog.js?v=51"></script>
+  <script src="figuri.js?v=51"></script>
+  <script src="ui.js?v=51"></script>
+  <script src="grafice.js?v=51"></script>
+  <script src="setari.js?v=51"></script>
+  <script src="timer.js?v=51"></script>
+  <script src="sesiune.js?v=51"></script>
+  <script src="corp.js?v=51"></script>
+  <script src="progres.js?v=51"></script>
+  <script src="realizari-ui.js?v=51"></script>
+  <script src="istoric.js?v=51"></script>
+  <script src="biblioteca.js?v=51"></script>
+  <script src="nutritie.js?v=51"></script>
+  <script src="nutritie-zi-ui.js?v=51"></script>
+  <script src="cafea-ui.js?v=51"></script>
+  <script src="nutritie-saptamana-ui.js?v=51"></script>
+  <script src="nutritie-analiza-ui.js?v=51"></script>
+  <script src="nutritie-cumparaturi-ui.js?v=51"></script>
+  <script src="scanare.js?v=51"></script>
+  <script src="scanare-baze.js?v=51"></script>
+  <script src="scanare-ui.js?v=51"></script>
+  <script src="scanare-istoric.js?v=51"></script>
+  <script src="acasa-mealprep.js?v=51"></script>
+  <script src="backup.js?v=51"></script>
+  <script src="siguranta.js?v=51"></script>
+  <script src="acasa.js?v=51"></script>
+  <script src="cloud-config.js?v=51"></script>
+  <script src="sincron.js?v=51"></script>
+  <script src="cloud.js?v=51"></script>
+  <script src="cloud-ui.js?v=51"></script>
+  <script src="main.js?v=51"></script>
 </body>
 </html>

@@ -500,6 +500,7 @@ function pasConfirmareScanare() {
         el('p', { class: 'nota', text: `P ${fmt(total.valori.proteine)} g · C ${fmt(total.valori.carbohidrati)} g · G ${fmt(total.valori.grasimi)} g · ${plural(scanare.articole.length, 'aliment', 'alimente')}` }),
       ]),
     ]),
+    panouNutritional(total.valori, 'în total'),
     el('div', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Masa' }), chipuri]),
     el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Numele mesei' }), nume]),
     el('div', { class: 'scan-data-ora' }, [
@@ -562,11 +563,8 @@ function umpleTotalScanare(b) {
   const fmt = x => String(x).replace('.', ',');
   const extra = [`fibre ${fmt(v.fibre)} g`, t.zahar != null ? `zahăr ${fmt(t.zahar)} g` : null, t.saturate != null ? `grăsimi saturate ${fmt(t.saturate)} g` : null].filter(Boolean).join(' · ');
   b.replaceChildren(...[
-    el('div', { class: 'scan-total-sus' }, [el('span', { class: 'nota', text: 'Total masă (estimare)' }), el('strong', { text: `${v.kcal} kcal` })]),
-    el('div', { class: 'scan-total-macro' }, [
-      el('span', { text: `P ${fmt(v.proteine)} g` }), el('span', { text: `C ${fmt(v.carbohidrati)} g` }), el('span', { text: `G ${fmt(v.grasimi)} g` }),
-    ]),
-    el('p', { class: 'nota nota-mica', text: extra }),
+    panouNutritional(v, scanare.faraPoza ? 'în total' : 'în total (estimare)'),
+    t.zahar != null || t.saturate != null ? el('p', { class: 'nota nota-mica', text: extra.replace(/^fibre [^·]+· ?/, '') }) : null,
     t.lipsa ? el('p', { class: 'scan-total-lipsa', text: `${plural(t.lipsa, 'aliment nu are', 'alimente nu au')} încă valori și nu ${t.lipsa === 1 ? 'e inclus' : 'sunt incluse'} în total.` }) : null,
   ].filter(Boolean));
 }
@@ -826,10 +824,7 @@ function deschideIntrareScanata(i) {
   const eroare = el('p', { class: 'scan-eroare-mica', role: 'alert' });
   const deseneazaTotal = () => {
     const v = sumaArticoleScanate(articole);
-    total.replaceChildren(
-      el('div', { class: 'scan-total-sus' }, [el('span', { class: 'nota', text: 'Total masă' }), el('strong', { text: `${Math.round(v.kcal)} kcal` })]),
-      el('div', { class: 'scan-total-macro' }, [el('span', { text: `P ${fmt(v.proteine)} g` }), el('span', { text: `C ${fmt(v.carbohidrati)} g` }), el('span', { text: `G ${fmt(v.grasimi)} g` })]),
-    );
+    total.replaceChildren(panouNutritional(v, 'în total'));
   };
   const deseneazaLista = () => {
     lista.replaceChildren(...articole.map((a, k) => {
