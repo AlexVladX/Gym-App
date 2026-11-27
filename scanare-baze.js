@@ -26,8 +26,16 @@ function tokeniScanare(t) {
 }
 // Același cuvânt sau o formă apropiată („burger”/„burgeri”, „ou”/„oua”, „tomato”/„tomatoes”), dar nu
 // „cheeseburger” ≈ „cheese” (prefix scurt dintr-un cuvânt mult mai lung).
+// Pluralul românesc: „nuci”/„nucă”, „roșii”/„roșie”, „prune”/„prună”, plus câteva forme neregulate („mere”/„măr”).
+const PLURALE_NEREGULATE_SCANARE = { mere: 'mar', pere: 'para', oua: 'ou', cepe: 'ceapa', paini: 'paine', fragi: 'fraga', smochine: 'smochina' };
+function radacinaRoScanare(w) {
+  const n = PLURALE_NEREGULATE_SCANARE[w] || w;
+  return n.length >= 4 ? n.replace(/(uri|i|e|a)$/, '') : n;
+}
 function cuvinteEgaleScanare(x, y) {
   if (x === y) return true;
+  const rx = radacinaRoScanare(x), ry = radacinaRoScanare(y);
+  if (rx === ry && rx.length >= 2 && (rx !== x || ry !== y)) return true;
   const [s, l] = x.length <= y.length ? [x, y] : [y, x];
   if (!l.startsWith(s)) return false;
   return s.length >= 4 ? l.length - s.length <= 3 : s.length >= 2 && l.length - s.length <= 1; // „ou”/„ouă” da, „mar”/„mărar” nu
@@ -515,7 +523,7 @@ function scrieCacheCautari(stocare, cheie, candidati, acum = Date.now()) {
 }
 
 if (typeof module !== 'undefined') module.exports = {
-  PRAG_LOCAL_SCANARE, PRAG_EXTERN_SCANARE, tokeniScanare, asemanareScanare, stareDinTextScanare, stareArticolScanare, plauzibilScanare,
+  PRAG_LOCAL_SCANARE, cuvinteEgaleScanare, PRAG_EXTERN_SCANARE, tokeniScanare, asemanareScanare, stareDinTextScanare, stareArticolScanare, plauzibilScanare,
   potrivireDinAliment, potrivireDinReteta, potrivireDinExtern, potrivireManualaScanare, candidatiLocaliScanare, alegeLocalScanare,
   scorExternScanare, ordoneazaExterneScanare, unitatiArticolScanare, initializeazaCantitateScanare, seteazaCantitateScanare,
   seteazaUnitateScanare, aplicaPotrivireScanare, avertizariPotrivireScanare, cautaLocalScanare, valoriArticolScanare, totalScanare, textValoriScanare,

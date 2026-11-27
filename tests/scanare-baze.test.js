@@ -260,3 +260,11 @@ test('rețete: bucăți pe porție (doar unde rețeta o spune) și greutatea gă
   const fara = RETETE_BAZA.find(r => /Sarmale/.test(r.nume));
   assert.equal(fara.bucatiPortie, undefined);
 });
+
+test('pluralul românesc găsește alimentul la singular (nuci → nucă, mere → măr)', () => {
+  const { cuvinteEgaleScanare } = require('../scanare-baze.js');
+  for (const [a, b] of [['nuci', 'nuca'], ['mere', 'mar'], ['rosii', 'rosie'], ['prune', 'pruna'], ['oua', 'ou'], ['ciuperci', 'ciuperca'], ['capsuni', 'capsuna'], ['migdale', 'migdala'], ['vite', 'vita'], ['pere', 'para'], ['cartofi', 'cartof']])
+    assert.ok(cuvinteEgaleScanare(a, b), `${a} ≈ ${b}`);
+  for (const [a, b] of [['mar', 'marar'], ['cheese', 'cheeseburger'], ['pere', 'piper'], ['nuci', 'nucsoara'], ['para', 'paste']])
+    assert.ok(!cuvinteEgaleScanare(a, b), `${a} ≠ ${b}`);
+});
