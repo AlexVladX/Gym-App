@@ -611,7 +611,7 @@ async function reimprospateazaDupaSincron() {
     await reincarcaIstoric().catch(err => console.warn(err));
     await reincarcaMasuratori().catch(err => console.warn(err));
     await reincarcaPoze().catch(err => console.warn(err));
-    await reincarcaNutritie().catch(err => console.warn(err));
+    await reincarcaNutritiaDacaE().catch(err => console.warn(err));
     if (typeof ecranCurent !== 'undefined' && ecranCurent !== 'ecran-sesiune') arataEcran(ecranCurent);
   } catch (err) { console.warn(err); }
 }

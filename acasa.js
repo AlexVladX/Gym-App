@@ -362,9 +362,8 @@ function deschideGreutatea() {
 // Un singur card, compact: caloriile (țintă, planificat, mâncat, rămas), macro, cele 5 mese cu starea lor.
 // Se redesenează la fiecare deschidere a ecranului Acasă, deci reflectă imediat generarea, înlocuirea sau marcarea meselor.
 function deschideZiuaNutritie() {
-  dataZiNutritie = dataLocala();
+  dupaIncarcareNutritie(() => { dataZiNutritie = dataLocala(); arataFilaNutritie('zi', { randeaza: false }); });
   arataEcran('ecran-nutritie');
-  arataFilaNutritie('zi');
 }
 
 async function comutaMancataAcasa(idIntrare) {
@@ -379,7 +378,7 @@ async function comutaMancataAcasa(idIntrare) {
     console.error(err);
     notifica(mesajEroareSalvare(err, 'Starea mesei nu a putut fi salvată.'), 'eroare');
   }
-  if (ecranCurent === 'ecran-masa') randeazaAcasaMasa(); else randeazaAcasa();
+  if (ecranCurent === 'ecran-masa') { if (nutritiePornita) randeazaAcasaMasa(); } else randeazaAcasa();
 }
 
 // ---------- Primii pași (utilizator nou) ----------

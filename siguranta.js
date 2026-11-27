@@ -84,7 +84,7 @@ async function dupaRestaurareDinCos(tip) {
   } else if (tip === 'masuratori') await reincarcaMasuratori();
   else if (tip === 'poze') await reincarcaPoze();
   else if (tip === 'rutine') randeazaBiblioteca();
-  else if (tip === 'alimente' || tip === 'retete' || tip === 'pozeRetete' || tip === 'planuriNutritie') await reincarcaNutritie();
+  else if (tip === 'alimente' || tip === 'retete' || tip === 'pozeRetete' || tip === 'planuriNutritie') await reincarcaNutritiaDacaE();
 }
 
 function descriereElementCos(x) {

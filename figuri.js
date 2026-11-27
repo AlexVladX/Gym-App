@@ -25,8 +25,11 @@ function caleIlustratie(nume, grupa, catalog, tip = 'mini') {
 }
 
 // ---------- În pagină ----------
+// Versiunea ilustrațiilor e separată de a aplicației (scrisă de tools/ilustratii/optimizeaza.mjs din conținutul
+// desenelor): o actualizare de cod nu le mai descarcă din nou, doar o schimbare a desenelor.
+const VERSIUNE_ILUSTRATII = 'd049461e17';
 function versiuneIlustratii() {
-  return (typeof document !== 'undefined' && document.body && document.body.dataset.versiune) || '1';
+  return VERSIUNE_ILUSTRATII;
 }
 
 // Datele exercițiului: biblioteca unificată (cu grupa aleasă de tine), apoi catalogul.
@@ -65,5 +68,5 @@ function miniatura(nume, clasa = 'figura-mica') {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { numeFisierIlustratie, caleIlustratie, GRUPE_CU_ILUSTRATIE };
+  module.exports = { VERSIUNE_ILUSTRATII, numeFisierIlustratie, caleIlustratie, GRUPE_CU_ILUSTRATIE };
 }

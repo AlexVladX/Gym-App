@@ -151,7 +151,8 @@ function laInapoi(e) {
   if (decizie.ecran) {
     nav.dinIstoric = true;
     try {
-      if (decizie.ecran.fila && typeof arataFilaNutritie === 'function') arataFilaNutritie(decizie.ecran.fila, { randeaza: false });
+      const fila = decizie.ecran.fila;
+      if (fila && typeof dupaIncarcareNutritie === 'function') dupaIncarcareNutritie(() => arataFilaNutritie(fila, { randeaza: false }));
       arataEcran(decizie.ecran.ecran);
     } finally { nav.dinIstoric = false; }
     nav.ultimaCheie = cheieNavigare(decizie.ecran);

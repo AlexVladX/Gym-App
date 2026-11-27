@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "55";
+  --versiune-css: "56";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -2101,3 +2101,6 @@ html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
 
 .acasa-rutine-rapide > .btn { flex: 1 1 auto; min-width: 0; }
 .acasa-rutine-rapide > .btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Capătul unei liste desenate pe bucăți (deseneazaPeBucati): invizibil, doar semnal pentru următoarea bucată. */
+.santinela-lista { height: 1px; grid-column: 1 / -1; }

@@ -266,6 +266,38 @@ function cereText({ titlu, text, eticheta, valoare = '', ok = 'Salvează', peric
   });
 }
 
+// ---------- Liste lungi, desenate pe bucăți (etapa 3) ----------
+// Primele `marime` elemente se creează acum; restul, câte o bucată, când capătul listei se apropie de ecran
+// (IntersectionObserver pe o „santinelă”). Căutarea și filtrele lucrează în continuare pe toată lista:
+// aici se amână doar crearea elementelor. fabrici: funcții care întorc elementul.
+function deseneazaPeBucati(container, fabrici, marime = 30) {
+  if (container.__observatorBucati) { container.__observatorBucati.disconnect(); container.__observatorBucati = null; }
+  let i = 0;
+  const santinela = el('div', { class: 'santinela-lista', 'aria-hidden': 'true' });
+  container.append(santinela);
+  const aproape = () => santinela.isConnected && santinela.getBoundingClientRect().top < window.innerHeight + 800;
+  const urmatoarea = () => {
+    if (!santinela.isConnected) return;
+    const bucata = fabrici.slice(i, i + marime).map(f => f());
+    i += bucata.length;
+    santinela.before(...bucata);
+    if (i >= fabrici.length) {
+      if (container.__observatorBucati) container.__observatorBucati.disconnect();
+      container.__observatorBucati = null;
+      santinela.remove();
+      return;
+    }
+    // Pe ecrane mari, santinela poate rămâne vizibilă după o bucată (observatorul nu mai anunță): continuăm.
+    requestAnimationFrame(() => { if (aproape()) urmatoarea(); });
+  };
+  urmatoarea();
+  if (i >= fabrici.length) return;
+  if (typeof IntersectionObserver !== 'function') { while (santinela.isConnected) urmatoarea(); return; }
+  const obs = new IntersectionObserver(intrari => { if (intrari.some(x => x.isIntersecting)) urmatoarea(); }, { rootMargin: '0px 0px 800px 0px' });
+  obs.observe(santinela);
+  container.__observatorBucati = obs;
+}
+
 // ---------- Stări goale și încărcare ----------
 function stareGoala({ icon = 'info', titlu, text, actiune }) {
   return el('div', { class: 'gol' }, [

@@ -106,6 +106,7 @@ function main() {
     fs.writeFileSync(path.join(iesire, 'revizie.html'), html);
   }
   console.log(`${rezultat.length} ilustrații în ${iesire}` + (lipsa.length ? `; fără specificație: ${lipsa.length}` : ''));
+  if (!opt('--iesire')) console.log('Pentru aplicație rulează apoi: node tools/ilustratii/optimizeaza.mjs (optimizează și dă versiunea ilustrațiilor).');
   if (lipsa.length && arg.includes('--lipsa')) console.log(lipsa.join('\n'));
 }
 

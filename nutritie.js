@@ -221,16 +221,19 @@ function randeazaRetete() {
     return;
   }
   const cuTitluri = !filtreRetete.masa && !cuvinte.length && !filtreRetete.sortare;
-  const copii = [];
+  // Cardurile (cu poză) se creează pe bucăți, pe măsură ce derulezi (189 de rețete).
+  const fabrici = [];
   let masa = null;
   for (const { r, info } of potrivite) {
     if (cuTitluri && r.masa !== masa) {
       masa = r.masa;
-      copii.push(el('h3', { class: 'lista-titlu grila-titlu', text: numeMasa(masa) }));
+      const titlu = numeMasa(masa);
+      fabrici.push(() => el('h3', { class: 'lista-titlu grila-titlu', text: titlu }));
     }
-    copii.push(cardReteta(r, info));
+    fabrici.push(() => cardReteta(r, info));
   }
-  lista.replaceChildren(...copii);
+  lista.replaceChildren();
+  deseneazaPeBucati(lista, fabrici, 30);
 }
 
 function macroScurt(v) {

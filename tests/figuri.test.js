@@ -21,7 +21,7 @@ test('fiecare exercițiu din catalog are ilustrația mare și miniatura, valide'
       assert.ok(cale, `${e.nume}: fără cale`);
       assert.ok(fs.existsSync(path.join(RADACINA, cale)), `${e.nume}: lipsește ${cale}`);
       const svg = citeste(cale);
-      assert.ok(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" viewBox="'), `${cale}: nu e SVG`);
+      assert.ok(/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"[^>]* viewBox="/.test(svg), `${cale}: nu e SVG`);
       assert.ok(!/NaN|undefined|Infinity/.test(svg), `${cale}: coordonate invalide`);
       assert.ok(svg.includes('#CDF760'), `${cale}: mușchiul principal nu e evidențiat`);
       assert.ok(svg.length < (tip === 'mare' ? 130 : 32) * 1024, `${cale}: prea mare (${svg.length} octeți)`);
@@ -41,19 +41,29 @@ test('ilustrații diferite pentru exerciții diferite (mari și miniaturi)', () 
   }
 });
 
-test('fișierele din dosar sunt cele produse acum de generator (nimic învechit)', () => {
+test('fișierele din dosar sunt cele produse acum de generator, optimizate (nimic învechit)', () => {
+  // ilustratii/amprente.json (scris de tools/ilustratii/optimizeaza.mjs): amprenta desenului brut din generator
+  // și a fișierului optimizat. Testul nu are nevoie de svgo: compară generatorul de acum cu amprenta brută.
+  const amp = JSON.parse(fs.readFileSync(path.join(DOSAR, 'amprente.json'), 'utf8'));
+  const h = t => crypto.createHash('sha256').update(t).digest('hex').slice(0, 16);
   const exemple = ['Împins cu bara pe bancă', 'Tracțiuni', 'Flexii ciocan', 'Plank', "Mers cu greutăți (farmer's walk)"];
   for (const nume of exemple) {
     const e = BIBLIOTECA.find(x => x.nume === nume);
     const u = cat.unificaExercitiu(e, null);
     const { mare, mini } = gen.construieste(gen.SPECIFICATII[nume], gen.nivel(u), nume);
     const s = fig.numeFisierIlustratie(nume);
-    assert.equal(mare, fs.readFileSync(path.join(DOSAR, `${s}.svg`), 'utf8'), `${nume}: rulează node tools/ilustratii/genereaza.js`);
-    assert.equal(mini, fs.readFileSync(path.join(DOSAR, `${s}-mini.svg`), 'utf8'));
+    assert.equal(h(mare), amp.fisiere[`${s}.svg`].brut, `${nume}: rulează node tools/ilustratii/optimizeaza.mjs`);
+    assert.equal(h(mini), amp.fisiere[`${s}-mini.svg`].brut);
   }
-  const lista = JSON.parse(fs.readFileSync(path.join(DOSAR, 'lista.json'), 'utf8')).miniaturi;
-  const reale = fs.readdirSync(DOSAR).filter(f => f.endsWith('-mini.svg')).sort();
-  assert.deepEqual(lista, reale);
+  // fiecare fișier din dosar e cel optimizat (nu un desen brut scris direct de generator) și e în amprente
+  const svg = fs.readdirSync(DOSAR).filter(f => f.endsWith('.svg')).sort();
+  assert.deepEqual(svg, Object.keys(amp.fisiere).sort());
+  for (const f of svg) assert.equal(h(fs.readFileSync(path.join(DOSAR, f), 'utf8')), amp.fisiere[f].optimizat, `${f}: rulează optimizeaza.mjs`);
+  const lista = JSON.parse(fs.readFileSync(path.join(DOSAR, 'lista.json'), 'utf8'));
+  assert.deepEqual(lista.miniaturi, svg.filter(f => f.endsWith('-mini.svg')));
+  // versiunea ilustrațiilor: aceeași în lista.json, amprente.json și figuri.js
+  assert.equal(lista.versiune, amp.versiune);
+  assert.equal(fig.VERSIUNE_ILUSTRATII, amp.versiune);
 });
 
 test('numele fișierelor: același în aplicație și în generator, unic pentru fiecare exercițiu', () => {

@@ -154,6 +154,10 @@ function randScanare(s, urluri, onclick, extra = null) {
 
 // Istoricul: căutare, detalii, comparare, ștergerea pozei sau a scanării.
 async function deschideIstoricScanari(idDeschis = null) {
+  // Istoricul folosește funcții din modulele de nutriție (numele mesei, graficul): le încărcăm dacă lipsesc.
+  if (typeof incarcaNutritia === 'function') {
+    try { await incarcaNutritia(); } catch (err) { console.error(err); notifica('Istoricul nu poate fi deschis fără modulele de nutriție. Verifică internetul.', 'eroare'); return; }
+  }
   await curataPozeExpirateScanari();
   let lista = [];
   try { lista = await toateScanarileIstoric(); } catch (err) { console.error(err); notifica('Istoricul scanărilor nu a putut fi citit.', 'eroare'); return; }

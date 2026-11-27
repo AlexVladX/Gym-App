@@ -44,7 +44,8 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `backup.js` | Export, restaurare, copii automate, stare stocare, ștergerea datelor |
 | `acasa.js` | Ecranul Acasă (panoul): doar afișare; calculele sunt în `analiza.js` |
 | `main.js` | Navigarea și pornirea aplicației (se încarcă ultimul) |
-| `sw.js` | Service worker: întâi rețeaua (max. 3 s), apoi cache |
+| `sw.js` | Service worker: întâi cache pentru fișierele cu versiune, pagina stale-while-revalidate, cache-uri separate pentru ilustrații și fotografii |
+| `incarcare.js` | Încărcarea la cerere a modulelor de nutriție și scanare |
 
 Regula: fișierele definesc funcții; singurul cod care rulează la încărcare este în `main.js`
 (prin funcțiile `init…()` ale fiecărui modul).
@@ -479,3 +480,27 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
 - Antetul (`.topbar`) și bara chiar rămân lipite acum: `overflow-x: hidden` pe html+body făcea din body un container de
   defilare și anula `position: sticky`; acum `overflow-x: clip` (unde e suportat).
 - Progres fără date: butonul „Începe antrenamentul”. Vibrație de 15 ms la bifare (doar cu semnalul activ; nu pe iPhone).
+
+## Îmbunătățiri — Etapa 3: viteză (v56)
+
+- **Service worker**: fișierele cu `?v=` se servesc **întâi din cache** (rețeaua doar dacă lipsesc; căutate în toate
+  cache-urile, ca o pagină nouă să găsească fișierele SW-ului nou aflat în așteptare). Pagina e **stale-while-revalidate**.
+  Cererile spre alte domenii (Supabase, Gemini, USDA, OFF) nu sunt interceptate. La `activate` rămân `jurnal-v<versiune>`,
+  `jurnal-foto-retete` și `jurnal-ilustratii`. SW-ul nou **așteaptă**: pagina îl activează la pornire (primele 8 s, fără
+  antrenament în curs) și reîncarcă; altfel apare „Versiune nouă” cu „Reîncarcă” (niciodată forțat).
+- **Ilustrațiile** au versiune proprie (`VERSIUNE_ILUSTRATII` în figuri.js = `versiune` din `ilustratii/lista.json`,
+  calculată din conținut) și cache propriu; o actualizare de cod nu le mai descarcă. `tools/ilustratii/optimizeaza.mjs`
+  (svgo, instalat separat în `tools/ilustratii/node_modules`, ignorat de git) rulează generatorul, optimizează (trasee cu
+  1 zecimală la desenele mari, rotunjite la miniaturi, trasee identice refolosite, capetele gradienților rotunjite) și scrie
+  `ilustratii/amprente.json` (amprenta desenului brut și a celui optimizat; testul verifică generatorul fără svgo).
+  Dosarul: 10,3 MB → 6,2 MB (−40%). Verificat: diferență de pixeli ≤ 0,5% la 1300 px pe toate desenele mari.
+  `removeOffCanvasPaths` nu se folosește (ștergea trunchiul din desenele culcate).
+- **Nutriția la cerere** (`incarcare.js`, `SCRIPTURI_NUTRITIE`): rețetele, alimentele, ecranele de nutriție și scanarea
+  (~450 KB) se încarcă la prima intrare într-un ecran de nutriție (sau la pornire dacă modul salvat e Nutriție), cu
+  promisiune unică și reîncercare. Nucleul păstrează stratul de date (nutritie-calcul, nutritie-zi, cafea,
+  nutritie-cumparaturi, nutritie-generator, scanare-istoric), folosit de backup, sincronizare și setări. Acțiunile cerute
+  înainte de încărcare (fila aleasă) așteaptă în `dupaIncarcareNutritie`. Scripturile din nucleu au `defer`.
+- **Liste lungi** (`deseneazaPeBucati` în ui.js): rețetele și exercițiile se creează câte 30, restul cu IntersectionObserver
+  pe o santinelă; căutarea și filtrele lucrează pe toată lista.
+- Lighthouse (mobil, cu gzip ca pe GitHub Pages): 86 → 96; FCP 2,4 s → 1,0 s. Cu „Slow 3G”, a doua deschidere afișează
+  Acasă în ~0,2 s.

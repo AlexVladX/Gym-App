@@ -1,0 +1,1045 @@
+{
+ "versiune": "d049461e17",
+ "fisiere": {
+  "aparat-pentru-abductori-mini.svg": {
+   "brut": "6ccb0177b57d70e8",
+   "optimizat": "0ecccff59df934fc"
+  },
+  "aparat-pentru-abductori.svg": {
+   "brut": "019d1e198dd95e91",
+   "optimizat": "088d6766a08a7c8b"
+  },
+  "aparat-pentru-adductori-mini.svg": {
+   "brut": "81fa529dd20a4dac",
+   "optimizat": "79e15c16a5844523"
+  },
+  "aparat-pentru-adductori.svg": {
+   "brut": "8d1389045ee8a3ae",
+   "optimizat": "c62ab7b349057817"
+  },
+  "crunch-invers-mini.svg": {
+   "brut": "df601d8c82ea6a19",
+   "optimizat": "9e47daf162841947"
+  },
+  "crunch-invers.svg": {
+   "brut": "4006ef177d51e1eb",
+   "optimizat": "f18c2c2911eff976"
+  },
+  "crunch-la-aparat-mini.svg": {
+   "brut": "c8e0e24075ebec62",
+   "optimizat": "9ce097a28e9f6839"
+  },
+  "crunch-la-aparat.svg": {
+   "brut": "84d2076c4a0121c5",
+   "optimizat": "e1166b5f129d461e"
+  },
+  "crunch-la-scripete-din-genunchi-mini.svg": {
+   "brut": "b9045eb4364530f9",
+   "optimizat": "58e51c53e09ad483"
+  },
+  "crunch-la-scripete-din-genunchi.svg": {
+   "brut": "eb43a4d4a4760468",
+   "optimizat": "0cbd3ce15935199d"
+  },
+  "crunch-mini.svg": {
+   "brut": "2f1663245dced54b",
+   "optimizat": "a3d8499d995f199f"
+  },
+  "crunch.svg": {
+   "brut": "37c65bbbb272cd0f",
+   "optimizat": "4b514cac0472f4ee"
+  },
+  "dead-bug-mini.svg": {
+   "brut": "a563980dc6d91902",
+   "optimizat": "199fe24c598e995a"
+  },
+  "dead-bug.svg": {
+   "brut": "ec1b5d0a5c79ebcf",
+   "optimizat": "e266e27cf1e73255"
+  },
+  "dips-la-aparat-mini.svg": {
+   "brut": "fa96b7b144195ee2",
+   "optimizat": "dd62ec90c878fe16"
+  },
+  "dips-la-aparat.svg": {
+   "brut": "bddc3859b5884594",
+   "optimizat": "34283649a78e0177"
+  },
+  "extensii-de-incheietura-palmele-in-jos-mini.svg": {
+   "brut": "d5637b5afebde549",
+   "optimizat": "d71def60f20e87da"
+  },
+  "extensii-de-incheietura-palmele-in-jos.svg": {
+   "brut": "333ee40c228fd797",
+   "optimizat": "52135a3828d61f70"
+  },
+  "extensii-franceze-cu-bara-ez-skullcrusher-mini.svg": {
+   "brut": "653691b0283072f0",
+   "optimizat": "37868fc64a20b541"
+  },
+  "extensii-franceze-cu-bara-ez-skullcrusher.svg": {
+   "brut": "0863f4ec2b0ace3f",
+   "optimizat": "9e40151299dac78f"
+  },
+  "extensii-pentru-cvadricepsi-la-aparat-mini.svg": {
+   "brut": "b4df4c0c6cfb728f",
+   "optimizat": "2155f3cd3f49b17c"
+  },
+  "extensii-pentru-cvadricepsi-la-aparat.svg": {
+   "brut": "6aeb6b8999655757",
+   "optimizat": "3f0f1796865ce91e"
+  },
+  "extensii-triceps-cu-priza-inversa-mini.svg": {
+   "brut": "e3ef280b33c99531",
+   "optimizat": "f3101cedd02ed887"
+  },
+  "extensii-triceps-cu-priza-inversa.svg": {
+   "brut": "6a4466f9ee81fb68",
+   "optimizat": "1a1091f273459981"
+  },
+  "extensii-triceps-culcat-cu-gantere-mini.svg": {
+   "brut": "bc83a6360b05ce1f",
+   "optimizat": "a07c233628f479f3"
+  },
+  "extensii-triceps-culcat-cu-gantere.svg": {
+   "brut": "56b71bb7f5a9a38e",
+   "optimizat": "ef7e1548b66f0d56"
+  },
+  "extensii-triceps-deasupra-capului-la-scripete-mini.svg": {
+   "brut": "9be844ecf9d9e12b",
+   "optimizat": "6034329efd430abc"
+  },
+  "extensii-triceps-deasupra-capului-la-scripete.svg": {
+   "brut": "70566e364d967bdc",
+   "optimizat": "8a44c2a72aa02de8"
+  },
+  "extensii-triceps-deasupra-capului-mini.svg": {
+   "brut": "4440c30f7cc73ae3",
+   "optimizat": "c3cac9700241366f"
+  },
+  "extensii-triceps-deasupra-capului.svg": {
+   "brut": "69e6234007c8939b",
+   "optimizat": "ba1219d81153a8f9"
+  },
+  "extensii-triceps-la-scripete-cu-bara-in-v-mini.svg": {
+   "brut": "e17ade4910b9bd39",
+   "optimizat": "2e7926345e8bb339"
+  },
+  "extensii-triceps-la-scripete-cu-bara-in-v.svg": {
+   "brut": "d6ed5a86f09e9f7c",
+   "optimizat": "2142b1eef49a9a15"
+  },
+  "extensii-triceps-la-scripete-cu-franghie-mini.svg": {
+   "brut": "7ceb2208695509f5",
+   "optimizat": "63dd1d02524ba884"
+  },
+  "extensii-triceps-la-scripete-cu-franghie.svg": {
+   "brut": "e7c0e4559bc4de08",
+   "optimizat": "c0b7d78d9e8f9199"
+  },
+  "extensii-triceps-la-scripete-mini.svg": {
+   "brut": "b4d166c2850f0a25",
+   "optimizat": "69fbddfce3460297"
+  },
+  "extensii-triceps-la-scripete.svg": {
+   "brut": "0d5f108bf474ca58",
+   "optimizat": "9d759e9f297daf4d"
+  },
+  "face-pull-la-scripete-mini.svg": {
+   "brut": "34e5f2f607f84963",
+   "optimizat": "e9eecf1b78f75256"
+  },
+  "face-pull-la-scripete.svg": {
+   "brut": "77392f39abac8846",
+   "optimizat": "651f3ce3622ea2eb"
+  },
+  "fandari-cu-bara-mini.svg": {
+   "brut": "84bf10a7e6119ccf",
+   "optimizat": "5a4b82f5829548a1"
+  },
+  "fandari-cu-bara.svg": {
+   "brut": "6d85aaf3159ef32a",
+   "optimizat": "79c0787dcbdb4137"
+  },
+  "fandari-din-mers-mini.svg": {
+   "brut": "4c8335413fcc17f3",
+   "optimizat": "2eb82e8eff5ab781"
+  },
+  "fandari-din-mers.svg": {
+   "brut": "1ac8f2128eb4b371",
+   "optimizat": "6f95f4563f7d408d"
+  },
+  "fandari-mini.svg": {
+   "brut": "0300d5013bb885d4",
+   "optimizat": "dc7372bf9c817836"
+  },
+  "fandari.svg": {
+   "brut": "82ee71405a62696d",
+   "optimizat": "567df6df12d663bf"
+  },
+  "flexii-ciocan-la-scripete-mini.svg": {
+   "brut": "6a802845a239a82f",
+   "optimizat": "908a5a102b125ffa"
+  },
+  "flexii-ciocan-la-scripete.svg": {
+   "brut": "f90287bff5a6c5c8",
+   "optimizat": "84e872f9f1148a09"
+  },
+  "flexii-ciocan-mini.svg": {
+   "brut": "56e1d4b8191a0e1d",
+   "optimizat": "700c831732a0ceaa"
+  },
+  "flexii-ciocan.svg": {
+   "brut": "dcfc4501bef2de1f",
+   "optimizat": "993ae2d07ff590e8"
+  },
+  "flexii-concentrate-mini.svg": {
+   "brut": "54c1859b722435c1",
+   "optimizat": "68cc9157b95388ae"
+  },
+  "flexii-concentrate.svg": {
+   "brut": "581ab96078b51b28",
+   "optimizat": "d543ca7e9933bc72"
+  },
+  "flexii-cu-bara-ez-mini.svg": {
+   "brut": "a8c6d08e084329d4",
+   "optimizat": "04afcbd8e6945e7d"
+  },
+  "flexii-cu-bara-ez.svg": {
+   "brut": "ed16ed6deb2fd581",
+   "optimizat": "9c2c27a4cabd8479"
+  },
+  "flexii-cu-bara-mini.svg": {
+   "brut": "3592bd287b2c15ce",
+   "optimizat": "7e33ed7d6593231c"
+  },
+  "flexii-cu-bara.svg": {
+   "brut": "e0572c83a453485c",
+   "optimizat": "8415b73352219816"
+  },
+  "flexii-cu-gantere-alternativ-mini.svg": {
+   "brut": "c4eb7fcdd65969d0",
+   "optimizat": "e34babf1f1fa94ec"
+  },
+  "flexii-cu-gantere-alternativ.svg": {
+   "brut": "bc251f5b3a29e958",
+   "optimizat": "f97733d27fcee878"
+  },
+  "flexii-cu-gantere-pe-banca-inclinata-mini.svg": {
+   "brut": "e0273ab529603f1b",
+   "optimizat": "fcd50de573bcaad4"
+  },
+  "flexii-cu-gantere-pe-banca-inclinata.svg": {
+   "brut": "01caabdd03d74ee6",
+   "optimizat": "d05eebe8b914024d"
+  },
+  "flexii-de-incheietura-palmele-in-sus-mini.svg": {
+   "brut": "ba0a015bbd9ae72a",
+   "optimizat": "d5cdd95ce8bce0b6"
+  },
+  "flexii-de-incheietura-palmele-in-sus.svg": {
+   "brut": "33cccb641821886d",
+   "optimizat": "80790f52d05b0ae7"
+  },
+  "flexii-inverse-cu-bara-mini.svg": {
+   "brut": "6c467b06e68ef7af",
+   "optimizat": "f9461a515dfcf3e8"
+  },
+  "flexii-inverse-cu-bara.svg": {
+   "brut": "d8ab82dbe91895c0",
+   "optimizat": "d9277297427f4471"
+  },
+  "flexii-la-aparat-pentru-biceps-mini.svg": {
+   "brut": "9592409a12d47c96",
+   "optimizat": "8dc6b6c33bf8d2d8"
+  },
+  "flexii-la-aparat-pentru-biceps.svg": {
+   "brut": "fb602348cb48006d",
+   "optimizat": "658479532a71eebb"
+  },
+  "flexii-la-pupitru-scott-mini.svg": {
+   "brut": "06c92b4f91565caa",
+   "optimizat": "1b4651574c4a1553"
+  },
+  "flexii-la-pupitru-scott.svg": {
+   "brut": "28fb2d2cd01dd8cb",
+   "optimizat": "65d96822a3396332"
+  },
+  "flexii-la-scripete-mini.svg": {
+   "brut": "9cf976f9fa26df69",
+   "optimizat": "1c8fce0c4a550382"
+  },
+  "flexii-la-scripete.svg": {
+   "brut": "fbb849a086004e6f",
+   "optimizat": "3da3a3b2a115cd69"
+  },
+  "flexii-pentru-femurali-asezat-mini.svg": {
+   "brut": "fbd8134f749f6bee",
+   "optimizat": "a91ee69fa59c6be5"
+  },
+  "flexii-pentru-femurali-asezat.svg": {
+   "brut": "72310500ad3175d1",
+   "optimizat": "ae1d6505db006600"
+  },
+  "flexii-pentru-femurali-culcat-mini.svg": {
+   "brut": "e3730c758c62ccb1",
+   "optimizat": "16c95abe425515c2"
+  },
+  "flexii-pentru-femurali-culcat.svg": {
+   "brut": "5fc34a95cacf4d88",
+   "optimizat": "a2320c1172992ce9"
+  },
+  "flexii-spider-mini.svg": {
+   "brut": "395722fb8e2e7c1d",
+   "optimizat": "f08385d8dcdb69c9"
+  },
+  "flexii-spider.svg": {
+   "brut": "bd86c3ac5343179e",
+   "optimizat": "2772cb0639e1204a"
+  },
+  "flexii-zottman-mini.svg": {
+   "brut": "f14219f997cc4b9a",
+   "optimizat": "d7f8e134c6c76d6f"
+  },
+  "flexii-zottman.svg": {
+   "brut": "d159632f1a480ca3",
+   "optimizat": "89ca9c95b186e72d"
+  },
+  "flotari-cu-mainile-apropiate-mini.svg": {
+   "brut": "e6a6d805039668d5",
+   "optimizat": "c2248684b1dd0a64"
+  },
+  "flotari-cu-mainile-apropiate.svg": {
+   "brut": "ec0d241cfada08c0",
+   "optimizat": "4675cce53dd63738"
+  },
+  "flotari-cu-picioarele-ridicate-mini.svg": {
+   "brut": "5c9ec3029f1d2432",
+   "optimizat": "45246eafeaed6490"
+  },
+  "flotari-cu-picioarele-ridicate.svg": {
+   "brut": "ce681c1afcb2426b",
+   "optimizat": "f606761a2b4e7c8d"
+  },
+  "flotari-intre-banci-mini.svg": {
+   "brut": "d0688fdbb88fb006",
+   "optimizat": "505a8c1da3093bed"
+  },
+  "flotari-intre-banci.svg": {
+   "brut": "676ef9593abc7270",
+   "optimizat": "07e0c0857b075af4"
+  },
+  "flotari-la-paralele-dips-mini.svg": {
+   "brut": "399dfe03dcd6859b",
+   "optimizat": "e5f2a16a8e1b12cb"
+  },
+  "flotari-la-paralele-dips.svg": {
+   "brut": "8b2d24229a3ba1d8",
+   "optimizat": "4b732244f8336061"
+  },
+  "flotari-mini.svg": {
+   "brut": "9684fcd2a60c2e30",
+   "optimizat": "e3cab73a04ff6c0b"
+  },
+  "flotari.svg": {
+   "brut": "0d7aa3cc5c8203b5",
+   "optimizat": "91afb8154104395b"
+  },
+  "fluturari-cu-gantere-mini.svg": {
+   "brut": "f892caeb7a2090a6",
+   "optimizat": "c7a7a036d53236fb"
+  },
+  "fluturari-cu-gantere-pe-banca-inclinata-mini.svg": {
+   "brut": "2bf6330962088cf4",
+   "optimizat": "e37e98bfcce88d35"
+  },
+  "fluturari-cu-gantere-pe-banca-inclinata.svg": {
+   "brut": "fe542d0bfdf80116",
+   "optimizat": "82dde666ee276d2e"
+  },
+  "fluturari-cu-gantere.svg": {
+   "brut": "54e87ea96568e7ed",
+   "optimizat": "271b69ed941debd4"
+  },
+  "fluturari-inverse-cu-gantere-mini.svg": {
+   "brut": "14f3c222763dc1f7",
+   "optimizat": "a93430552c222db5"
+  },
+  "fluturari-inverse-cu-gantere.svg": {
+   "brut": "5fc37a4e4ae24960",
+   "optimizat": "4db59c31ddfe38ce"
+  },
+  "fluturari-inverse-la-aparat-mini.svg": {
+   "brut": "0f971da158c17b0f",
+   "optimizat": "b592877c31569ae8"
+  },
+  "fluturari-inverse-la-aparat.svg": {
+   "brut": "c1e3ebe323278479",
+   "optimizat": "f8d717c42b65efa0"
+  },
+  "fluturari-la-aparat-pec-deck-mini.svg": {
+   "brut": "92be35e176c72674",
+   "optimizat": "3b5937ac83009f60"
+  },
+  "fluturari-la-aparat-pec-deck.svg": {
+   "brut": "56ce0167c90248ab",
+   "optimizat": "cd0c3fab3c1029c3"
+  },
+  "fluturari-la-scripete-crossover-mini.svg": {
+   "brut": "27606b7c61ba17c0",
+   "optimizat": "ee732a302ca3f73c"
+  },
+  "fluturari-la-scripete-crossover.svg": {
+   "brut": "1f7485bd7536927b",
+   "optimizat": "adc4e62f0b44c243"
+  },
+  "fluturari-la-scripete-de-jos-mini.svg": {
+   "brut": "47c9a45ca8974cac",
+   "optimizat": "e84347a392d515f7"
+  },
+  "fluturari-la-scripete-de-jos.svg": {
+   "brut": "f55902277065bb14",
+   "optimizat": "5d2279f3490c712e"
+  },
+  "genuflexiuni-cu-bara-mini.svg": {
+   "brut": "d5a8f955987281af",
+   "optimizat": "7649b02d0bef0862"
+  },
+  "genuflexiuni-cu-bara.svg": {
+   "brut": "d09d9f08d4ca38ca",
+   "optimizat": "c60000212bdecebc"
+  },
+  "genuflexiuni-fandate-cu-gantere-split-squat-mini.svg": {
+   "brut": "d02cfe1044cde2f4",
+   "optimizat": "34683361f8c6e2c6"
+  },
+  "genuflexiuni-fandate-cu-gantere-split-squat.svg": {
+   "brut": "889ad34167b95a9d",
+   "optimizat": "0692c9e3b59d0b31"
+  },
+  "genuflexiuni-fara-greutati-mini.svg": {
+   "brut": "485924aadae8ae99",
+   "optimizat": "4bef7adbe4d95016"
+  },
+  "genuflexiuni-fara-greutati.svg": {
+   "brut": "84e9b1ff1342f1ec",
+   "optimizat": "6fcc1228cbc904cd"
+  },
+  "genuflexiuni-frontale-mini.svg": {
+   "brut": "818e76f546d90050",
+   "optimizat": "6913dd7afeb05ac6"
+  },
+  "genuflexiuni-frontale.svg": {
+   "brut": "e93d65b6077ec970",
+   "optimizat": "533f84ed89c2f0e9"
+  },
+  "genuflexiuni-goblet-mini.svg": {
+   "brut": "14f16571bac6bc0e",
+   "optimizat": "aa5eda2469c0ee57"
+  },
+  "genuflexiuni-goblet.svg": {
+   "brut": "589d0a3afb8b020e",
+   "optimizat": "8ca36226b50b030b"
+  },
+  "genuflexiuni-la-aparatul-smith-mini.svg": {
+   "brut": "9cfae7133c78e794",
+   "optimizat": "232c185ea0b529a3"
+  },
+  "genuflexiuni-la-aparatul-smith.svg": {
+   "brut": "45f1ba0057690d1a",
+   "optimizat": "dce0223b2dcad1de"
+  },
+  "good-morning-cu-bara-mini.svg": {
+   "brut": "e2855589fef00723",
+   "optimizat": "105c39db12d21f09"
+  },
+  "good-morning-cu-bara.svg": {
+   "brut": "7ce5ece8097e1f60",
+   "optimizat": "513967a074edc816"
+  },
+  "grupa-abdomen-mini.svg": {
+   "brut": "3f1e19c67ae3d2f6",
+   "optimizat": "10f9395d7f16912e"
+  },
+  "grupa-abdomen.svg": {
+   "brut": "0b2a9d3a6f89a106",
+   "optimizat": "fff5185070bccc0f"
+  },
+  "grupa-antebrate-mini.svg": {
+   "brut": "191239c9ae25a9cb",
+   "optimizat": "291b64488ea6b264"
+  },
+  "grupa-antebrate.svg": {
+   "brut": "5c6bd6322033c61b",
+   "optimizat": "c712cf9fef455b41"
+  },
+  "grupa-biceps-mini.svg": {
+   "brut": "005fc2b255812ccb",
+   "optimizat": "99451101050bf630"
+  },
+  "grupa-biceps.svg": {
+   "brut": "bd3cd41396e9de9a",
+   "optimizat": "4c77c45fae358b49"
+  },
+  "grupa-cvadricepsi-mini.svg": {
+   "brut": "1f09238ae4c9819a",
+   "optimizat": "479435f1b6792b4e"
+  },
+  "grupa-cvadricepsi.svg": {
+   "brut": "ffa2f270776c0db6",
+   "optimizat": "42bf33cb68f3368f"
+  },
+  "grupa-femurali-mini.svg": {
+   "brut": "f0fca3f14d9f6007",
+   "optimizat": "d6cb4e7f28b0ea71"
+  },
+  "grupa-femurali.svg": {
+   "brut": "99cfa8d667cecf8f",
+   "optimizat": "5c09af5095f283bd"
+  },
+  "grupa-fese-mini.svg": {
+   "brut": "679a6ea6081abe05",
+   "optimizat": "d29ba16dcd5c80db"
+  },
+  "grupa-fese.svg": {
+   "brut": "560c5a8619c7d6ba",
+   "optimizat": "88f9a4d3a604096f"
+  },
+  "grupa-gambe-mini.svg": {
+   "brut": "7f3826c79190ad08",
+   "optimizat": "64c2fd7cb6568fa6"
+  },
+  "grupa-gambe.svg": {
+   "brut": "e5b9676bfaf6c310",
+   "optimizat": "585ab49962cc782d"
+  },
+  "grupa-picioare-mini.svg": {
+   "brut": "94cb26c446ec638b",
+   "optimizat": "1fbdcfad0df3a926"
+  },
+  "grupa-picioare.svg": {
+   "brut": "fe2a048a8aa9b3b0",
+   "optimizat": "f2081ed172d3fc24"
+  },
+  "grupa-piept-mini.svg": {
+   "brut": "cbf912ae9f27678e",
+   "optimizat": "abe485c498b9015d"
+  },
+  "grupa-piept.svg": {
+   "brut": "028f00eddc7ce3fa",
+   "optimizat": "982daac63d7bc579"
+  },
+  "grupa-spate-mini.svg": {
+   "brut": "dfeb699ec8ea5733",
+   "optimizat": "f6cfa58ddee87a24"
+  },
+  "grupa-spate.svg": {
+   "brut": "715f3622e6975a31",
+   "optimizat": "529486106fad5508"
+  },
+  "grupa-triceps-mini.svg": {
+   "brut": "d49f33eb4b0f2865",
+   "optimizat": "b0c5cbbfd9a8956d"
+  },
+  "grupa-triceps.svg": {
+   "brut": "cb211984ae72944d",
+   "optimizat": "e7ef926835aa6d59"
+  },
+  "grupa-umeri-mini.svg": {
+   "brut": "51816f34b89e787c",
+   "optimizat": "4fa4e6cf549fe48a"
+  },
+  "grupa-umeri.svg": {
+   "brut": "721b06f7586a01c8",
+   "optimizat": "fe36250fc7786988"
+  },
+  "hack-squat-la-aparat-mini.svg": {
+   "brut": "9ba25b3542e79d68",
+   "optimizat": "f1a8936dbe1f1def"
+  },
+  "hack-squat-la-aparat.svg": {
+   "brut": "2c4697795aa08907",
+   "optimizat": "1ffb5a4b254a16b2"
+  },
+  "helcometru-cu-maner-in-v-mini.svg": {
+   "brut": "02f600cee9f464f0",
+   "optimizat": "0d94f51000e23aef"
+  },
+  "helcometru-cu-maner-in-v.svg": {
+   "brut": "c969b63d23a81107",
+   "optimizat": "e2591b13e79b7473"
+  },
+  "helcometru-cu-priza-ingusta-mini.svg": {
+   "brut": "63a382f040947549",
+   "optimizat": "260427f957d99578"
+  },
+  "helcometru-cu-priza-ingusta.svg": {
+   "brut": "38909760a12bab2d",
+   "optimizat": "33ee6fc99019f634"
+  },
+  "hip-thrust-mini.svg": {
+   "brut": "a271a9ac98ee1ace",
+   "optimizat": "921cfbf7e4666f56"
+  },
+  "hip-thrust.svg": {
+   "brut": "08ac424e2e9f646a",
+   "optimizat": "3697c6b18678727d"
+  },
+  "hiperextensii-extensii-lombare-mini.svg": {
+   "brut": "29f270e2f52bd367",
+   "optimizat": "c513def2c6cc5348"
+  },
+  "hiperextensii-extensii-lombare.svg": {
+   "brut": "340fde682000dfd4",
+   "optimizat": "488e371ae4066e3b"
+  },
+  "impins-arnold-mini.svg": {
+   "brut": "10a66eff2a1adfc4",
+   "optimizat": "d00a065e24888449"
+  },
+  "impins-arnold.svg": {
+   "brut": "8915cd45c3c3a200",
+   "optimizat": "cbf52955f4f49720"
+  },
+  "impins-cu-bara-pe-banca-declinata-mini.svg": {
+   "brut": "60fc8a2f9633bb78",
+   "optimizat": "892666c56b980768"
+  },
+  "impins-cu-bara-pe-banca-declinata.svg": {
+   "brut": "c659d5e8215e0ed7",
+   "optimizat": "400c4f054509e962"
+  },
+  "impins-cu-bara-pe-banca-inclinata-mini.svg": {
+   "brut": "789658358c1cce8d",
+   "optimizat": "561d193d97d35389"
+  },
+  "impins-cu-bara-pe-banca-inclinata.svg": {
+   "brut": "aec987da65dab6da",
+   "optimizat": "4078fc952de5b68d"
+  },
+  "impins-cu-bara-pe-banca-mini.svg": {
+   "brut": "f44b05917890dbbd",
+   "optimizat": "fe639df35cfc40e4"
+  },
+  "impins-cu-bara-pe-banca.svg": {
+   "brut": "1a81745aca1fb4d8",
+   "optimizat": "8e0c577e851cd4dc"
+  },
+  "impins-cu-gantere-deasupra-capului-mini.svg": {
+   "brut": "19dffc9378de6e82",
+   "optimizat": "8c4762279143411c"
+  },
+  "impins-cu-gantere-deasupra-capului.svg": {
+   "brut": "171ed8ad3a049b73",
+   "optimizat": "f55a873100811d36"
+  },
+  "impins-cu-gantere-din-sezut-mini.svg": {
+   "brut": "c9a5d492037b2520",
+   "optimizat": "362e7a8c73d51b2f"
+  },
+  "impins-cu-gantere-din-sezut.svg": {
+   "brut": "fe8d40308fc3e040",
+   "optimizat": "44a37bbaafd9c0df"
+  },
+  "impins-cu-gantere-pe-banca-inclinata-mini.svg": {
+   "brut": "57ee4272f760d985",
+   "optimizat": "bcfd1b0eb4e464d7"
+  },
+  "impins-cu-gantere-pe-banca-inclinata.svg": {
+   "brut": "fc7d1e415f6f545e",
+   "optimizat": "1c12b88e6021780e"
+  },
+  "impins-cu-gantere-pe-banca-mini.svg": {
+   "brut": "2927dc644a39268e",
+   "optimizat": "01f0d88a04911883"
+  },
+  "impins-cu-gantere-pe-banca.svg": {
+   "brut": "dc87cf3c5419fe98",
+   "optimizat": "9794e8640ee5fcfd"
+  },
+  "impins-cu-priza-ingusta-mini.svg": {
+   "brut": "cecc81b4b001130c",
+   "optimizat": "1a23878c5be71e4e"
+  },
+  "impins-cu-priza-ingusta.svg": {
+   "brut": "838a7cb21d18b05d",
+   "optimizat": "92654f65d81beaef"
+  },
+  "impins-deasupra-capului-mini.svg": {
+   "brut": "d622d637db256726",
+   "optimizat": "631c2cbbe1c0792e"
+  },
+  "impins-deasupra-capului.svg": {
+   "brut": "97e4bf132d6139ec",
+   "optimizat": "830d2c241a04d396"
+  },
+  "impins-inclinat-la-aparatul-smith-mini.svg": {
+   "brut": "6ef0c29350f1af38",
+   "optimizat": "8841c9f3e89d4878"
+  },
+  "impins-inclinat-la-aparatul-smith.svg": {
+   "brut": "9fca75c829ac18b7",
+   "optimizat": "380862ff8b4a0a87"
+  },
+  "impins-la-aparat-pentru-piept-mini.svg": {
+   "brut": "1be0135bf1796248",
+   "optimizat": "e1a3ea9d31243334"
+  },
+  "impins-la-aparat-pentru-piept.svg": {
+   "brut": "6fc5149a999edf6b",
+   "optimizat": "f89ef3f3faa49d29"
+  },
+  "impins-la-aparat-pentru-umeri-mini.svg": {
+   "brut": "0683f781ef97bbbc",
+   "optimizat": "d1cd62af2d9e5e40"
+  },
+  "impins-la-aparat-pentru-umeri.svg": {
+   "brut": "4a76afa6fde2e5d5",
+   "optimizat": "ac47def6a22ce83c"
+  },
+  "indreptari-cu-picioarele-intinse-cu-gantere-mini.svg": {
+   "brut": "dab5b97bef6063ba",
+   "optimizat": "9f063d5401bf782f"
+  },
+  "indreptari-cu-picioarele-intinse-cu-gantere.svg": {
+   "brut": "0aa5c5a55ee48cda",
+   "optimizat": "2e1da037fe6e3ff2"
+  },
+  "indreptari-deadlift-mini.svg": {
+   "brut": "dc9b5f88d30fb917",
+   "optimizat": "163abcf5f5c715e7"
+  },
+  "indreptari-deadlift.svg": {
+   "brut": "fd8deb39e2cf5aa3",
+   "optimizat": "186260c134accacd"
+  },
+  "indreptari-partiale-rack-pull-mini.svg": {
+   "brut": "189bfffe0ba451be",
+   "optimizat": "be6b09565c7ac6c9"
+  },
+  "indreptari-partiale-rack-pull.svg": {
+   "brut": "0c268d42ddcc062a",
+   "optimizat": "78c2d4280c49f4c2"
+  },
+  "indreptari-romanesti-mini.svg": {
+   "brut": "9563b75c80e39d6c",
+   "optimizat": "c768d34f5aea5082"
+  },
+  "indreptari-romanesti.svg": {
+   "brut": "d657019341123b4c",
+   "optimizat": "c6f08f6fe61eb8b4"
+  },
+  "indreptari-sumo-mini.svg": {
+   "brut": "614b7075f80882c2",
+   "optimizat": "d5122182c51f412e"
+  },
+  "indreptari-sumo.svg": {
+   "brut": "beaec4281bb09c48",
+   "optimizat": "7472a2f4970d6f83"
+  },
+  "kickback-cu-gantera-mini.svg": {
+   "brut": "00876bee7326e4db",
+   "optimizat": "d5d9140026c4d345"
+  },
+  "kickback-cu-gantera.svg": {
+   "brut": "d15f166c900160ae",
+   "optimizat": "b47ac32803f545f3"
+  },
+  "kickback-din-patrupedie-mini.svg": {
+   "brut": "816c83d585f80e1e",
+   "optimizat": "c026ae6e9abc8a2e"
+  },
+  "kickback-din-patrupedie.svg": {
+   "brut": "26e004cde09defa6",
+   "optimizat": "5b01200748538ab9"
+  },
+  "kickback-la-scripete-pentru-fesieri-mini.svg": {
+   "brut": "57ba81fe173b1d84",
+   "optimizat": "8a0a92a40c4ca600"
+  },
+  "kickback-la-scripete-pentru-fesieri.svg": {
+   "brut": "537ddbf665fe5508",
+   "optimizat": "576295a2e3468f7f"
+  },
+  "mers-cu-greutati-farmer-s-walk-mini.svg": {
+   "brut": "263efc9e907f99d7",
+   "optimizat": "d6c02fceb7d55a80"
+  },
+  "mers-cu-greutati-farmer-s-walk.svg": {
+   "brut": "44b62562164fe682",
+   "optimizat": "95d63135f7ddc97a"
+  },
+  "pallof-press-la-scripete-mini.svg": {
+   "brut": "35c04c0f0ffe0e95",
+   "optimizat": "a9cd29d227ec6e32"
+  },
+  "pallof-press-la-scripete.svg": {
+   "brut": "65f55defb7e0c2a0",
+   "optimizat": "7b29e75178734c43"
+  },
+  "plank-lateral-mini.svg": {
+   "brut": "5c4f40caafea009d",
+   "optimizat": "88abc43efc1e107a"
+  },
+  "plank-lateral.svg": {
+   "brut": "f54f8c3b4618fcd3",
+   "optimizat": "2918e38807eb1fdc"
+  },
+  "plank-mini.svg": {
+   "brut": "6adc43c8d68779b5",
+   "optimizat": "40169d5af43cd85d"
+  },
+  "plank.svg": {
+   "brut": "c7f804254329d58b",
+   "optimizat": "4009654904018174"
+  },
+  "pod-pe-un-picior-mini.svg": {
+   "brut": "d798abddfc434cf1",
+   "optimizat": "c0c3fda0ac5e05fa"
+  },
+  "pod-pe-un-picior.svg": {
+   "brut": "22001bd909490aa6",
+   "optimizat": "590556e460aa47fd"
+  },
+  "pod-pentru-fesieri-cu-bara-mini.svg": {
+   "brut": "86e1a4ba3d9f6068",
+   "optimizat": "69d34c30e180be6e"
+  },
+  "pod-pentru-fesieri-cu-bara.svg": {
+   "brut": "13252a3552cb63fc",
+   "optimizat": "f4948def6274b63a"
+  },
+  "presa-pentru-picioare-mini.svg": {
+   "brut": "9fc4829272be1c9d",
+   "optimizat": "f511569ea3e4cd28"
+  },
+  "presa-pentru-picioare.svg": {
+   "brut": "996095c48b02516f",
+   "optimizat": "56891effa135fdd4"
+  },
+  "pull-through-la-scripete-mini.svg": {
+   "brut": "6ec3ee7ea430608d",
+   "optimizat": "3170984b118cfd9a"
+  },
+  "pull-through-la-scripete.svg": {
+   "brut": "7be99bf77108f08f",
+   "optimizat": "eab7c3b1f0add58b"
+  },
+  "pulldown-cu-bratele-intinse-mini.svg": {
+   "brut": "e09db4ad3c54d30a",
+   "optimizat": "edb2ecfed12c78c1"
+  },
+  "pulldown-cu-bratele-intinse.svg": {
+   "brut": "0f72a770a0499eda",
+   "optimizat": "2de3ef2eb89b3413"
+  },
+  "pullover-cu-gantera-mini.svg": {
+   "brut": "63e7ef7810ce9205",
+   "optimizat": "0843a13c5e5d3b91"
+  },
+  "pullover-cu-gantera.svg": {
+   "brut": "15b1e92697e08119",
+   "optimizat": "508f4451a67f01a5"
+  },
+  "ramat-cu-bara-mini.svg": {
+   "brut": "5e191f4ddc672db1",
+   "optimizat": "f7a5a7c45da55cfb"
+  },
+  "ramat-cu-bara.svg": {
+   "brut": "37f34699da16a192",
+   "optimizat": "5700c633e79565d8"
+  },
+  "ramat-cu-doua-gantere-mini.svg": {
+   "brut": "0404c85ab2e22400",
+   "optimizat": "3b7744ea1485ae40"
+  },
+  "ramat-cu-doua-gantere.svg": {
+   "brut": "e79087db5dd857b3",
+   "optimizat": "05a26b638dbad04c"
+  },
+  "ramat-cu-gantera-mini.svg": {
+   "brut": "7bcaaafd8f4d05cc",
+   "optimizat": "84fac521946e56eb"
+  },
+  "ramat-cu-gantera.svg": {
+   "brut": "31455eed1c266fcf",
+   "optimizat": "cde2a4d323f3dbe3"
+  },
+  "ramat-cu-pieptul-pe-banca-inclinata-mini.svg": {
+   "brut": "69a2f4c24e26a80a",
+   "optimizat": "9420d1f3038f42d1"
+  },
+  "ramat-cu-pieptul-pe-banca-inclinata.svg": {
+   "brut": "08a6f56dc7119c82",
+   "optimizat": "4fc68e83d5b646f4"
+  },
+  "ramat-la-aparat-mini.svg": {
+   "brut": "c8b92d13292e4a3f",
+   "optimizat": "253c109b4061ec01"
+  },
+  "ramat-la-aparat.svg": {
+   "brut": "dd8e76c4ea6edcd5",
+   "optimizat": "b77d2df6ae22dcb6"
+  },
+  "ramat-la-scripete-asezat-mini.svg": {
+   "brut": "1209bb5097a89415",
+   "optimizat": "1419c3d12978bd3c"
+  },
+  "ramat-la-scripete-asezat.svg": {
+   "brut": "ebeee79ad22688b0",
+   "optimizat": "0183603259c9f428"
+  },
+  "ramat-t-bar-mini.svg": {
+   "brut": "934a8f7cd1b42fef",
+   "optimizat": "e587ea6d7cf724c8"
+  },
+  "ramat-t-bar.svg": {
+   "brut": "3b3018211ff48595",
+   "optimizat": "669c40a2d579039d"
+  },
+  "ramat-vertical-cu-bara-mini.svg": {
+   "brut": "28bbee712f45094e",
+   "optimizat": "67a133ac8190d421"
+  },
+  "ramat-vertical-cu-bara.svg": {
+   "brut": "b624d9f53a75b6f5",
+   "optimizat": "7b4072405d3abca0"
+  },
+  "rasuciri-rusesti-mini.svg": {
+   "brut": "38257715c4469408",
+   "optimizat": "277c101839b46dee"
+  },
+  "rasuciri-rusesti.svg": {
+   "brut": "45aae3772b07175c",
+   "optimizat": "80b647fcc96bb100"
+  },
+  "ridicari-de-picioare-pe-banca-mini.svg": {
+   "brut": "c69ae462f3225748",
+   "optimizat": "00c1d9613340ed18"
+  },
+  "ridicari-de-picioare-pe-banca.svg": {
+   "brut": "6ea5d8998d47d632",
+   "optimizat": "a2afa77b4d854126"
+  },
+  "ridicari-din-umeri-cu-bara-mini.svg": {
+   "brut": "45f9bebc14aea635",
+   "optimizat": "00c70631e7c14683"
+  },
+  "ridicari-din-umeri-cu-bara.svg": {
+   "brut": "c008700148788293",
+   "optimizat": "2fd9a1315e0b9ac4"
+  },
+  "ridicari-din-umeri-cu-gantere-mini.svg": {
+   "brut": "559eee9c6f4f767d",
+   "optimizat": "98c9eb526dcf5d5e"
+  },
+  "ridicari-din-umeri-cu-gantere.svg": {
+   "brut": "135d66ae2e2adc51",
+   "optimizat": "f2ad7f1d84effc28"
+  },
+  "ridicari-frontale-cu-gantere-mini.svg": {
+   "brut": "3dd59cbc0eea3018",
+   "optimizat": "b2f7ceb1069f50e2"
+  },
+  "ridicari-frontale-cu-gantere.svg": {
+   "brut": "0f90faaa57068e5b",
+   "optimizat": "a2245b052b1bff9e"
+  },
+  "ridicari-laterale-la-scripete-mini.svg": {
+   "brut": "243e14804cb8ae72",
+   "optimizat": "0193538c9cd3a2cd"
+  },
+  "ridicari-laterale-la-scripete.svg": {
+   "brut": "60ed8d588ef1757b",
+   "optimizat": "c8ba21135459b14c"
+  },
+  "ridicari-laterale-mini.svg": {
+   "brut": "8e042336bc6f3329",
+   "optimizat": "ce436b6644ae9f3d"
+  },
+  "ridicari-laterale.svg": {
+   "brut": "56b84e0ee177b806",
+   "optimizat": "6a9fa42361a42d55"
+  },
+  "ridicari-pe-varfuri-cu-gantere-mini.svg": {
+   "brut": "823c4baf50ec580e",
+   "optimizat": "6f1d715ff05f839e"
+  },
+  "ridicari-pe-varfuri-cu-gantere.svg": {
+   "brut": "acf3719ba440ab83",
+   "optimizat": "d2c8c815d2bbbbc5"
+  },
+  "ridicari-pe-varfuri-la-aparat-asezat-mini.svg": {
+   "brut": "cde7e32519e0fbee",
+   "optimizat": "7e251d0b962e00b8"
+  },
+  "ridicari-pe-varfuri-la-aparat-asezat.svg": {
+   "brut": "5e98f6a7881a8cd5",
+   "optimizat": "63c8651732649c04"
+  },
+  "ridicari-pe-varfuri-la-aparat-in-picioare-mini.svg": {
+   "brut": "b96d088f87551bed",
+   "optimizat": "9249e53ef03f7fb5"
+  },
+  "ridicari-pe-varfuri-la-aparat-in-picioare.svg": {
+   "brut": "a1e05de00c50f328",
+   "optimizat": "66e7e9cfaef21188"
+  },
+  "ridicari-pe-varfuri-la-presa-mini.svg": {
+   "brut": "63a56da340c74fc0",
+   "optimizat": "140e93ca1d221c98"
+  },
+  "ridicari-pe-varfuri-la-presa.svg": {
+   "brut": "82bf9869c3058bd2",
+   "optimizat": "fa86901d1fa42157"
+  },
+  "rollout-cu-bara-mini.svg": {
+   "brut": "214d7329c00f1139",
+   "optimizat": "05296fa842ecb34d"
+  },
+  "rollout-cu-bara.svg": {
+   "brut": "fbf11e3eee31baa8",
+   "optimizat": "e9dbf1707eb3de5a"
+  },
+  "taietorul-de-lemne-la-scripete-mini.svg": {
+   "brut": "33ad65ded143df80",
+   "optimizat": "df656beb3c3bd35d"
+  },
+  "taietorul-de-lemne-la-scripete.svg": {
+   "brut": "0ed6557e4d6be161",
+   "optimizat": "432b2cac5194d6f0"
+  },
+  "tractiuni-cu-priza-supinata-mini.svg": {
+   "brut": "af6c0c3a656a8d12",
+   "optimizat": "7885c208bf35c23c"
+  },
+  "tractiuni-cu-priza-supinata.svg": {
+   "brut": "14de7da86484a251",
+   "optimizat": "45e2ef6d3a8aea25"
+  },
+  "tractiuni-la-helcometru-mini.svg": {
+   "brut": "48aba8a1c9ecaa63",
+   "optimizat": "40693964caea96d9"
+  },
+  "tractiuni-la-helcometru.svg": {
+   "brut": "d369f657b1ff937e",
+   "optimizat": "3a08860ec0fca279"
+  },
+  "tractiuni-mini.svg": {
+   "brut": "44bf28e2b799e845",
+   "optimizat": "4eb726d31b4912af"
+  },
+  "tractiuni.svg": {
+   "brut": "0053be62a2eb1eb6",
+   "optimizat": "8b71b0b66aee4fb7"
+  },
+  "urcari-pe-banca-cu-gantere-mini.svg": {
+   "brut": "85e0d637db8d520f",
+   "optimizat": "501f36b940df400d"
+  },
+  "urcari-pe-banca-cu-gantere.svg": {
+   "brut": "61bfe428f08dee3d",
+   "optimizat": "3af9cbb500b862db"
+  }
+ }
+}

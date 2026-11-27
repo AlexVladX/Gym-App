@@ -64,16 +64,20 @@ function randeazaBiblioteca() {
   }
   // Titluri de grupă când lista e ordonată pe grupe (fără căutare și fără filtru de grupă).
   const cuTitluri = !cuvinte.length && !filtre.grupa;
-  const randuri = [];
+  // Rândurile (cu ilustrație) se creează pe bucăți, pe măsură ce derulezi (118 exerciții).
+  const fabrici = [];
   let grupaCurenta = null;
   for (const e of potrivite) {
     if (cuTitluri && e.grupa !== grupaCurenta) {
       grupaCurenta = e.grupa;
-      randuri.push(el('h3', { class: 'lista-titlu', text: e.grupa || 'Fără grupă' }));
+      const titlu = e.grupa || 'Fără grupă';
+      fabrici.push(() => el('h3', { class: 'lista-titlu', text: titlu }));
     }
-    randuri.push(randExercitiu(e));
+    fabrici.push(() => randExercitiu(e));
   }
-  lista.replaceChildren(el('div', { class: 'card lista-exercitii-biblio' }, randuri));
+  const card = el('div', { class: 'card lista-exercitii-biblio' });
+  lista.replaceChildren(card);
+  deseneazaPeBucati(card, fabrici, 30);
 }
 
 function areFiltre(ignora = []) {

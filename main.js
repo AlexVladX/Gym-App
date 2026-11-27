@@ -25,8 +25,12 @@ let ecranInainteDeSetari = null;
 
 let ecranCurent = 'ecran-acasa';
 
+// Ecranele modului Nutriție au nevoie de modulele încărcate la cerere (incarcare.js).
+const ECRANE_NUTRITIE = ['ecran-nutritie', 'ecran-masa'];
+
 function arataEcran(id) {
   asiguraModulEcranului(id);
+  const asteaptaNutritia = ECRANE_NUTRITIE.includes(id) && !nutritiePornita;
   if (id === 'ecran-setari' && ecranCurent !== 'ecran-setari') ecranInainteDeSetari = ecranCurent;
   if (id === 'ecran-setari' && typeof deseneazaSetariScanare === 'function') deseneazaSetariScanare();
   const schimbat = id !== ecranCurent;
@@ -41,13 +45,29 @@ function arataEcran(id) {
     }
   });
   actualizeazaNavigatia();
-  $('titlu-ecran').textContent = id === 'ecran-nutritie' ? TITLU_GRUP_NUTRITIE[grupFilaNutritie(filaNutritie)] : (TITLURI_ECRANE[id] || 'Jurnal');
+  $('titlu-ecran').textContent = id === 'ecran-nutritie' && !asteaptaNutritia ? TITLU_GRUP_NUTRITIE[grupFilaNutritie(filaNutritie)] : (TITLURI_ECRANE[id] || 'Jurnal');
   $('btn-setari').classList.toggle('activ', id === 'ecran-setari');
   // Setările au „Înapoi” în antet (în locul semnului mărcii).
   $('btn-inapoi').hidden = id !== 'ecran-setari';
   document.querySelector('.marca-semn').hidden = id === 'ecran-setari';
   if (schimbat) window.scrollTo({ top: 0 });
 
+  if (asteaptaNutritia) {
+    // Prima intrare în Nutriție: încărcăm modulele (din cache, de obicei sub o secundă), apoi desenăm ecranul.
+    const sectiune = $(id);
+    sectiune.setAttribute('aria-busy', 'true');
+    incarcaNutritia().then(() => {
+      sectiune.removeAttribute('aria-busy');
+      if (ecranCurent === id) arataEcran(id);
+    }).catch(err => {
+      sectiune.removeAttribute('aria-busy');
+      console.error(err);
+      notifica('Nutriția nu a putut fi încărcată. Verifică internetul și încearcă din nou.', 'eroare', 6000,
+        { text: 'Reîncearcă', onclick: () => arataEcran(id) });
+    });
+    if (typeof navigareDupaEcran === 'function') navigareDupaEcran();
+    return;
+  }
   // Ecranele cu date se reîncarcă la fiecare deschidere (graficele au nevoie de dimensiunea reală).
   if (id === 'ecran-acasa') randeazaAcasa();
   if (id === 'ecran-masa') randeazaAcasaMasa();
@@ -76,7 +96,7 @@ async function initializeaza() {
   const v = $('versiune-app');
   if (v && document.body.dataset.versiune) v.textContent = `Gym App 3.0 · versiunea ${document.body.dataset.versiune}`;
   document.querySelectorAll('.navigatie button').forEach(b => b.addEventListener('click', () => {
-    if (b.dataset.grup) { arataFilaNutritie(filaDinGrup(b.dataset.grup), { randeaza: false }); }
+    if (b.dataset.grup) { const g = b.dataset.grup; dupaIncarcareNutritie(() => arataFilaNutritie(filaDinGrup(g), { randeaza: false })); }
     arataEcran(b.dataset.ecran);
   }));
   document.querySelectorAll('[data-mod-tinta]').forEach(b => b.addEventListener('click', () => schimbaMod(b.dataset.modTinta)));
@@ -104,7 +124,6 @@ async function initializeaza() {
   initProgres();
   initIstoric();
   initBiblioteca();
-  initNutritie();
   initBackup();
   initSiguranta();
 
@@ -120,11 +139,8 @@ async function initializeaza() {
     console.warn('Istoricul nu a putut fi citit', err);
     notifica('Istoricul nu a putut fi citit. Dacă problema persistă, restaurează un backup.', 'eroare');
   }
-  try {
-    await reincarcaNutritie();
-  } catch (err) {
-    console.warn('Datele de nutriție nu au putut fi citite', err);
-  }
+  // Modul Nutriție la pornire: modulele lui se încarcă acum (în modul Sală, abia la prima intrare în Nutriție).
+  if (modCurent === 'mealprep') await incarcaNutritia().catch(err => console.warn('Nutriția nu a putut fi încărcată', err));
   await incarcaCiorna();
   await restaureazaTimerul(); // odihna dintre serii continuă după o reîncărcare (iOS închide aplicația din fundal)
   deseneazaGrupe();
@@ -180,6 +196,35 @@ if (verificaVersiuneaFisierelor()) {
 });
 
 // Service worker: aplicația funcționează offline după prima încărcare. Necesită HTTPS sau localhost.
+// Versiunea nouă se instalează în fundal și așteaptă. La pornire (primele secunde, fără antrenament în curs) o
+// activăm imediat și reîncărcăm; mai târziu doar o anunțăm discret, cu „Reîncarcă” — niciodată forțat.
+const PORNIRE_APLICATIE = Date.now();
+let reincarcaLaActivare = false;
+function activeazaVersiuneaNoua(sw) {
+  reincarcaLaActivare = true;
+  sw.postMessage({ tip: 'activeaza' });
+}
+function laVersiuneNoua(sw) {
+  const laPornire = Date.now() - PORNIRE_APLICATIE < 8000;
+  const inAntrenament = typeof stare !== 'undefined' && stare.exercitii && stare.exercitii.length > 0;
+  if (laPornire && !inAntrenament) { activeazaVersiuneaNoua(sw); return; }
+  notifica(inAntrenament ? 'Versiune nouă disponibilă. Antrenamentul e salvat; poți reîncărca oricând.' : 'Versiune nouă disponibilă.',
+    'info', 20000, { text: 'Reîncarcă', onclick: () => activeazaVersiuneaNoua(sw) });
+}
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => { /* fără offline, aplicația merge oricum */ });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => {
+    if (reg.waiting && navigator.serviceWorker.controller) laVersiuneNoua(reg.waiting);
+    reg.addEventListener('updatefound', () => {
+      const nou = reg.installing;
+      if (!nou) return;
+      nou.addEventListener('statechange', () => {
+        if (nou.state === 'installed' && navigator.serviceWorker.controller) laVersiuneNoua(nou);
+      });
+    });
+  }).catch(() => { /* fără offline, aplicația merge oricum */ });
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!reincarcaLaActivare) return;
+    reincarcaLaActivare = false;
+    Promise.resolve(typeof salveazaCiornaAcum === 'function' ? salveazaCiornaAcum() : null).finally(() => location.reload());
+  });
 }

@@ -304,7 +304,7 @@ async function reincarcaTot() {
   await reincarcaMasuratori();
   await reincarcaPoze().catch(err => console.warn(err));
   await deseneazaCos().catch(err => console.warn(err));
-  await reincarcaNutritie().catch(err => console.warn(err));
+  await reincarcaNutritiaDacaE().catch(err => console.warn(err));
   deseneazaGrupe();
   deseneazaExercitii();
   randeazaBiblioteca();
