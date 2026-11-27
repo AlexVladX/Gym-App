@@ -29,14 +29,10 @@ function metaExercitiu(e) {
 }
 
 // ---------- Lista ----------
-function randeazaBiblioteca() {
-  if (modBiblioteca !== 'exercitii') {
-    randeazaAntrenamente().catch(err => console.error(err));
-    return;
-  }
-  deseneazaGrupeVechi();
+// Exercițiile care trec de căutare și de toate filtrele (lista întreagă, nu doar ce e desenat).
+function exercitiiFiltrate() {
   const cuvinte = fara(filtre.cautare).split(/\s+/).filter(Boolean);
-  const potrivite = ordoneaza(toateExercitiile().filter(e =>
+  return ordoneaza(toateExercitiile().filter(e =>
     (!filtre.grupa || e.grupa === filtre.grupa) &&
     (!filtre.echipament || e.echipament === filtre.echipament) &&
     (!filtre.nivel || e.nivel === filtre.nivel) &&
@@ -44,6 +40,17 @@ function randeazaBiblioteca() {
     (!filtre.favorite || e.favorit) &&
     (!filtre.proprii || e.propriu) &&
     potrivireCautare(e, cuvinte)));
+}
+function numarExercitiiFiltrate() { return exercitiiFiltrate().length; }
+
+function randeazaBiblioteca() {
+  if (modBiblioteca !== 'exercitii') {
+    randeazaAntrenamente().catch(err => console.error(err));
+    return;
+  }
+  deseneazaGrupeVechi();
+  const cuvinte = fara(filtre.cautare).split(/\s+/).filter(Boolean);
+  const potrivite = exercitiiFiltrate();
 
   $('biblio-numar').textContent = plural(potrivite.length, 'exercițiu', 'exerciții');
   $('btn-sterge-filtre').hidden = !areFiltre();
@@ -134,28 +141,47 @@ async function comutaFavorit(nume) {
 }
 
 // ---------- Filtre ----------
+// Etapa 4: rândul scurt = grupa; restul (favorite, proprii, echipament, nivel, categorie) în foaia „Filtre (n)”.
+function chipFiltru(text, activ, onclick, extra = {}) {
+  return el('button', { class: 'chip chip-mic' + (activ ? ' activ' : ''), type: 'button', 'aria-pressed': String(activ), text, onclick, ...extra });
+}
+function aplicaFiltre() { deseneazaFiltre(); randeazaBiblioteca(); }
+
 function deseneazaFiltre() {
-  $('biblio-grupe').replaceChildren(
-    el('button', { class: 'chip chip-mic chip-icon' + (filtre.favorite ? ' activ' : ''), type: 'button', 'aria-pressed': String(filtre.favorite),
-      onclick: () => { filtre.favorite = !filtre.favorite; deseneazaFiltre(); randeazaBiblioteca(); } }, [iconita('stea', 'iconita mica'), el('span', { text: 'Favorite' })]),
-    el('button', { class: 'chip chip-mic' + (filtre.proprii ? ' activ' : ''), type: 'button', 'aria-pressed': String(filtre.proprii), text: 'Proprii',
-      onclick: () => { filtre.proprii = !filtre.proprii; deseneazaFiltre(); randeazaBiblioteca(); } }),
-    ...['', ...GRUPE].map(g => el('button', {
-      class: 'chip chip-mic' + (filtre.grupa === g ? ' activ' : ''), type: 'button', 'aria-pressed': String(filtre.grupa === g),
-      text: g || 'Toate',
-      onclick: () => { filtre.grupa = g; deseneazaFiltre(); randeazaBiblioteca(); },
-    })),
-  );
-  const optiuni = (select, valori, gol) => {
-    select.replaceChildren(el('option', { value: '', text: gol }), ...valori.map(v => el('option', { value: v, text: v })));
-  };
+  $('biblio-grupe').replaceChildren(...['', ...GRUPE].map(g => chipFiltru(g || 'Toate', filtre.grupa === g, () => { filtre.grupa = g; aplicaFiltre(); })));
+  const active = [
+    filtre.favorite && { text: '★ Favorite', scoate: () => { filtre.favorite = false; aplicaFiltre(); } },
+    filtre.proprii && { text: 'Proprii', scoate: () => { filtre.proprii = false; aplicaFiltre(); } },
+    filtre.echipament && { text: filtre.echipament, scoate: () => { filtre.echipament = ''; aplicaFiltre(); } },
+    filtre.nivel && { text: filtre.nivel, scoate: () => { filtre.nivel = ''; aplicaFiltre(); } },
+    filtre.categorie && { text: filtre.categorie, scoate: () => { filtre.categorie = ''; aplicaFiltre(); } },
+  ].filter(Boolean);
+  deseneazaFiltreActive($('biblio-active'), active);
+  etichetaButonFiltre($('btn-biblio-filtre'), active.length + (filtre.grupa ? 1 : 0));
+}
+
+function deschideFiltreExercitii() {
   const echipamente = [...new Set(toateExercitiile().map(e => e.echipament).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ro'));
-  optiuni($('biblio-echipament'), echipamente, 'Echipament');
-  optiuni($('biblio-nivel'), NIVELURI, 'Nivel');
-  optiuni($('biblio-categorie'), CATEGORII, 'Categorie');
-  $('biblio-echipament').value = filtre.echipament;
-  $('biblio-nivel').value = filtre.nivel;
-  $('biblio-categorie').value = filtre.categorie;
+  const select = (eticheta, cheie, valori, refa) => {
+    const s = el('select', { 'aria-label': eticheta, onchange: () => { filtre[cheie] = s.value; aplicaFiltre(); refa(); } },
+      [el('option', { value: '', text: 'Oricare' }), ...valori.map(v => el('option', { value: v, text: v, selected: filtre[cheie] === v }))]);
+    return el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: eticheta }), s]);
+  };
+  deschideFoaieFiltre({
+    titlu: 'Filtre exerciții',
+    deseneaza: refa => [
+      el('div', { class: 'chipuri chipuri-mici' }, [
+        chipFiltru('★ Favorite', filtre.favorite, () => { filtre.favorite = !filtre.favorite; aplicaFiltre(); refa(); }),
+        chipFiltru('Proprii', filtre.proprii, () => { filtre.proprii = !filtre.proprii; aplicaFiltre(); refa(); }),
+      ]),
+      el('span', { class: 'camp-eticheta mt', text: 'Grupa musculară' }),
+      el('div', { class: 'chipuri chipuri-mici' }, ['', ...GRUPE].map(g => chipFiltru(g || 'Toate', filtre.grupa === g, () => { filtre.grupa = g; aplicaFiltre(); refa(); }))),
+      el('div', { class: 'grila-2 mt' }, [select('Echipament', 'echipament', echipamente, refa), select('Nivel', 'nivel', NIVELURI, refa)]),
+      select('Categorie', 'categorie', CATEGORII, refa),
+      el('p', { class: 'nota', text: `${plural(numarExercitiiFiltrate(), 'exercițiu', 'exerciții')} cu filtrele alese.` }),
+    ],
+    reseteaza: () => { Object.assign(filtre, { grupa: '', echipament: '', nivel: '', categorie: '', favorite: false, proprii: false }); aplicaFiltre(); },
+  });
 }
 
 function reseteazaFiltrele() {
@@ -634,9 +660,7 @@ function initBiblioteca() {
   $('tab-exercitii').addEventListener('click', () => arataFilaBiblioteca('exercitii'));
   $('tab-antrenamente').addEventListener('click', () => arataFilaBiblioteca('antrenamente'));
   $('biblio-cautare').addEventListener('input', e => { filtre.cautare = e.target.value.trim(); randeazaBiblioteca(); });
-  for (const [id, cheie] of [['biblio-echipament', 'echipament'], ['biblio-nivel', 'nivel'], ['biblio-categorie', 'categorie']]) {
-    $(id).addEventListener('change', e => { filtre[cheie] = e.target.value; randeazaBiblioteca(); });
-  }
+  $('btn-biblio-filtre').addEventListener('click', deschideFiltreExercitii);
   $('btn-sterge-filtre').addEventListener('click', reseteazaFiltrele);
   $('btn-exercitiu-nou').addEventListener('click', () => deschideFormularExercitiu(null, filtre.cautare));
   deseneazaFiltre();

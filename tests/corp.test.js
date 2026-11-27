@@ -111,3 +111,24 @@ test('backup: pozele valide se păstrează, cele stricate se ignoră; fără poz
   assert.equal(fara.date.poze, undefined);   // inlocuiesteToate nu atinge pozele
   assert.equal(fara.rezumat.poze, null);
 });
+
+test('profilul unic: migrarea din câmpurile vechi, oglinda pentru versiunile vechi, valoarea mai recentă câștigă', () => {
+  const { profilDinSetari, setariCuProfil, curataProfil, ACTIVITATI_PROFIL } = require('../corp-calcul.js');
+  // migrare: doar câmpurile vechi (înainte de etapa 4)
+  assert.deepEqual(profilDinSetari({ inaltimeCm: 178, anNastere: 1990, sex: 'm', activitate: 'moderat' }), { inaltimeCm: 178, anNastere: 1990, sex: 'm', activitate: 'moderat' });
+  // profil nou, oglinda la fel
+  const s = setariCuProfil({ minRep: 8 }, { inaltimeCm: 170, sex: 'f' });
+  assert.deepEqual(s.profil, { inaltimeCm: 170, sex: 'f' });
+  assert.equal(s.inaltimeCm, 170); assert.equal(s.anNastere, null); assert.equal(s.minRep, 8);
+  assert.deepEqual(profilDinSetari(s), { inaltimeCm: 170, sex: 'f' });
+  // o versiune veche a schimbat înălțimea (doar oglinda): e mai recentă și se preia
+  assert.equal(profilDinSetari({ ...s, inaltimeCm: 172 }).inaltimeCm, 172);
+  // oglindă lipsă (backup vechi fără câmp): profilul rămâne
+  assert.equal(profilDinSetari({ profil: { inaltimeCm: 170 } }).inaltimeCm, 170);
+  // valori invalide ignorate
+  assert.deepEqual(curataProfil({ inaltimeCm: 20, anNastere: 1800, sex: 'x', activitate: 'mult', extra: 1 }), {});
+  assert.deepEqual(profilDinSetari(null), {});
+  // aceleași id-uri de activitate ca în nutriție
+  const { NIVELURI_ACTIVITATE } = require('../nutritie-zi.js');
+  assert.deepEqual(ACTIVITATI_PROFIL, NIVELURI_ACTIVITATE.map(a => a.id));
+});

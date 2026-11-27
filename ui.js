@@ -266,6 +266,34 @@ function cereText({ titlu, text, eticheta, valoare = '', ok = 'Salvează', peric
   });
 }
 
+// ---------- Filtre la fel peste tot (etapa 4) ----------
+// Chip-urile filtrelor active, sub căutare: fiecare cu ✕ (îl scoate). active: [{ text, scoate }].
+function deseneazaFiltreActive(container, active) {
+  container.hidden = !active.length;
+  container.replaceChildren(...active.map(a => el('button', { type: 'button', class: 'chip chip-mic chip-activ-sters', 'aria-label': `Scoate filtrul ${a.text}`, onclick: a.scoate },
+    [el('span', { text: a.text }), iconita('x', 'iconita mica')])));
+}
+// Eticheta butonului: „Filtre” sau „Filtre (n)”.
+function etichetaButonFiltre(buton, n) {
+  buton.querySelector('span').textContent = n ? `Filtre (${n})` : 'Filtre';
+  buton.classList.toggle('activ', n > 0);
+  buton.setAttribute('aria-label', n ? `Filtre, ${n} active` : 'Filtre');
+}
+// Foaia cu toate filtrele: continut se redesenează la fiecare schimbare (deseneaza), „Resetează” și „Gata”.
+function deschideFoaieFiltre({ titlu = 'Filtre', deseneaza, reseteaza }) {
+  const zona = el('div', { class: 'foaie-filtre' });
+  const reface = () => zona.replaceChildren(...deseneaza(reface).filter(Boolean));
+  reface();
+  const d = deschideDialog({
+    titlu, continut: zona,
+    butoane: [
+      buton({ text: 'Resetează', tip: 'fantoma', onclick: () => { reseteaza(); reface(); } }),
+      buton({ text: 'Gata', tip: 'principal', onclick: () => d.inchide() }),
+    ],
+  });
+  return d;
+}
+
 // ---------- Liste lungi, desenate pe bucăți (etapa 3) ----------
 // Primele `marime` elemente se creează acum; restul, câte o bucată, când capătul listei se apropie de ecran
 // (IntersectionObserver pe o „santinelă”). Căutarea și filtrele lucrează în continuare pe toată lista:

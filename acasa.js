@@ -97,10 +97,13 @@ function incepeAntrenament() {
 // ---------- Repetă ultimul antrenament (etapa 2) ----------
 // Sub „Începe antrenamentul”: ultimul antrenament cu „Repetă” și primele rutine ca acțiuni rapide.
 // Nu apare cât timp un antrenament e în curs (cardul principal arată atunci „Continuă antrenamentul”).
-function cardRepeta(sesiuni, rutine) {
+function cardRepeta(sesiuni, rutine, urmator = null) {
   if (stare.exercitii.length > 0) return null;
   const ultima = ultimaSesiune(sesiuni);
-  const rapide = [...(rutine || [])].reverse().slice(0, 3);
+  // Etapa 4: „Următorul antrenament” e aici — rutina făcută cel mai demult apare prima, marcată „Sugerată”.
+  const sugerata = urmator && urmator.tip === 'rutina' ? urmator.rutina : null;
+  const rapide = [...(sugerata ? [sugerata] : []), ...[...(rutine || [])].reverse().filter(r => r !== sugerata && r.id !== (sugerata && sugerata.id))].slice(0, 3);
+  const grupeSugerate = urmator && urmator.tip !== 'rutina' && sesiuni.length ? urmator.grupe : [];
   if (!ultima && !rapide.length) return null;
   const copii = [titluCard(ultima ? 'Ultimul antrenament' : 'Rutinele tale')];
   if (ultima) {
@@ -116,40 +119,26 @@ function cardRepeta(sesiuni, rutine) {
   if (rapide.length) {
     copii.push(
       ultima ? el('p', { class: 'sectiune-eticheta mt', text: 'Sau din rutină' }) : null,
-      el('div', { class: 'rand-butoane acasa-rutine-rapide' }, rapide.map(r => buton({
-        text: r.nume, icon: 'lista', tip: 'secundar', eticheta: `Începe rutina „${r.nume}”`, onclick: () => adaugaInSesiune(r.exercitii, r.grupe || []),
-      }))),
+      el('div', { class: 'rand-butoane acasa-rutine-rapide' }, rapide.map(r => {
+        const b = buton({ text: r.nume, icon: 'lista', tip: 'secundar',
+          eticheta: `${r === sugerata ? 'Sugerată: ' : ''}Începe rutina „${r.nume}”${r === sugerata && urmator.ultimaData ? `, făcută ultima dată ${textZile(urmator.zile)}` : ''}`,
+          onclick: () => adaugaInSesiune(r.exercitii, r.grupe || []) });
+        if (r === sugerata) b.append(el('span', { class: 'insigna-sugerata', text: 'Sugerată' }));
+        return b;
+      })),
+    );
+  }
+  // Fără rutine: grupele lucrate cel mai demult (fostul card „Următorul antrenament”).
+  if (grupeSugerate.length) {
+    copii.push(
+      el('p', { class: 'sectiune-eticheta mt', text: 'Lucrate cel mai demult' }),
+      el('div', { class: 'acasa-grupe' }, grupeSugerate.map(g => el('button', {
+        class: 'acasa-grupa', type: 'button', 'aria-label': `${g.grupa}, ultima dată ${textZile(g.zile)}. Deschide exercițiile pentru ${g.grupa}`,
+        onclick: () => deschideBibliotecaPeGrupa(g.grupa),
+      }, [el('strong', { text: g.grupa }), el('span', { text: textZile(g.zile) })]))),
     );
   }
   return el('div', { class: 'card acasa-repeta' }, copii);
-}
-
-// ---------- Următorul antrenament ----------
-function cardUrmator(urmator) {
-  if (!urmator) return null;
-  if (urmator.tip === 'rutina') {
-    const r = urmator.rutina;
-    return el('div', { class: 'card' }, [
-      titluCard('Următorul antrenament'),
-      el('p', { class: 'acasa-rutina', text: r.nume }),
-      el('p', { class: 'nota', text: urmator.ultimaData
-        ? `Ultima dată ${textZile(urmator.zile)} (${afiseazaData(urmator.ultimaData)}). E rutina ta făcută cel mai demult.`
-        : 'Încă nu ai făcut această rutină.' }),
-      el('p', { class: 'descriere', text: r.exercitii.join(' · ') }),
-      buton({ text: `Începe „${r.nume}"`, icon: 'gantera', tip: 'secundar', lat: true, onclick: () => adaugaInSesiune(r.exercitii, r.grupe || []) }),
-    ]);
-  }
-  return el('div', { class: 'card' }, [
-    titluCard('Următorul antrenament'),
-    el('p', { class: 'nota', text: 'Grupele lucrate cel mai demult. Salvează o rutină ca să primești sugestii de antrenament complet.' }),
-    el('div', { class: 'acasa-grupe' }, urmator.grupe.map(g => el('button', {
-      class: 'acasa-grupa', type: 'button', 'aria-label': `${g.grupa}, ultima dată ${textZile(g.zile)}. Deschide exercițiile pentru ${g.grupa}`,
-      onclick: () => deschideBibliotecaPeGrupa(g.grupa),
-    }, [
-      el('strong', { text: g.grupa }),
-      el('span', { text: textZile(g.zile) }),
-    ]))),
-  ]);
 }
 
 // ---------- Săptămâna aceasta ----------
@@ -387,7 +376,7 @@ function cardPrimiiPasi(sesiuni, masuratori) {
   try { backup = Boolean(localStorage.getItem(CHEIE_ULTIM_BACKUP)); } catch (_) { /* ignorat */ }
   const pasi = [
     { gata: sesiuni.length > 0, text: 'Salvează primul antrenament', actiune: incepeAntrenament },
-    { gata: masuratori.some(m => m.tip === 'Greutate'), text: 'Notează-ți greutatea', actiune: deschideGreutatea },
+    // „Notează-ți greutatea” nu mai e aici: cardul Greutate corporală e mereu pe Acasă (o singură intrare).
     { gata: backup, text: 'Exportă un backup', actiune: () => arataEcran('ecran-setari') },
   ];
   if (pasi.every(p => p.gata) || sesiuni.length >= 5) return null;
@@ -421,11 +410,11 @@ async function randeazaAcasa() {
 
   const azi = dataLocala();
   const sesiuni = istoric;
-  const carduri = [cardAzi(azi, sesiuni), cardRepeta(sesiuni, rutine), cardMementoBackup(sesiuni), cardPrimiiPasi(sesiuni, masuratori)];
+  const urmator = urmatorulAntrenament(rutine, sesiuni, grupaExercitiu, azi);
+  const carduri = [cardAzi(azi, sesiuni), cardRepeta(sesiuni, rutine, urmator), cardMementoBackup(sesiuni), cardPrimiiPasi(sesiuni, masuratori)];
   if (sesiuni.length > 0) {
     const saptamani = rezumatSaptamani(sesiuni, azi, 8);
     carduri.push(
-      cardUrmator(urmatorulAntrenament(rutine, sesiuni, grupaExercitiu, azi)),
       cardSaptamana(azi, sesiuni, saptamani),
       ctxRealizari ? cardRealizari(azi, ctxRealizari) : null,
       cardRecorduri(azi, sesiuni),
@@ -436,7 +425,8 @@ async function randeazaAcasa() {
       cardTotal(sesiuni),
     );
   } else {
-    carduri.push(cardUrmator(urmatorulAntrenament(rutine, sesiuni, grupaExercitiu, azi)), cardGreutate(azi, masuratori));
+    // Utilizator nou: rutinele (dacă are) intră în cardul Repetă; altfel doar greutatea.
+    carduri.push(cardGreutate(azi, masuratori));
   }
   const vizibile = carduri.filter(Boolean);
   zona.replaceChildren(...vizibile);

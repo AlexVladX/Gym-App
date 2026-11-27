@@ -10,12 +10,11 @@ async function randeazaAcasaMasa() {
   if (!zona.childElementCount) zona.replaceChildren(stareIncarcare(3));
   const azi = dataLocala();
   const zile = zileSaptamana(azi);
-  let ziAzi, zileSapt, deCumparat = null;
+  let ziAzi, zileSapt;
   try {
     await completeazaCafeleZilnice().catch(err => console.warn(err));
     zileSapt = await Promise.all(zile.map(d => citesteZiNutritie(d)));
     ziAzi = zileSapt[zile.indexOf(azi)];
-    deCumparat = await articoleDeCumparat().catch(err => { console.warn(err); return null; });
   } catch (err) {
     console.error(err);
     zona.replaceChildren(stareGoala({ icon: 'avertizare', titlu: 'Datele nu au putut fi citite', text: 'Reîncarcă aplicația. Dacă problema persistă, restaurează un backup din Setări.' }));
@@ -23,28 +22,17 @@ async function randeazaAcasaMasa() {
   }
   if (ecranCurent !== 'ecran-masa') return;
   const tinte = setari.tinteNutritie;
+  // Etapa 4: primul card e „Azi” (calorii, proteine, următoarea masă, „+ Adaugă”). Fotografierea e în foaia „+”,
+  // iar Rețete / Cumpărături / Planificator / Analiză sunt în bara de jos (fără plăci dublate aici).
   const carduri = [
-    cardCaloriiMasa(ziAzi, tinte),
-    cardScanareAcasa(),
-    cardCafeaAcasa(ziAzi),
-    cardUrmatoareaMasa(ziAzi),
+    cardAziMasa(ziAzi, tinte),
     cardMeseleZilei(ziAzi),
+    cardCafeaAcasa(ziAzi),
     cardSaptamanaMasa(zile, zileSapt, tinte, azi),
-    cardScurtaturiMasa(deCumparat),
     cardReteteRapide(),
   ].filter(Boolean);
   zona.replaceChildren(...carduri);
   for (const c of carduri) if (c.deseneaza) c.deseneaza();
-}
-
-// Câte articole mai ai de cumpărat pentru restul săptămânii (aceeași listă ca în fila Listă).
-async function articoleDeCumparat() {
-  const iv = intervalLista('restul');
-  const zile = [];
-  for (let d = iv.de; d <= iv.pana; d = mutaData(d, 1)) zile.push(await citesteZiNutritie(d));
-  const stare = await citesteListaCumparaturi(iv.de, iv.pana);
-  const l = construiesteLista({ zile, idx: indexNutritie, retete: toateRetetele(), stare });
-  return { ramase: l.total - l.cumparate, total: l.total };
 }
 
 // el() din ui.js face elemente HTML; inelul e SVG, deci are nevoie de namespace.
@@ -66,43 +54,72 @@ function inelCalorii(mancat, planificat, tinta) {
   ]);
 }
 
-function cardCaloriiMasa(zi, tinte) {
+// „Azi”: inelul caloriilor (rămase; fără ținte: mâncate), proteinele, macro, următoarea masă planificată și „+ Adaugă”.
+function cardAziMasa(zi, tinte) {
   const { planificat, mancat } = totaluriZi(zi);
-  if (!tinte) {
-    return el('div', { class: 'card masa-erou' }, [stareGoala({ icon: 'nutritie', titlu: 'Setează-ți țintele zilnice',
-      text: 'Cu o țintă de calorii și macronutrienți, aici vezi cât ai mâncat, cât ți-a mai rămas și cât de aproape e planul de ce ți-ai propus.',
-      actiune: buton({ text: 'Setează țintele', icon: 'editeaza', tip: 'principal', onclick: deschideTinteNutritie }) }),
-    mancat.kcal || planificat.kcal ? el('p', { class: 'nota', text: `Azi: ${numarKcal(mancat.kcal)} kcal mâncate din ${numarKcal(planificat.kcal)} planificate.` }) : null].filter(Boolean));
+  const mese = (zi && zi.mese) || [];
+  const urm = urmatoareaIntrare(zi);
+  const dataText = new Date().toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long' });
+  const cap = el('div', { class: 'masa-erou-cap' }, [
+    el('div', {}, [el('p', { class: 'masa-data', text: dataText.charAt(0).toUpperCase() + dataText.slice(1) }), el('h2', { text: 'Azi' })]),
+    tinte ? buton({ text: 'Ținte', icon: 'editeaza', tip: 'fantoma', mic: true, eticheta: 'Modifică țintele', onclick: deschideTinteNutritie }) : null,
+  ]);
+  let cifre;
+  if (tinte) {
+    const ramas = tinte.kcal - mancat.kcal;
+    const pRamas = tinte.proteine ? tinte.proteine - mancat.proteine : null;
+    cifre = el('div', { class: 'masa-kcal' }, [
+      el('div', { class: 'masa-inel' }, [
+        inelCalorii(mancat.kcal, planificat.kcal, tinte.kcal),
+        el('div', { class: 'masa-inel-text' }, [el('strong', { class: ramas < 0 ? 'peste' : '', text: numarKcal(Math.abs(ramas)) }), el('span', { text: ramas < 0 ? 'kcal peste' : 'kcal rămase' })]),
+      ]),
+      el('dl', { class: 'masa-kcal-cifre' }, [
+        el('div', {}, [el('dt', { text: pRamas === null ? 'Proteine mâncate' : pRamas < 0 ? 'Proteine peste' : 'Proteine rămase' }),
+          el('dd', { text: `${Math.round(pRamas === null ? mancat.proteine : Math.abs(pRamas))} g` })]),
+        el('div', {}, [el('dt', { text: 'Mâncat' }), el('dd', { text: `${numarKcal(mancat.kcal)} din ${numarKcal(tinte.kcal)} kcal` })]),
+        el('div', {}, [el('dt', { text: 'Planificat' }), el('dd', { text: `${numarKcal(planificat.kcal)} kcal` })]),
+      ]),
+    ]);
+  } else {
+    cifre = el('div', { class: 'masa-fara-tinte' }, [
+      el('p', { class: 'masa-mancat' }, [el('strong', { text: numarKcal(mancat.kcal) }), el('span', { text: ' kcal mâncate' })]),
+      el('p', { class: 'nota', text: `Proteine ${Math.round(mancat.proteine)} g · carbohidrați ${Math.round(mancat.carbohidrati)} g · grăsimi ${Math.round(mancat.grasimi)} g` }),
+      buton({ text: 'Setează-ți țintele (3 pași)', icon: 'editeaza', tip: 'secundar', lat: true, onclick: deschideTinteNutritie }),
+    ]);
   }
-  const ramas = tinte.kcal - mancat.kcal;
   const macro = (nume, camp, clasa) => {
-    const t = tinte[camp];
+    const t = tinte && tinte[camp];
     return el('div', { class: 'masa-macro' }, [
       el('div', { class: 'masa-macro-cap' }, [el('span', { class: 'nutri-nume' }, [el('i', { class: `nutri-punct ${clasa}` }), nume]),
         el('span', { class: 'masa-macro-val' }, [el('strong', { text: String(Math.round(mancat[camp])) }), t ? ` / ${t} g` : ' g'])]),
       baraDubla(mancat[camp], planificat[camp], t, clasa),
     ]);
   };
-  return el('div', { class: 'card masa-erou' }, [
-    el('div', { class: 'masa-erou-cap' }, [
-      el('div', {}, [el('p', { class: 'masa-data', text: new Date().toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long' }) }),
-        el('h2', { text: 'Ziua de azi' })]),
-      buton({ text: 'Ținte', icon: 'editeaza', tip: 'fantoma', mic: true, eticheta: 'Modifică țintele', onclick: deschideTinteNutritie }),
-    ]),
-    el('div', { class: 'masa-kcal' }, [
-      el('div', { class: 'masa-inel' }, [
-        inelCalorii(mancat.kcal, planificat.kcal, tinte.kcal),
-        el('div', { class: 'masa-inel-text' }, [el('strong', { class: ramas < 0 ? 'peste' : '', text: numarKcal(Math.abs(ramas)) }), el('span', { text: ramas < 0 ? 'kcal peste' : 'kcal rămase' })]),
+  // Următoarea masă planificată (prima nemâncată din ordinea zilei).
+  let urmator;
+  if (!mese.length) {
+    urmator = el('div', { class: 'masa-azi-urm goala' }, [el('span', { class: 'nota', text: 'Nimic planificat azi.' }),
+      buton({ text: 'Generează planul zilei', icon: 'zar', tip: 'fantoma', mic: true, onclick: deschideZiuaNutritie })]);
+  } else if (!urm) {
+    urmator = el('p', { class: 'masa-gata' }, [iconita('bifa'), el('span', { text: 'Ai bifat toate mesele de azi.' })]);
+  } else {
+    const v = valoriPlanificateIntrare(urm);
+    const r = urm.idReteta ? retetaDupaId(urm.idReteta) : null;
+    urmator = el('div', { class: 'masa-azi-urm' }, [
+      el('button', { type: 'button', class: 'masa-azi-urm-text', 'aria-label': `Următoarea masă: ${numeMasa(urm.masa)}, ${urm.nume}`, onclick: () => (r ? arataReteta(r.id, urm.portii) : deschideZiuaNutritie()) }, [
+        el('span', { class: 'eticheta-masa', text: `Urmează · ${numeMasa(urm.masa)}` }),
+        el('strong', { text: urm.nume }),
+        el('span', { class: 'nota', text: `${fmtNumarPortii(urm.portii)} · ${numarKcal(v.kcal)} kcal · P ${Math.round(v.proteine)} g` }),
       ]),
-      el('dl', { class: 'masa-kcal-cifre' }, [
-        el('div', {}, [el('dt', { text: 'Țintă' }), el('dd', { text: `${numarKcal(tinte.kcal)} kcal` })]),
-        el('div', {}, [el('dt', { text: 'Mâncat' }), el('dd', { text: `${numarKcal(mancat.kcal)} kcal` })]),
-        el('div', {}, [el('dt', { text: 'Planificat' }), el('dd', { text: `${numarKcal(planificat.kcal)} kcal` })]),
-      ]),
-    ]),
-    el('div', { class: 'masa-macrouri' }, [macro('Proteine', 'proteine', 'nutri-p'), macro('Carbohidrați', 'carbohidrati', 'nutri-c'), macro('Grăsimi', 'grasimi', 'nutri-g')]),
-    el('p', { class: 'nota nota-mica zi-legenda' }, [el('i', { class: 'zi-leg-mancat' }), ' mâncat  ', el('i', { class: 'zi-leg-plan' }), ' planificat']),
-  ]);
+      urm.stare === 'neinceput' ? buton({ text: 'Am mâncat-o', icon: 'bifa', tip: 'secundar', mic: true, onclick: () => comutaMancataAcasa(urm.id) }) : null,
+    ]);
+  }
+  return el('div', { class: 'card masa-erou masa-azi' }, [
+    cap, cifre,
+    tinte ? el('div', { class: 'masa-macrouri' }, [macro('Proteine', 'proteine', 'nutri-p'), macro('Carbohidrați', 'carbohidrati', 'nutri-c'), macro('Grăsimi', 'grasimi', 'nutri-g')]) : null,
+    urmator,
+    buton({ text: 'Adaugă', icon: 'plus', tip: 'principal', lat: true, clasa: 'masa-azi-adauga', onclick: () => deschideAdaugareRapida() }),
+  ].filter(Boolean));
 }
 
 // Prima masă din ordinea zilei care nu e mâncată complet.
@@ -113,37 +130,6 @@ function urmatoareaIntrare(zi) {
     if (i) return i;
   }
   return null;
-}
-
-function cardUrmatoareaMasa(zi) {
-  const mese = (zi && zi.mese) || [];
-  if (!mese.length) {
-    return el('div', { class: 'card masa-urmatoare goala' }, [stareGoala({ icon: 'zar', titlu: 'Nicio masă planificată azi',
-      text: 'Generează planul zilei din rețetele tale, după ținte și preferințe. Îl poți modifica apoi masă cu masă.',
-      actiune: buton({ text: 'Generează planul zilei', icon: 'zar', tip: 'principal', onclick: deschideZiuaNutritie }) })]);
-  }
-  const i = urmatoareaIntrare(zi);
-  if (!i) {
-    return el('div', { class: 'card masa-urmatoare' }, [titluCard('Următoarea masă'),
-      el('p', { class: 'masa-gata' }, [iconita('bifa'), el('span', { text: 'Ai bifat toate mesele de azi.' })])]);
-  }
-  const r = retetaDupaId(i.idReteta);
-  const v = valoriPlanificateIntrare(i);
-  return el('div', { class: 'card masa-urmatoare' }, [
-    titluCard('Următoarea masă', el('span', { class: 'eticheta-masa', text: numeMasa(i.masa) })),
-    el('div', { class: 'masa-urmatoare-corp' }, [
-      r ? el('button', { type: 'button', class: 'masa-urmatoare-foto', 'aria-label': `Rețeta: ${i.nume}`, onclick: () => arataReteta(r.id, i.portii) }, [imagineReteta(r, 'masa-urmatoare-img')]) : null,
-      el('div', { class: 'masa-urmatoare-text' }, [
-        el('strong', { text: i.nume }),
-        el('span', { class: 'nota', text: `${fmtNumarPortii(i.portii)} · ${numarKcal(v.kcal)} kcal · P ${Math.round(v.proteine)} g · C ${Math.round(v.carbohidrati)} g · G ${Math.round(v.grasimi)} g` }),
-        i.stare === 'partial' ? el('span', { class: 'nota nota-avertizare', text: 'Începută (parțial).' }) : null,
-      ]),
-    ]),
-    el('div', { class: 'rand-butoane' }, [
-      i.stare === 'neinceput' ? buton({ text: 'Am mâncat-o', icon: 'bifa', tip: 'principal', onclick: () => comutaMancataAcasa(i.id) }) : null,
-      buton({ text: 'Ziua mea', tip: 'secundar', onclick: deschideZiuaNutritie }),
-    ].filter(Boolean)),
-  ]);
 }
 
 function fmtNumarPortii(p) {
@@ -202,18 +188,6 @@ function cardSaptamanaMasa(zile, zileSapt, tinte, azi) {
 function deschideGrupNutritie(grup) {
   arataFilaNutritie(filaDinGrup(grup), { randeaza: false });
   arataEcran('ecran-nutritie');
-}
-
-function cardScurtaturiMasa(deCumparat) {
-  const scurt = (icon, titlu, detaliu, onclick) => el('button', { type: 'button', class: 'masa-scurtatura', onclick }, [
-    el('span', { class: 'masa-scurtatura-icon' }, [iconita(icon)]), el('strong', { text: titlu }), el('span', { class: 'nota', text: detaliu })]);
-  const fav = (setari.retetePreferate || []).length;
-  return el('div', { class: 'masa-scurtaturi' }, [
-    scurt('carte', 'Rețete', fav ? `${plural(fav, 'favorită', 'favorite')}` : `${toateRetetele().length} în bibliotecă`, () => deschideGrupNutritie('retete')),
-    scurt('cumparaturi', 'Cumpărături', deCumparat && deCumparat.total ? `${deCumparat.ramase} de cumpărat` : 'lista săptămânii', () => { perioadaLista = 'restul'; deschideGrupNutritie('lista'); }),
-    scurt('calendar', 'Planificator', 'mesele săptămânii', () => deschideGrupNutritie('saptamana')),
-    scurt('grafic', 'Analiză', 'medii și obiective', () => { arataFilaNutritie('analiza', { randeaza: false }); arataEcran('ecran-nutritie'); }),
-  ]);
 }
 
 // Acces rapid: rețetele favorite; fără favorite, rețete cu fotografie pentru masa care urmează (alese pe zi, nu la întâmplare la fiecare deschidere).

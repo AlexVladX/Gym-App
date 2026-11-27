@@ -874,11 +874,3 @@ function deschideIntrareScanata(i) {
   });
 }
 
-// Butonul mare de pe Acasă (MEAL PREP).
-function cardScanareAcasa() {
-  return el('button', { type: 'button', class: 'scan-buton-acasa', onclick: deschideScanare }, [
-    el('span', { class: 'scan-buton-icon' }, [iconita('camera')]),
-    el('span', { class: 'scan-buton-text' }, [el('strong', { text: 'Fotografiază masa' }), el('span', { text: 'recunoaștere AI · tu verifici înainte de orice salvare' })]),
-    iconita('sageata', 'iconita mica'),
-  ]);
-}

@@ -65,6 +65,7 @@ function arataEcran(id) {
       notifica('Nutriția nu a putut fi încărcată. Verifică internetul și încearcă din nou.', 'eroare', 6000,
         { text: 'Reîncearcă', onclick: () => arataEcran(id) });
     });
+    actualizeazaButonAdaugare();
     if (typeof navigareDupaEcran === 'function') navigareDupaEcran();
     return;
   }
@@ -81,7 +82,16 @@ function arataEcran(id) {
     deseneazaInstantanee();
     deseneazaStareStocare();
   }
+  actualizeazaButonAdaugare();
   if (typeof navigareDupaEcran === 'function') navigareDupaEcran(); // istoricul pentru „Înapoi”
+}
+
+// Butonul plutitor „+” apare pe Acasă (Nutriție) și pe Ziua mea.
+function actualizeazaButonAdaugare() {
+  const b = $('btn-adauga-rapid');
+  if (!b) return;
+  const fila = typeof filaNutritie !== 'undefined' ? filaNutritie : null;
+  b.hidden = !nutritiePornita || !(ecranCurent === 'ecran-masa' || (ecranCurent === 'ecran-nutritie' && fila === 'zi'));
 }
 
 // Ieșirea din Setări: înapoi în istoric dacă se poate, altfel ecranul de dinainte (sau Acasă al modului).
@@ -105,6 +115,7 @@ async function initializeaza() {
     else iesiDinSetari();
   });
   $('btn-inapoi').addEventListener('click', iesiDinSetari);
+  $('btn-adauga-rapid').addEventListener('click', () => { if (typeof deschideAdaugareRapida === 'function') deschideAdaugareRapida(); });
 
   // Înălțimea antetului (pe telefon are două rânduri): bara antrenamentului în curs se lipește sub el.
   const antet = document.querySelector('.topbar');

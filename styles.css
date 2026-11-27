@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "56";
+  --versiune-css: "57";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -2104,3 +2104,74 @@ html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
 
 /* Capătul unei liste desenate pe bucăți (deseneazaPeBucati): invizibil, doar semnal pentru următoarea bucată. */
 .santinela-lista { height: 1px; grid-column: 1 / -1; }
+
+/* ---------- Etapa 4: „+ Adaugă” rapid ---------- */
+.fab {
+  position: fixed; z-index: 25;
+  right: calc(var(--s4) + var(--dreapta));
+  bottom: calc(var(--nav-h) + var(--jos) + var(--s4));
+  width: 58px; height: 58px; border-radius: 50%; border: none;
+  display: grid; place-items: center;
+  background: var(--accent); color: var(--pe-accent);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 35%, transparent), 0 2px 6px rgba(0, 0, 0, 0.25);
+  cursor: pointer; touch-action: manipulation;
+}
+.fab:active { transform: scale(0.96); }
+body.cu-timer .fab { bottom: calc(var(--nav-h) + var(--timer-h) + var(--jos) + var(--s4)); }
+@media (min-width: 700px) { .fab { right: calc(50% - 320px + var(--s4)); } }
+/* loc liber jos, ca butonul să nu acopere ultimul card */
+#ecran-masa, #nutritie-zi { padding-bottom: 72px; }
+
+.adauga-rapid .adauga-mese { margin-bottom: var(--s3); }
+.adauga-actiuni { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s2); margin-bottom: var(--s4); }
+.adauga-actiune {
+  display: grid; justify-items: center; gap: 4px; padding: var(--s3) var(--s2); min-height: 104px;
+  border: 1px solid var(--bordura); border-radius: var(--raza); background: var(--suprafata-2, var(--suprafata));
+  color: var(--text); font: inherit; text-align: center; cursor: pointer;
+}
+.adauga-actiune strong { font-size: 15px; }
+.adauga-actiune .nota { margin: 0; font-size: 12px; }
+.adauga-actiune-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+.adauga-recente { display: grid; gap: var(--s1); }
+.adauga-recent {
+  display: flex; align-items: center; gap: var(--s2); width: 100%; min-height: 52px; padding: var(--s2) var(--s3);
+  border: 1px solid var(--bordura); border-radius: var(--raza); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.adauga-recent-text { flex: 1 1 auto; min-width: 0; display: grid; }
+.adauga-recent-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adauga-recent-text .nota { margin: 0; }
+.adauga-recent-plus { color: var(--accent); }
+
+/* Ziua mea: o masă goală e un singur rând */
+.zi-masa-goala {
+  display: flex; align-items: center; justify-content: space-between; width: 100%;
+  min-height: 52px; padding: var(--s2) var(--s4); font: inherit; color: var(--text); text-align: left; cursor: pointer;
+}
+.zi-masa-goala-nume { font-weight: 650; }
+.zi-masa-goala-adauga { display: inline-flex; align-items: center; gap: 4px; color: var(--accent); font-weight: 650; }
+
+/* Etapa 4: cardul „Azi” (Acasă, Nutriție), rutina sugerată, linkul discret spre analiză */
+.masa-azi-urm { display: flex; align-items: center; gap: var(--s2); margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--bordura); }
+.masa-azi-urm.goala { justify-content: space-between; }
+.masa-azi-urm .nota { margin: 0; }
+.masa-azi-urm-text { flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; padding: 0; border: none; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.masa-azi-urm-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.masa-azi .masa-gata { margin-top: var(--s3); }
+.masa-azi-adauga { margin-top: var(--s3); }
+.masa-fara-tinte .masa-mancat { margin: var(--s2) 0 0; }
+.masa-fara-tinte .masa-mancat strong { font-size: 34px; font-weight: 800; }
+.insigna-sugerata { margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); font-size: 11px; font-weight: 750; }
+.link-discret { display: inline-flex; align-items: center; min-height: 44px; margin-top: var(--s1); padding: 0; border: none; background: none; color: var(--text-2); font: inherit; font-size: 13.5px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Etapa 4: filtrele la fel în Exerciții și Rețete — rând scurt + „Filtre (n)”, chip-uri active ștergabile */
+.rand-filtre { display: flex; align-items: center; gap: var(--s2); }
+.rand-filtre > .chipuri { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.rand-filtre > .chipuri::-webkit-scrollbar { display: none; }
+.btn-filtre { flex: 0 0 auto; }
+.btn-filtre.activ { border-color: var(--accent); color: var(--accent); }
+.filtre-active { flex-wrap: wrap; }
+.chip-activ-sters { display: inline-flex; align-items: center; gap: 4px; border-color: var(--accent); color: var(--accent); }
+.foaie-filtre .chipuri { flex-wrap: wrap; }
+.foaie-filtre .camp-eticheta { display: block; }
+.rand-contor { flex-wrap: wrap; row-gap: var(--s2); }
+.rand-contor > .nota { flex: 1 1 auto; }

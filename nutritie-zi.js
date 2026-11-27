@@ -509,8 +509,53 @@ function varstaDinAn(anNastere, azi = new Date()) {
   return v >= 0 && v <= 120 ? v : null;
 }
 
+// ---------- „+ Adaugă” rapid (etapa 4) ----------
+// Masa preselectată după oră: până la 10:30 mic dejun; 10:30–12:00 gustarea 1; 12:00–15:30 prânz;
+// 15:30–18:30 gustarea 2; după 18:30 cină. (Capetele intervalelor aparțin mesei următoare.)
+function masaDupaOra(d = new Date()) {
+  const min = d.getHours() * 60 + d.getMinutes();
+  if (min < 10 * 60 + 30) return 'mic-dejun';
+  if (min < 12 * 60) return 'gustare-1';
+  if (min < 15 * 60 + 30) return 'pranz';
+  if (min < 18 * 60 + 30) return 'gustare-2';
+  return 'cina';
+}
+
+// Cheia după care două notări sunt „același lucru”: rețeta, altfel numele (alimente, mese din poză).
+function cheieRecent(i) {
+  return i.idReteta ? `r:${i.idReteta}` : `n:${String(i.nume || '').trim().toLowerCase()}`;
+}
+
+// Ultimele `n` lucruri diferite notate (cele mai recent adăugate întâi), din zilele date.
+// Cafeaua zilnică nu intră (are cardul ei); intrările fără valori nu se pot readăuga.
+function recenteNutritie(zile, n = 5) {
+  const toate = [];
+  for (const z of zile || []) for (const i of (z && z.mese) || []) if (i && i.valoriPortie) toate.push(i);
+  toate.sort((a, b) => (b.adaugat || 0) - (a.adaugat || 0));
+  const vazute = new Set();
+  const rez = [];
+  for (const i of toate) {
+    const k = cheieRecent(i);
+    if (vazute.has(k)) continue;
+    vazute.add(k);
+    rez.push(i);
+    if (rez.length >= n) break;
+  }
+  return rez;
+}
+
+// O copie a unei notări recente, pentru altă masă/zi: id nou, aceleași valori și cantități.
+// Rețetele intră ca planificate (neîncepute), ca la adăugarea obișnuită; alimentele și mesele din poză ca mâncate.
+function copieIntrareRecenta(i, { id, masa, acum = Date.now() }) {
+  const rez = { ...i, id, masa, adaugat: acum, modificat: acum };
+  delete rez.blocat; delete rez.portiiMancate; delete rez.ajustat;
+  rez.stare = i.idReteta ? 'neinceput' : 'complet';
+  if (rez.ora) rez.ora = `${String(new Date(acum).getHours()).padStart(2, '0')}:${String(new Date(acum).getMinutes()).padStart(2, '0')}`;
+  return rez;
+}
+
 if (typeof module !== 'undefined') {
-  module.exports = {
+  module.exports = { masaDupaOra, recenteNutritie, copieIntrareRecenta, cheieRecent,
     STARI_MASA, NIVELURI_ACTIVITATE, SCOPURI_NUTRITIE, LIMITE_TINTE, FIBRE_PE_1000_KCAL,
     curataSnapshotScanare, intrareDinScanare, scaleazaArticolScanat, articolScanatEditabil, modificaIntrareScanata, sumaArticoleScanate,
     estimeazaTinte, curataTinte, valoriZero, intrareMasa, valoriPlanificateIntrare, portiiMancateIntrare,

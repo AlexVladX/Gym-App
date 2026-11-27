@@ -159,7 +159,49 @@ function pozePeDate(poze) {
     .map(([data, lista]) => ({ data, poze: lista.sort((a, b) => ord(a.unghi) - ord(b.unghi) || (a.creat || 0) - (b.creat || 0)) }));
 }
 
+// ---------- Profilul (etapa 4): un singur loc pentru înălțime, anul nașterii, sex, nivel de activitate ----------
+// Folosit de Corp (IMC), de ținte și de estimări; editabil din Corp și din ghidul țintelor.
+// setari.profil e sursa. Câmpurile vechi (inaltimeCm, anNastere, sex, activitate) rămân ca oglindă pentru versiunile
+// vechi ale aplicației (alt telefon sincronizat, backupuri vechi). Versiunea nouă le scrie mereu pe amândouă, deci o
+// oglindă care diferă de profil a fost schimbată după aceea de o versiune veche: e valoarea mai recentă și se preia.
+// (Greutatea țintă rămâne în setari.obiectiv — are și punctul de plecare și data — dar se editează în același card.)
+const CAMPURI_PROFIL = ['inaltimeCm', 'anNastere', 'sex', 'activitate'];
+const ACTIVITATI_PROFIL = ['sedentar', 'usor', 'moderat', 'activ', 'extrem']; // aceleași id-uri ca NIVELURI_ACTIVITATE
+
+function campProfilValid(camp, v, an = new Date().getFullYear()) {
+  if (camp === 'inaltimeCm') return typeof v === 'number' && Number.isFinite(v) && v >= 100 && v <= 250;
+  if (camp === 'anNastere') return Number.isInteger(v) && v >= 1900 && v <= an - 10;
+  if (camp === 'sex') return v === 'm' || v === 'f';
+  if (camp === 'activitate') return ACTIVITATI_PROFIL.includes(v);
+  return false;
+}
+
+function curataProfil(p) {
+  const rez = {};
+  if (!p || typeof p !== 'object') return rez;
+  for (const c of CAMPURI_PROFIL) if (campProfilValid(c, p[c])) rez[c] = p[c];
+  return rez;
+}
+
+// Profilul de folosit, din setări (cu migrarea de mai sus). Lipsurile rămân lipsuri (nu inventăm).
+function profilDinSetari(s) {
+  const p = curataProfil(s && s.profil);
+  for (const c of CAMPURI_PROFIL) {
+    const vechi = s ? s[c] : undefined;
+    if (campProfilValid(c, vechi) && vechi !== p[c]) p[c] = vechi;
+  }
+  return p;
+}
+
+// Setările cu profilul nou: obiectul profil + oglinda în câmpurile vechi (null unde lipsește).
+function setariCuProfil(s, profil) {
+  const p = curataProfil(profil);
+  const rez = { ...s, profil: p };
+  for (const c of CAMPURI_PROFIL) rez[c] = c in p ? p[c] : null;
+  return rez;
+}
+
 if (typeof module !== 'undefined') {
-  module.exports = { TIPURI_MASURATORI, UNGHIURI_POZA, definitieTip, unitateTip, valoarePlauzibila, valoriZilnice, mediaMobila,
+  module.exports = { CAMPURI_PROFIL, ACTIVITATI_PROFIL, curataProfil, profilDinSetari, setariCuProfil, TIPURI_MASURATORI, UNGHIURI_POZA, definitieTip, unitateTip, valoarePlauzibila, valoriZilnice, mediaMobila,
     imc, progresObiectiv, ultimeleValori, dateCuMasuratori, comparaDate, pozePeDate };
 }

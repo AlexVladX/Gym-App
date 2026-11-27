@@ -46,7 +46,7 @@ function deseneazaGreutate() {
     const s = schimbareGreutate(greutati, azi, zile);
     if (s) placute.push(placuta(`Schimbare ${zile} zile`, cuSemn(s.diferenta, 'kg'), `${formatNumar(s.de)} → ${formatNumar(s.la)} kg`));
   }
-  const i = imc(t.media7, setari.inaltimeCm);
+  const i = imc(t.media7, profilDinSetari(setari).inaltimeCm);
   placute.push(i
     ? placuta('IMC', formatNumar(i.valoare), i.categorie)
     : placuta('IMC', '—', 'adaugă înălțimea mai jos'));
@@ -125,20 +125,38 @@ async function salveazaGreutatea() {
 }
 
 // ---------- Profil și obiectiv ----------
+// Sexul ales în card (până la salvare).
+let sexProfilAles = null;
+function deseneazaSexProfil() {
+  $('profil-sex').replaceChildren(...[['m', 'Bărbat'], ['f', 'Femeie']].map(([id, n]) => el('button', {
+    type: 'button', class: 'chip chip-mic' + (sexProfilAles === id ? ' activ' : ''), 'aria-pressed': String(sexProfilAles === id), text: n,
+    onclick: () => { sexProfilAles = sexProfilAles === id ? null : id; deseneazaSexProfil(); },
+  })));
+}
+
 function afiseazaProfil() {
-  $('profil-inaltime').value = setari.inaltimeCm ?? '';
+  const p = profilDinSetari(setari);
+  $('profil-inaltime').value = p.inaltimeCm ?? '';
+  $('profil-an').value = p.anNastere ?? '';
+  $('profil-an').max = String(new Date().getFullYear() - 10);
+  sexProfilAles = p.sex || null;
+  deseneazaSexProfil();
+  $('profil-activitate').replaceChildren(el('option', { value: '', text: 'Alege…' }),
+    ...NIVELURI_ACTIVITATE.map(a => el('option', { value: a.id, text: `${a.nume} — ${a.detaliu}`, selected: a.id === p.activitate })));
   $('profil-tinta').value = setari.obiectiv ? setari.obiectiv.tinta : '';
   const o = setari.obiectiv;
   $('profil-nota').textContent = o
     ? `Obiectiv setat pe ${afiseazaData(o.dela)}, de la ${formatNumar(o.start)} kg. Golește câmpul ca să-l ștergi.`
-    : 'Înălțimea se folosește pentru IMC. Obiectivul pornește de la greutatea ta de acum (media pe 7 zile).';
+    : 'Profilul se folosește pentru IMC și pentru estimarea țintelor de nutriție. Obiectivul pornește de la greutatea ta de acum (media pe 7 zile).';
 }
 
 function salveazaProfil() {
-  const hText = $('profil-inaltime').value.trim(), tText = $('profil-tinta').value.trim();
-  const h = hText === '' ? null : parseFloat(hText);
-  const tinta = tText === '' ? null : parseFloat(tText);
+  const hText = $('profil-inaltime').value.trim(), tText = $('profil-tinta').value.trim(), aText = $('profil-an').value.trim();
+  const h = hText === '' ? null : parseFloat(hText.replace(',', '.'));
+  const tinta = tText === '' ? null : parseFloat(tText.replace(',', '.'));
+  const an = aText === '' ? null : Number(aText);
   if (h !== null && !(h >= 100 && h <= 250)) { notifica('Înălțimea trebuie să fie între 100 și 250 cm.', 'eroare'); return; }
+  if (an !== null && !(Number.isInteger(an) && an >= 1900 && an <= new Date().getFullYear() - 10)) { notifica(`Anul nașterii trebuie să fie între 1900 și ${new Date().getFullYear() - 10}.`, 'eroare'); return; }
   if (tinta !== null && !(tinta >= 20 && tinta <= 300)) { notifica('Greutatea țintă trebuie să fie între 20 și 300 kg.', 'eroare'); return; }
   let obiectiv = setari.obiectiv;
   if (tinta === null) obiectiv = null;
@@ -147,7 +165,8 @@ function salveazaProfil() {
     if (!t) { notifica('Notează întâi greutatea de azi, ca obiectivul să aibă un punct de plecare.', 'eroare'); return; }
     obiectiv = { tinta, start: Math.round(t.media7 * 10) / 10, dela: dataLocala() };
   }
-  setari.inaltimeCm = h;
+  const activitate = $('profil-activitate').value || null;
+  Object.assign(setari, setariCuProfil(setari, { inaltimeCm: h, anNastere: an, sex: sexProfilAles, activitate }));
   setari.obiectiv = obiectiv;
   salveazaSetari();
   afiseazaProfil();

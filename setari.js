@@ -10,7 +10,7 @@
 // cafeleZilnice (Faza 4): cafeaua care se pune singură în fiecare zi (vezi cafea.js); limitaCofeina: mg pe zi (implicit 400, EFSA).
 const SETARI_IMPLICITE = { minRep: 8, maxRep: 12, pasKg: 2.5, ecranAprins: true, pauzaSec: 90, pauzaAutomata: true, semnal: true, notificariPauza: false,
   inaltimeCm: null, obiectiv: null, obiectivSaptamanal: 3, retetePreferate: [],
-  tinteNutritie: null, anNastere: null, sex: null, activitate: null, scopNutritie: null, preferinteNutritie: null, mod: 'gym',
+  tinteNutritie: null, anNastere: null, sex: null, activitate: null, scopNutritie: null, preferinteNutritie: null, mod: 'gym', profil: {},
   cafeleZilnice: [], limitaCofeina: 400, pozeScanare: '30', limitaScanari: null };
 const setari = { ...SETARI_IMPLICITE };
 
@@ -51,6 +51,9 @@ function curataSetari(sursa) {
   // Scanarea meselor (etapa 4): câte zile se păstrează pozele ('nu' | '30' | '90' | 'mereu') și limita ta de scanări pe zi (null = a serverului).
   if (['nu', '30', '90', 'mereu'].includes(sursa.pozeScanare)) rez.pozeScanare = sursa.pozeScanare;
   if (sursa.limitaScanari === null || intreg(sursa.limitaScanari, 1, 200)) rez.limitaScanari = sursa.limitaScanari;
+  // Profilul unic (etapa 4): din setari.profil, cu câmpurile vechi ca oglindă (vezi corp-calcul.js).
+  const profil = profilDinSetari({ ...sursa, ...rez, profil: sursa.profil });
+  Object.assign(rez, setariCuProfil({}, profil));
   return rez;
 }
 

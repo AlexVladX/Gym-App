@@ -504,3 +504,30 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
   pe o santinelă; căutarea și filtrele lucrează pe toată lista.
 - Lighthouse (mobil, cu gzip ca pe GitHub Pages): 86 → 96; FCP 2,4 s → 1,0 s. Cu „Slow 3G”, a doua deschidere afișează
   Acasă în ~0,2 s.
+
+## Îmbunătățiri — Etapa 4: nutriție și navigare (v57)
+
+- **„+ Adaugă” rapid**: butonul plutitor `#btn-adauga-rapid` (Acasă din Nutriție și Ziua mea; `actualizeazaButonAdaugare`
+  în main.js) deschide foaia `deschideAdaugareRapida`: masa preselectată după oră (`masaDupaOra`: < 10:30 mic dejun,
+  < 12:00 gustarea 1, < 15:30 prânz, < 18:30 gustarea 2, apoi cină), Din poză / Rețetă / Aliment și „Recente”
+  (`recenteNutritie`: ultimele 5 lucruri diferite din 14 zile; `copieIntrareRecenta`: id nou, rețetele neîncepute,
+  alimentele și mesele din poză mâncate; cu „Anulează”). Rețeta din foaie se adaugă direct (o porție): 3 atingeri.
+- **Ziua mea**: mesele goale sunt câte un rând („Gustarea 2 · Adaugă”) care deschide foaia pe masa respectivă;
+  cafeaua și generatorul sunt sub mese; analiza e un link text („Vezi analiza nutriției”).
+- **Acasă (Nutriție)**: primul card e „Azi” (`cardAziMasa`: kcal rămase / mâncate, proteinele, macro, următoarea masă
+  cu „Am mâncat-o”, „+ Adaugă”). Au plecat „Fotografiază masa” (e în foaie) și plăcile Rețete/Cumpărături/Planificator/
+  Analiză (sunt în bara de jos). Fără ținte și fără plan: un singur card, cu ghidul țintelor și „Generează planul zilei”.
+- **Acasă (Sală)**: „Următorul antrenament” e în cardul „Ultimul antrenament” (rutina făcută cel mai demult apare prima,
+  „Sugerată”; fără rutine: grupele lucrate cel mai demult). „Notează-ți greutatea” nu mai e în „Primii pași” (cardul
+  Greutate corporală e singurul loc).
+- **Ghidul țintelor** (`deschideGhidTinte`, o singură foaie, 3 ecrane): greutatea de azi (se salvează în Corp ca
+  cântărire, doar dacă e nouă sau diferită), profilul, obiectivul cu țintele calculate de `estimeazaTinte` (aceeași
+  formulă), editabile; avertismentul medical rămâne. „Le știu deja” / țintele existente: `deschideTinteManual`.
+- **Profilul unic**: `setari.profil { inaltimeCm, anNastere, sex, activitate }` (corp-calcul.js: `curataProfil`,
+  `profilDinSetari`, `setariCuProfil`). Câmpurile vechi rămân ca oglindă pentru versiunile vechi; o oglindă care diferă
+  de profil a fost schimbată de o versiune veche (cea nouă le scrie pe amândouă), deci e mai recentă și se preia.
+  Migrarea se face la fiecare citire a setărilor (idempotentă), profilul se sincronizează și intră în backup ca restul
+  setărilor. Greutatea țintă rămâne în `setari.obiectiv` (are punctul de plecare și data), editată în același card din Corp.
+- **Filtre la fel** în Exerciții și Rețete: căutarea, un rând scurt (grupa / masa, defilare orizontală) și „Filtre (n)”
+  care deschide `deschideFoaieFiltre` cu toate filtrele (+ sortarea la rețete) și „Resetează”; filtrele active apar ca
+  chip-uri cu ✕ sub căutare (`deseneazaFiltreActive`).

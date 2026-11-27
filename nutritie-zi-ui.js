@@ -98,7 +98,6 @@ function deseneazaSumarZi() {
   const cap = el('div', { class: 'card-cap' }, [
     el('h2', { text: 'Calorii și macronutrienți' }),
     el('div', { class: 'card-cap-actiuni' }, [
-      buton({ icon: 'grafic', tip: 'fantoma', mic: true, eticheta: 'Analiza nutriției', onclick: () => arataFilaNutritie('analiza') }),
       buton({ text: tinte ? 'Ținte' : 'Setează ținte', icon: 'editeaza', tip: 'fantoma', mic: true, onclick: deschideTinteNutritie }),
     ]),
   ]);
@@ -151,6 +150,8 @@ function deseneazaSumarZi() {
   if (tinte && tinte.estimat) {
     continut.push(el('p', { class: 'nota nota-mica', text: 'Țintele sunt o estimare din profil, nu o recomandare medicală. Le poți ajusta oricând.' }));
   }
+  // Analiza are un singur loc (fila „Analiză”); aici doar un link text discret.
+  continut.push(el('button', { type: 'button', class: 'link-discret', text: 'Vezi analiza nutriției →', onclick: () => arataFilaNutritie('analiza') }));
   $('zi-sumar').replaceChildren(...continut);
 }
 
@@ -217,6 +218,14 @@ function randIntrare(i) {
 function deseneazaMeseZi() {
   const carduri = MESE_TOATE.filter(m => m.id !== 'alta' || ziNutritie.mese.some(i => i.masa === 'alta')).map(m => {
     const intrari = ziNutritie.mese.filter(i => i.masa === m.id);
+    // Masă goală: un singur rând („Gustarea 2 · + Adaugă”), care deschide foaia de adăugare pe masa respectivă.
+    if (!intrari.length) {
+      return el('button', { type: 'button', class: 'card zi-masa-goala', 'aria-label': `${m.nume}: nimic notat. Adaugă`,
+        onclick: () => deschideAdaugareRapida({ masa: m.id, data: dataZiNutritie }) }, [
+        el('span', { class: 'zi-masa-goala-nume', text: m.nume }),
+        el('span', { class: 'zi-masa-goala-adauga' }, [iconita('plus', 'iconita mica'), el('span', { text: 'Adaugă' })]),
+      ]);
+    }
     const t = totaluriPeMasa(ziNutritie, m.id);
     return el('section', { class: 'card zi-masa', 'aria-label': m.nume }, [
       el('div', { class: 'card-cap' }, [
@@ -786,7 +795,9 @@ function deschideIntrarea(i) {
 }
 
 // ---------- Adăugarea unei rețete în zi ----------
-function alegeRetetaPentruMasa(idMasa) {
+// direct: alegerea adaugă imediat o porție (din foaia „+”: rețeta la o masă în 3 atingeri); altfel se deschide
+// dialogul cu porțiile și masa.
+function alegeRetetaPentruMasa(idMasa, { data = dataZiNutritie, direct = false } = {}) {
   let doarMasa = true;
   let cautare = '';
   const lista = el('div', { class: 'selector-retete' });
@@ -804,7 +815,9 @@ function alegeRetetaPentruMasa(idMasa) {
       .sort((a, b) => (estePreferata(b.id) - estePreferata(a.id)) || a.nume.localeCompare(b.nume, 'ro'));
     lista.replaceChildren(...(potrivite.length ? potrivite.slice(0, 80).map(r => {
       const v = valoriPortie(r, indexNutritie);
-      return el('button', { type: 'button', class: 'selector-reteta', onclick: () => d.inchide(() => deschideAdaugareInZi(r, { masa: idMasa })) }, [
+      return el('button', { type: 'button', class: 'selector-reteta', onclick: () => d.inchide(() => (direct
+        ? adaugaRetetaInZi(r, { masa: idMasa, portii: 1, data }).then(dupaAdaugareRapida)
+        : deschideAdaugareInZi(r, { masa: idMasa, data }))) }, [
         imagineReteta(r, 'zi-imagine'),
         el('span', { class: 'zi-intrare-text' }, [
           el('strong', { text: (estePreferata(r.id) ? '★ ' : '') + r.nume }),
@@ -884,120 +897,266 @@ async function adaugaRetetaInZi(r, { masa, portii, data }) {
   if (filaNutritie === 'zi' && typeof ecranCurent !== 'undefined' && ecranCurent === 'ecran-nutritie') randeazaZiNutritie();
 }
 
-// ---------- Țintele ----------
-async function deschideTinteNutritie() {
-  const t = setari.tinteNutritie || {};
-  let masuratori = [];
-  try { masuratori = await toateMasuratorile(); } catch (err) { console.warn(err); }
-  const tend = tendintaGreutate(masuratori.filter(m => m.tip === 'Greutate'));
-  const kg = tend ? Math.round(tend.media7 * 10) / 10 : null;
+// ---------- „+ Adaugă” rapid (etapa 4) ----------
+// Foaia: sus masa (preselectată după oră), dedesubt Din poză / Rețetă / Aliment, apoi „Recente” (o atingere).
+// data: ziua din Ziua mea dacă e deschisă, altfel azi.
+async function deschideAdaugareRapida({ masa = null, data = null } = {}) {
+  const ziua = data || (ecranCurent === 'ecran-nutritie' && filaNutritie === 'zi' ? dataZiNutritie : dataLocala());
+  let masaAleasa = MESE.some(m => m.id === masa) ? masa : masaDupaOra();
+  const chipuri = el('div', { class: 'chipuri chipuri-mici adauga-mese', role: 'group', 'aria-label': 'Masa' });
+  const deseneazaChipuri = () => chipuri.replaceChildren(...MESE.map(m => el('button', {
+    type: 'button', class: 'chip chip-mic' + (m.id === masaAleasa ? ' activ' : ''), 'aria-pressed': String(m.id === masaAleasa), text: m.scurt || m.nume,
+    onclick: () => { masaAleasa = m.id; deseneazaChipuri(); },
+  })));
+  deseneazaChipuri();
+  const actiune = (icon, titlu, detaliu, f) => el('button', { type: 'button', class: 'adauga-actiune', onclick: () => d.inchide(() => f(masaAleasa)) }, [
+    el('span', { class: 'adauga-actiune-icon' }, [iconita(icon)]), el('strong', { text: titlu }), el('span', { class: 'nota', text: detaliu })]);
+  const recente = el('div', { class: 'adauga-recente' }, [stareIncarcare(2)]);
+  const d = deschideDialog({
+    titlu: ziua === dataLocala() ? 'Adaugă la azi' : `Adaugă la ${afiseazaData(ziua)}`,
+    continut: el('div', { class: 'adauga-rapid' }, [
+      chipuri,
+      el('div', { class: 'adauga-actiuni' }, [
+        actiune('camera', 'Din poză', 'tu verifici', m => deschideScanare({ masa: m, data: ziua })),
+        actiune('carte', 'Rețetă', 'o porție', m => alegeRetetaPentruMasa(m, { data: ziua, direct: true })),
+        actiune('plus', 'Aliment', 'ex. un măr', m => deschideAdaugareAlimente({ masa: m, data: ziua })),
+      ]),
+      el('p', { class: 'sectiune-eticheta', text: 'Recente' }),
+      recente,
+    ]),
+    butoane: [buton({ text: 'Închide', tip: 'fantoma', onclick: () => d.inchide() })],
+  });
+  // Ultimele 5 lucruri notate (din ultimele 14 zile), adăugabile cu o atingere la masa aleasă.
+  let lista = [];
+  try {
+    const zile = await Promise.all(Array.from({ length: 14 }, (_, k) => citesteZiNutritie(mutaData(dataLocala(), -k))));
+    lista = recenteNutritie(zile, 5);
+  } catch (err) { console.warn(err); }
+  if (dialogDeschis !== d) return;
+  recente.replaceChildren(...(lista.length ? lista.map(i => {
+    const v = valoriPlanificateIntrare(i);
+    return el('button', { type: 'button', class: 'adauga-recent', onclick: () => d.inchide(() => adaugaRecent(i, masaAleasa, ziua)) }, [
+      el('span', { class: 'adauga-recent-text' }, [el('strong', { text: i.nume }),
+        el('span', { class: 'nota', text: `${fmtNr(v.kcal)} kcal${i.idReteta ? ` · ${fmtNumarPortiiZi(i.portii)}` : ''}` })]),
+      el('span', { class: 'adauga-recent-plus', 'aria-hidden': 'true' }, [iconita('plus', 'iconita mica')]),
+    ]);
+  }) : [el('p', { class: 'nota', text: 'Ce notezi apare aici, ca să adaugi din nou cu o atingere.' })]));
+}
 
+function fmtNumarPortiiZi(p) {
+  return `${String(Math.round(p * 100) / 100).replace('.', ',')} ${p === 1 ? 'porție' : 'porții'}`;
+}
+
+async function adaugaRecent(i, masa, data) {
+  let zi;
+  try { zi = await citesteZiNutritie(data); } catch (err) { notifica('Ziua nu a putut fi citită.', 'eroare'); return; }
+  const copie = copieIntrareRecenta(i, { id: idNutritieNou(), masa });
+  const noua = { ...zi, mese: [...zi.mese, copie] };
+  try { await salveazaZiNutritie(noua); } catch (err) { console.error(err); notifica(mesajEroareSalvare(err, 'Nu s-a putut adăuga.'), 'eroare'); return; }
+  if (data === ziNutritie.data) ziNutritie = noua;
+  notifica(`${i.nume} adăugat la ${numeMasa(masa).toLowerCase()}.`, 'succes', 5000, { text: 'Anulează', onclick: async () => {
+    try {
+      const acum = await citesteZiNutritie(data);
+      await salveazaZiNutritie({ ...acum, mese: acum.mese.filter(x => x.id !== copie.id) });
+      if (data === ziNutritie.data) ziNutritie = { ...ziNutritie, mese: ziNutritie.mese.filter(x => x.id !== copie.id) };
+    } catch (err) { notifica(mesajEroareSalvare(err, 'Nu s-a putut anula.'), 'eroare'); return; }
+    dupaAdaugareRapida();
+  } });
+  dupaAdaugareRapida();
+}
+
+// După o adăugare din foaia rapidă: se redesenează ecranul de pe care s-a pornit.
+function dupaAdaugareRapida() {
+  if (ecranCurent === 'ecran-masa') randeazaAcasaMasa();
+  else if (ecranCurent === 'ecran-nutritie' && filaNutritie === 'zi') randeazaZiNutritie({ reincarca: true });
+}
+
+// ---------- Țintele ----------
+// Țintele: fără ținte → ghidul în 3 pași; cu ținte → valorile, editabile (plus „Recalculează cu ghidul”).
+function deschideTinteNutritie() {
+  return setari.tinteNutritie ? deschideTinteManual() : deschideGhidTinte();
+}
+
+function dupaSalvareTinte() {
+  if (typeof ecranCurent === 'undefined') return;
+  if (ecranCurent === 'ecran-masa') randeazaAcasaMasa();
+  else if (ecranCurent === 'ecran-nutritie' && filaNutritie === 'zi') randeazaZiNutritie();
+  if (typeof afiseazaProfil === 'function') afiseazaProfil();
+}
+
+// Câmpurile celor 5 ținte (calorii obligatorii, restul opționale), cu verificarea limitelor la citire.
+function campuriTinte(valori) {
   const campuri = {};
-  const camp = (id, eticheta, valoare, limite) => {
-    const input = el('input', { type: 'number', inputmode: 'numeric', step: '1', min: String(limite[0]), max: String(limite[1]),
-      value: valoare != null ? String(valoare) : '', placeholder: id === 'kcal' ? 'obligatoriu' : 'opțional' });
+  const camp = (id, eticheta) => {
+    const [min, max] = LIMITE_TINTE[id];
+    const input = el('input', { type: 'number', inputmode: 'numeric', step: '1', min: String(min), max: String(max),
+      value: valori && valori[id] != null ? String(valori[id]) : '', placeholder: id === 'kcal' ? 'obligatoriu' : 'opțional' });
     campuri[id] = input;
     return el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: eticheta }), input]);
   };
+  const grila = el('div', { class: 'grila-2' }, [camp('kcal', 'Calorii (kcal)'), camp('proteine', 'Proteine (g)'),
+    camp('carbohidrati', 'Carbohidrați (g)'), camp('grasimi', 'Grăsimi (g)'), camp('fibre', 'Fibre (g)')]);
+  const citeste = () => {
+    const brut = {};
+    for (const [c, input] of Object.entries(campuri)) {
+      const t = String(input.value).trim();
+      if (t === '') continue;
+      const v = Number(t.replace(',', '.'));
+      const [min, max] = LIMITE_TINTE[c];
+      if (!(v >= min && v <= max)) { notifica(`Valoarea pentru ${input.closest('label').textContent.trim()} trebuie să fie între ${min} și ${max}.`, 'eroare'); input.focus(); return null; }
+      brut[c] = v;
+    }
+    if (!('kcal' in brut)) { notifica('Scrie cel puțin ținta de calorii.', 'eroare'); campuri.kcal.focus(); return null; }
+    return brut;
+  };
+  return { grila, campuri, citeste };
+}
+
+const AVERTISMENT_TINTE = 'Estimarea e orientativă, pentru adulți sănătoși. Nu e o recomandare medicală; pentru o afecțiune, sarcină sau o dietă strictă întreabă un medic sau un nutriționist.';
+
+// Valorile țintelor, scrise de mână („Le știu deja”) sau modificate după ghid.
+function deschideTinteManual() {
+  const t = setari.tinteNutritie || {};
+  const f = campuriTinte(t);
   let estimat = Boolean(t.estimat);
-  let ultimaEstimare = null;
-  const valoriManuale = el('div', { class: 'grila-2' }, [
-    camp('kcal', 'Calorii (kcal)', t.kcal, LIMITE_TINTE.kcal),
-    camp('proteine', 'Proteine (g)', t.proteine, LIMITE_TINTE.proteine),
-    camp('carbohidrati', 'Carbohidrați (g)', t.carbohidrati, LIMITE_TINTE.carbohidrati),
-    camp('grasimi', 'Grăsimi (g)', t.grasimi, LIMITE_TINTE.grasimi),
-    camp('fibre', 'Fibre (g)', t.fibre, LIMITE_TINTE.fibre),
-  ]);
-  for (const input of Object.values(campuri)) input.addEventListener('input', () => { estimat = false; });
-
-  // Profilul pentru estimare: greutatea vine din Corp; înălțimea din Corp (se poate scrie și aici).
-  const anInput = el('input', { type: 'number', inputmode: 'numeric', step: '1', min: '1900', max: String(new Date().getFullYear() - 15),
-    value: setari.anNastere ? String(setari.anNastere) : '', placeholder: 'ex. 1990' });
-  const inaltimeInput = el('input', { type: 'number', inputmode: 'decimal', step: '0.5', min: '120', max: '250',
-    value: setari.inaltimeCm ? String(setari.inaltimeCm) : '', placeholder: 'ex. 178' });
-  let sex = setari.sex, activitate = setari.activitate || 'moderat', scop = setari.scopNutritie || 'mentinere';
-  const chipuriSex = el('div', { class: 'chipuri chipuri-mici', role: 'group', 'aria-label': 'Sex' });
-  const chipuriScop = el('div', { class: 'chipuri chipuri-mici', role: 'group', 'aria-label': 'Obiectiv' });
-  const selectActivitate = el('select', { 'aria-label': 'Nivel de activitate' },
-    NIVELURI_ACTIVITATE.map(a => el('option', { value: a.id, text: `${a.nume} — ${a.detaliu}`, selected: a.id === activitate })));
-  selectActivitate.addEventListener('change', () => { activitate = selectActivitate.value; });
-  const deseneazaChipuri = () => {
-    chipuriSex.replaceChildren(...[['m', 'Bărbat'], ['f', 'Femeie']].map(([id, n]) => el('button', { type: 'button',
-      class: 'chip chip-mic' + (sex === id ? ' activ' : ''), 'aria-pressed': String(sex === id), text: n, onclick: () => { sex = id; deseneazaChipuri(); } })));
-    chipuriScop.replaceChildren(...SCOPURI_NUTRITIE.map(s => el('button', { type: 'button',
-      class: 'chip chip-mic' + (scop === s.id ? ' activ' : ''), 'aria-pressed': String(scop === s.id), text: s.nume, onclick: () => { scop = s.id; deseneazaChipuri(); } })));
-  };
-  deseneazaChipuri();
-  const rezultat = el('p', { class: 'nota' });
-
-  const calculeaza = () => {
-    const an = parseInt(anInput.value, 10);
-    const h = parseFloat(String(inaltimeInput.value).replace(',', '.'));
-    const varsta = varstaDinAn(an);
-    if (!kg) { rezultat.textContent = 'Notează-ți greutatea în ecranul Corp ca să poți estima.'; return; }
-    const e = estimeazaTinte({ kg, inaltimeCm: h, varsta, sex, activitate, scop });
-    if (!e) { rezultat.textContent = 'Completează anul nașterii (vârsta 15–100), înălțimea (120–250 cm) și sexul.'; return; }
-    for (const c of ['kcal', 'proteine', 'carbohidrati', 'grasimi', 'fibre']) campuri[c].value = String(e[c]);
-    estimat = true;
-    ultimaEstimare = { an, h };
-    const dt = e.detalii;
-    rezultat.textContent = `Metabolism bazal ≈ ${fmtNr(dt.bmr)} kcal (Mifflin-St Jeor), necesar ≈ ${fmtNr(dt.necesar)} kcal (× ${String(dt.factor).replace('.', ',')})` +
-      `${dt.ajustare ? `, ${dt.ajustare > 0 ? '+' : '−'}${Math.abs(dt.ajustare * 100)}% pentru obiectiv` : ''}. ` +
-      `Proteine ${String(dt.proteinePeKg).replace('.', ',')} g/kg, grăsimi 25% din calorii, fibre 14 g la 1000 kcal, restul carbohidrați.` +
-      (dt.limitat ? ' Caloriile au fost ridicate la minimul sigur pentru o estimare generală.' : '') +
-      ' Verifică valorile și ajustează-le dacă vrei.';
-  };
-
+  for (const input of Object.values(f.campuri)) input.addEventListener('input', () => { estimat = false; });
   const d = deschideDialog({
     titlu: 'Țintele zilnice',
     continut: el('div', { class: 'formular' }, [
-      el('p', { class: 'nota', text: 'Scrie-ți țintele sau estimează-le mai jos. Doar caloriile sunt obligatorii.' }),
-      valoriManuale,
-      el('details', { class: 'estimare-tinte', open: !setari.tinteNutritie }, [
-        el('summary', { text: 'Estimează din profil' }),
-        el('p', { class: 'nota', text: kg ? `Greutatea din Corp: ${formatNumar(kg)} kg (media pe 7 zile).` : 'Nu ai nicio cântărire în Corp. Notează-ți greutatea acolo ca să poți estima.' }),
-        el('div', { class: 'grila-2' }, [
-          el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Anul nașterii' }), anInput]),
-          el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Înălțime (cm)' }), inaltimeInput]),
-        ]),
-        el('span', { class: 'camp-eticheta', text: 'Sex' }), chipuriSex,
-        el('label', { class: 'camp mt' }, [el('span', { class: 'camp-eticheta', text: 'Nivel de activitate' }), selectActivitate]),
-        el('span', { class: 'camp-eticheta', text: 'Obiectiv' }), chipuriScop,
-        buton({ text: 'Calculează estimarea', tip: 'secundar', lat: true, clasa: 'mt', onclick: calculeaza }),
-        rezultat,
-        el('p', { class: 'nota nota-mica', text: 'Estimarea e orientativă, pentru adulți sănătoși. Nu e o recomandare medicală; pentru o afecțiune, sarcină sau o dietă strictă întreabă un medic sau un nutriționist.' }),
-      ]),
+      el('p', { class: 'nota', text: 'Doar caloriile sunt obligatorii.' }),
+      f.grila,
+      buton({ text: 'Recalculează cu ghidul (greutate, profil, obiectiv)', icon: 'zar', tip: 'fantoma', lat: true, onclick: () => d.inchide(() => deschideGhidTinte()) }),
     ]),
     butoane: [
       setari.tinteNutritie ? buton({ text: 'Șterge', tip: 'fantoma', onclick: () => d.inchide(() => {
-        setari.tinteNutritie = null; salveazaSetari(); randeazaZiNutritie(); notifica('Țintele au fost șterse.', 'info');
+        setari.tinteNutritie = null; salveazaSetari(); dupaSalvareTinte(); notifica('Țintele au fost șterse.', 'info');
       }) }) : buton({ text: 'Renunță', tip: 'fantoma', onclick: () => d.inchide() }),
       buton({ text: 'Salvează', tip: 'principal', onclick: () => {
-        const brut = {};
-        for (const [c, input] of Object.entries(campuri)) {
-          const s = String(input.value).trim();
-          if (s === '') continue;
-          const v = Number(s.replace(',', '.'));
-          const [min, max] = LIMITE_TINTE[c];
-          if (!(v >= min && v <= max)) { notifica(`Valoarea pentru ${input.closest('label').textContent.trim()} trebuie să fie între ${min} și ${max}.`, 'eroare'); input.focus(); return; }
-          brut[c] = v;
-        }
-        if (!('kcal' in brut)) { notifica('Scrie cel puțin ținta de calorii.', 'eroare'); campuri.kcal.focus(); return; }
+        const brut = f.citeste();
+        if (!brut) return;
         setari.tinteNutritie = curataTinte({ ...brut, estimat });
-        // Profilul pentru estimare se păstrează (anul nașterii, sexul, activitatea, obiectivul); înălțimea se salvează și pentru Corp.
-        const an = parseInt(anInput.value, 10);
-        if (Number.isInteger(an) && an >= 1900 && an <= new Date().getFullYear() - 10) setari.anNastere = an;
-        if (sex) setari.sex = sex;
-        setari.activitate = activitate;
-        setari.scopNutritie = scop;
-        const h = parseFloat(String(inaltimeInput.value).replace(',', '.'));
-        if (h >= 120 && h <= 250 && ultimaEstimare) setari.inaltimeCm = h;
         salveazaSetari();
         d.inchide();
-        randeazaZiNutritie();
-        if (typeof afiseazaProfil === 'function') afiseazaProfil();
+        dupaSalvareTinte();
         notifica('Ținte salvate.', 'succes');
       } }),
     ],
   });
+}
+
+// Ghidul țintelor (etapa 4), în aceeași foaie: 1. greutatea de azi (se salvează în Corp ca cântărire),
+// 2. profilul (înălțime, anul nașterii, sex, activitate — profilul unic din Corp), 3. obiectivul, cu țintele
+// calculate (estimeazaTinte, Mifflin-St Jeor), editabile, și „Salvează”. „Le știu deja” → valorile de mână.
+async function deschideGhidTinte() {
+  let greutati = [];
+  try { greutati = (await toateMasuratorile()).filter(m => m.tip === 'Greutate'); } catch (err) { console.warn(err); }
+  const azi = dataLocala();
+  const deAzi = greutati.filter(m => m.data === azi).map(m => m.valoare);
+  const kgAzi = deAzi.length ? Math.round(deAzi.reduce((a, b) => a + b, 0) / deAzi.length * 10) / 10 : null;
+  const tend = tendintaGreutate(greutati);
+  const p = profilDinSetari(setari);
+  const st = { pas: 1, kg: kgAzi ?? (tend ? Math.round(tend.media7 * 10) / 10 : null), inaltime: p.inaltimeCm ?? null, an: p.anNastere ?? null,
+    sex: p.sex || null, activitate: p.activitate || 'moderat', scop: setari.scopNutritie || 'mentinere' };
+  const zona = el('div', { class: 'ghid-tinte' });
+  const d = deschideDialog({ titlu: 'Țintele zilnice', continut: zona, butoane: [] });
+  const butoane = (...b) => d.caseta.querySelector('.dialog-butoane').replaceChildren(...b.filter(Boolean));
+  const pasi = () => el('ol', { class: 'scan-pasi', 'aria-label': 'Pașii ghidului' }, ['Greutate', 'Profil', 'Obiectiv'].map((t, k) =>
+    el('li', { class: k + 1 < st.pas ? 'gata' : k + 1 === st.pas ? 'activ' : '', 'aria-current': k + 1 === st.pas ? 'step' : null, text: t })));
+  const numar = (valoare, atribute) => el('input', { type: 'number', inputmode: 'decimal', value: valoare != null ? String(valoare) : '', ...atribute });
+  const citesteNumar = input => { const t = String(input.value).trim().replace(',', '.'); return t === '' ? null : Number(t); };
+  const chipuri = (lista, activ, laAlegere, eticheta) => el('div', { class: 'chipuri chipuri-mici', role: 'group', 'aria-label': eticheta },
+    lista.map(([id, n]) => el('button', { type: 'button', class: 'chip chip-mic' + (activ === id ? ' activ' : ''), 'aria-pressed': String(activ === id), text: n, onclick: () => laAlegere(id) })));
+
+  function pas1() {
+    st.pas = 1;
+    const kg = numar(st.kg, { step: '0.1', min: '30', max: '300', placeholder: 'ex. 78,5', 'aria-label': 'Greutatea de azi în kg' });
+    zona.replaceChildren(pasi(),
+      el('p', { class: 'nota', text: 'Câteva date ca să-ți estimăm țintele. Le poți schimba oricând.' }),
+      el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Greutatea de azi (kg)' }), kg]),
+      el('p', { class: 'nota nota-mica', text: kgAzi != null ? 'Ai deja o cântărire azi; dacă o schimbi, se adaugă una nouă în Corp.' : 'Se salvează în Corp ca cântărirea de azi.' }));
+    butoane(buton({ text: 'Le știu deja', tip: 'fantoma', onclick: () => d.inchide(() => deschideTinteManual()) }),
+      buton({ text: 'Continuă', tip: 'principal', onclick: () => {
+        const v = citesteNumar(kg);
+        if (!(v >= 30 && v <= 300)) { notifica('Scrie greutatea în kg, între 30 și 300.', 'eroare'); kg.focus(); return; }
+        st.kg = Math.round(v * 10) / 10; pas2();
+      } }));
+  }
+
+  function pas2() {
+    st.pas = 2;
+    const inaltime = numar(st.inaltime, { step: '0.5', min: '120', max: '250', placeholder: 'ex. 178', 'aria-label': 'Înălțimea în cm' });
+    const an = numar(st.an, { step: '1', min: '1900', max: String(new Date().getFullYear() - 15), placeholder: 'ex. 1990', inputmode: 'numeric', 'aria-label': 'Anul nașterii' });
+    const sexBloc = el('div');
+    const deseneazaSex = () => sexBloc.replaceChildren(chipuri([['m', 'Bărbat'], ['f', 'Femeie']], st.sex, id => { st.sex = id; deseneazaSex(); }, 'Sex'));
+    deseneazaSex();
+    const activitate = el('select', { 'aria-label': 'Nivel de activitate' },
+      NIVELURI_ACTIVITATE.map(a => el('option', { value: a.id, text: `${a.nume} — ${a.detaliu}`, selected: a.id === st.activitate })));
+    zona.replaceChildren(pasi(),
+      el('div', { class: 'grila-2' }, [
+        el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Înălțime (cm)' }), inaltime]),
+        el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Anul nașterii' }), an]),
+      ]),
+      el('span', { class: 'camp-eticheta', text: 'Sex' }), sexBloc,
+      el('label', { class: 'camp mt' }, [el('span', { class: 'camp-eticheta', text: 'Nivel de activitate' }), activitate]),
+      el('p', { class: 'nota nota-mica', text: 'Se salvează în profilul tău (Corp → Profil), folosit și pentru IMC.' }));
+    butoane(buton({ text: 'Înapoi', tip: 'fantoma', onclick: pas1 }),
+      buton({ text: 'Continuă', tip: 'principal', onclick: () => {
+        const h = citesteNumar(inaltime), a = citesteNumar(an);
+        if (!(h >= 120 && h <= 250)) { notifica('Înălțimea trebuie să fie între 120 și 250 cm.', 'eroare'); inaltime.focus(); return; }
+        const varsta = varstaDinAn(a);
+        if (!Number.isInteger(a) || !(varsta >= 15 && varsta <= 100)) { notifica('Anul nașterii: vârsta trebuie să fie între 15 și 100 de ani.', 'eroare'); an.focus(); return; }
+        if (!st.sex) { notifica('Alege sexul (formula de estimare diferă).', 'eroare'); return; }
+        Object.assign(st, { inaltime: h, an: a, activitate: activitate.value });
+        pas3();
+      } }));
+  }
+
+  function pas3() {
+    st.pas = 3;
+    const scopBloc = el('div');
+    const valori = el('div');
+    const explicatie = el('p', { class: 'nota nota-mica' });
+    let f = null;
+    const calculeaza = () => {
+      const e = estimeazaTinte({ kg: st.kg, inaltimeCm: st.inaltime, varsta: varstaDinAn(st.an), sex: st.sex, activitate: st.activitate, scop: st.scop });
+      f = campuriTinte(e);
+      f.estimat = true;
+      for (const input of Object.values(f.campuri)) input.addEventListener('input', () => { f.estimat = false; });
+      valori.replaceChildren(f.grila);
+      const dt = e.detalii;
+      explicatie.textContent = `Metabolism bazal ≈ ${fmtNr(dt.bmr)} kcal (Mifflin-St Jeor), necesar ≈ ${fmtNr(dt.necesar)} kcal (× ${String(dt.factor).replace('.', ',')})` +
+        `${dt.ajustare ? `, ${dt.ajustare > 0 ? '+' : '−'}${Math.abs(dt.ajustare * 100)}% pentru obiectiv` : ''}. ` +
+        `Proteine ${String(dt.proteinePeKg).replace('.', ',')} g/kg, grăsimi 25% din calorii, fibre 14 g la 1000 kcal, restul carbohidrați.` +
+        (dt.limitat ? ' Caloriile au fost ridicate la minimul sigur pentru o estimare generală.' : '');
+    };
+    const deseneazaScop = () => scopBloc.replaceChildren(chipuri(SCOPURI_NUTRITIE.map(x => [x.id, x.nume]), st.scop, id => { st.scop = id; deseneazaScop(); calculeaza(); }, 'Obiectiv'));
+    deseneazaScop();
+    calculeaza();
+    zona.replaceChildren(pasi(), el('span', { class: 'camp-eticheta', text: 'Obiectiv' }), scopBloc,
+      el('p', { class: 'sectiune-eticheta mt', text: 'Țintele tale (le poți modifica)' }), valori, explicatie,
+      el('p', { class: 'nota nota-mica', text: AVERTISMENT_TINTE }));
+    butoane(buton({ text: 'Înapoi', tip: 'fantoma', onclick: pas2 }),
+      buton({ text: 'Salvează', tip: 'principal', onclick: () => salveaza(f) }));
+  }
+
+  async function salveaza(f) {
+    const brut = f.citeste();
+    if (!brut) return;
+    // 1. cântărirea de azi (doar dacă e nouă sau diferită de cea de azi)
+    if (kgAzi == null || Math.abs(kgAzi - st.kg) > 0.05) {
+      try { await salveazaMasuratoare({ data: azi, tip: 'Greutate', valoare: st.kg, creat: Date.now() }); }
+      catch (err) { console.error(err); notifica(mesajEroareSalvare(err, 'Greutatea nu a putut fi salvată.'), 'eroare'); return; }
+    }
+    // 2. profilul unic + obiectivul de nutriție, 3. țintele
+    Object.assign(setari, setariCuProfil(setari, { ...profilDinSetari(setari), inaltimeCm: st.inaltime, anNastere: st.an, sex: st.sex, activitate: st.activitate }));
+    setari.scopNutritie = st.scop;
+    setari.tinteNutritie = curataTinte({ ...brut, estimat: f.estimat !== false });
+    salveazaSetari();
+    d.inchide();
+    if (typeof reincarcaMasuratori === 'function') reincarcaMasuratori().catch(() => {});
+    dupaSalvareTinte();
+    notifica('Ținte salvate.', 'succes');
+  }
+
+  pas1();
 }

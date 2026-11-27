@@ -120,6 +120,7 @@ function arataFilaNutritie(fila, { randeaza = true } = {}) {
   $('nutritie-lista').hidden = fila !== 'lista';
   $('nutritie-retete').hidden = fila !== 'retete';
   $('nutritie-alimente').hidden = fila !== 'alimente';
+  if (typeof actualizeazaButonAdaugare === 'function') actualizeazaButonAdaugare();
   if (randeaza) randeazaNutritie();
 }
 const TITLU_GRUP_NUTRITIE = { nutritie: 'Nutriție', saptamana: 'Planificator mese', lista: 'Listă de cumpărături', retete: 'Rețete' };
@@ -138,22 +139,59 @@ function chip(text, activ, onclick, eticheta) {
     'aria-label': eticheta || null, onclick });
 }
 
+// Etapa 4: rândul scurt = masa; restul (favorite, ale mele, românești, filtrele dietetice, sortarea) în foaia „Filtre (n)”.
+function aplicaFiltreRetete() { deseneazaFiltreRetete(); randeazaRetete(); }
+
 function deseneazaFiltreRetete() {
   $('retete-mese').replaceChildren(
-    chip('Toate', !filtreRetete.masa, () => { filtreRetete.masa = ''; deseneazaFiltreRetete(); randeazaRetete(); }),
+    chip('Toate', !filtreRetete.masa, () => { filtreRetete.masa = ''; aplicaFiltreRetete(); }),
     ...MESE.map(m => chip(m.nume, filtreRetete.masa === m.id, () => {
       filtreRetete.masa = filtreRetete.masa === m.id ? '' : m.id;
-      deseneazaFiltreRetete(); randeazaRetete();
+      aplicaFiltreRetete();
     })));
-  $('retete-etichete').replaceChildren(
-    el('button', { class: 'chip chip-mic chip-icon' + (filtreRetete.favorite ? ' activ' : ''), type: 'button', 'aria-pressed': String(filtreRetete.favorite),
-      'aria-label': 'Doar favoritele', onclick: () => { filtreRetete.favorite = !filtreRetete.favorite; deseneazaFiltreRetete(); randeazaRetete(); } }, [iconita('stea'), el('span', { text: 'Favorite' })]),
-    chip('Ale mele', filtreRetete.proprii, () => { filtreRetete.proprii = !filtreRetete.proprii; deseneazaFiltreRetete(); randeazaRetete(); }),
-    chip('Românești', filtreRetete.romanesti, () => { filtreRetete.romanesti = !filtreRetete.romanesti; deseneazaFiltreRetete(); randeazaRetete(); }, 'Doar rețetele românești'),
-    ...ETICHETE_FILTRU.map(t => chip(NUME_SCURT_ETICHETA[t], filtreRetete.etichete.has(t), () => {
-      if (filtreRetete.etichete.has(t)) filtreRetete.etichete.delete(t); else filtreRetete.etichete.add(t);
-      deseneazaFiltreRetete(); randeazaRetete();
-    })));
+  const sort = SORTARI_NUTRITIE.find(o => o.id && o.id === filtreRetete.sortare);
+  const active = [
+    filtreRetete.favorite && { text: '★ Favorite', scoate: () => { filtreRetete.favorite = false; aplicaFiltreRetete(); } },
+    filtreRetete.proprii && { text: 'Ale mele', scoate: () => { filtreRetete.proprii = false; aplicaFiltreRetete(); } },
+    filtreRetete.romanesti && { text: 'Românești', scoate: () => { filtreRetete.romanesti = false; aplicaFiltreRetete(); } },
+    ...[...filtreRetete.etichete].map(t => ({ text: NUME_SCURT_ETICHETA[t] || t, scoate: () => { filtreRetete.etichete.delete(t); aplicaFiltreRetete(); } })),
+    sort && { text: `Sortare: ${sort.nume.toLowerCase()}`, scoate: () => { filtreRetete.sortare = ''; aplicaFiltreRetete(); } },
+  ].filter(Boolean);
+  deseneazaFiltreActive($('retete-active'), active);
+  etichetaButonFiltre($('btn-retete-filtre-foaie'), active.length + (filtreRetete.masa ? 1 : 0));
+}
+
+function deschideFiltreRetete() {
+  deschideFoaieFiltre({
+    titlu: 'Filtre rețete',
+    deseneaza: refa => {
+      const schimba = f => () => { f(); aplicaFiltreRetete(); refa(); };
+      const sortare = el('select', { id: 'retete-sortare', 'aria-label': 'Sortează rețetele după valori nutriționale',
+        onchange: () => { filtreRetete.sortare = sortare.value; aplicaFiltreRetete(); refa(); } },
+      SORTARI_NUTRITIE.map(o => el('option', { value: o.id, text: o.nume, selected: o.id === filtreRetete.sortare })));
+      return [
+        el('div', { class: 'chipuri chipuri-mici' }, [
+          chip('★ Favorite', filtreRetete.favorite, schimba(() => { filtreRetete.favorite = !filtreRetete.favorite; }), 'Doar favoritele'),
+          chip('Ale mele', filtreRetete.proprii, schimba(() => { filtreRetete.proprii = !filtreRetete.proprii; })),
+          chip('Românești', filtreRetete.romanesti, schimba(() => { filtreRetete.romanesti = !filtreRetete.romanesti; }), 'Doar rețetele românești'),
+        ]),
+        el('span', { class: 'camp-eticheta mt', text: 'Masa' }),
+        el('div', { class: 'chipuri chipuri-mici' }, [chip('Toate', !filtreRetete.masa, schimba(() => { filtreRetete.masa = ''; })),
+          ...MESE.map(m => chip(m.nume, filtreRetete.masa === m.id, schimba(() => { filtreRetete.masa = filtreRetete.masa === m.id ? '' : m.id; })))]),
+        el('span', { class: 'camp-eticheta mt', text: 'Dietă și valori' }),
+        el('div', { class: 'chipuri chipuri-mici' }, ETICHETE_FILTRU.map(t => chip(NUME_SCURT_ETICHETA[t], filtreRetete.etichete.has(t), schimba(() => {
+          if (filtreRetete.etichete.has(t)) filtreRetete.etichete.delete(t); else filtreRetete.etichete.add(t);
+        })))),
+        el('label', { class: 'camp mt' }, [el('span', { class: 'camp-eticheta', text: 'Sortare' }), sortare]),
+        el('p', { class: 'nota', text: `${plural(reteteFiltrate().length, 'rețetă', 'rețete')} cu filtrele alese.` }),
+      ];
+    },
+    reseteaza: () => {
+      Object.assign(filtreRetete, { masa: '', favorite: false, proprii: false, romanesti: false, sortare: '' });
+      filtreRetete.etichete.clear();
+      aplicaFiltreRetete();
+    },
+  });
 }
 
 function areFiltreRetete() {
@@ -180,7 +218,8 @@ function infoReteta(r) {
   return { v, etichete: eticheteReteta(r, indexNutritie) };
 }
 
-function randeazaRetete() {
+// Rețetele care trec de căutare și de toate filtrele, sortate (lista întreagă, nu doar ce e desenat).
+function reteteFiltrate() {
   const cuvinte = normalizeazaText(filtreRetete.cautare).split(/\s+/).filter(Boolean);
   const ordineMese = MESE.map(m => m.id);
   const potrivite = [];
@@ -200,7 +239,12 @@ function randeazaRetete() {
   if (filtreRetete.sortare) potrivite.sort((a, b) => valoareSortareNutritie(b.info.v, filtreRetete.sortare) - valoareSortareNutritie(a.info.v, filtreRetete.sortare) || a.r.nume.localeCompare(b.r.nume, 'ro'));
   else potrivite.sort((a, b) => ordineMese.indexOf(a.r.masa) - ordineMese.indexOf(b.r.masa) ||
     Number(Boolean(b.r.propriu)) - Number(Boolean(a.r.propriu)) || a.r.nume.localeCompare(b.r.nume, 'ro'));
+  return potrivite;
+}
 
+function randeazaRetete() {
+  const cuvinte = normalizeazaText(filtreRetete.cautare).split(/\s+/).filter(Boolean);
+  const potrivite = reteteFiltrate();
   $('retete-numar').textContent = plural(potrivite.length, 'rețetă', 'rețete');
   $('btn-retete-filtre').hidden = !areFiltreRetete();
   const lista = $('retete-lista');
@@ -882,7 +926,8 @@ function initNutritie() {
   $('tab-alimente').addEventListener('click', () => arataFilaNutritie('alimente'));
   $('retete-cautare').addEventListener('input', e => { filtreRetete.cautare = e.target.value; randeazaRetete(); });
   $('alimente-cautare').addEventListener('input', e => { filtreAlimente.cautare = e.target.value; randeazaAlimente(); });
-  for (const [idSel, filtre, randeaza] of [['retete-sortare', filtreRetete, () => randeazaRetete()], ['alimente-sortare', filtreAlimente, () => randeazaAlimente()]]) {
+  $('btn-retete-filtre-foaie').addEventListener('click', deschideFiltreRetete);
+  for (const [idSel, filtre, randeaza] of [['alimente-sortare', filtreAlimente, () => randeazaAlimente()]]) {
     const sel = $(idSel);
     if (!sel) continue;
     sel.replaceChildren(...SORTARI_NUTRITIE.map(o => el('option', { value: o.id, text: o.id ? `Sortează: ${o.nume.charAt(0).toLowerCase()}${o.nume.slice(1)}` : 'Sortează: ordinea obișnuită' })));
