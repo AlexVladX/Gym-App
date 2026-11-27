@@ -21,7 +21,7 @@
 // Câmpurile noi sunt opționale și primesc valori implicite la citire.
 
 const DB_NUME = 'jurnal-antrenament';
-const DB_VERSIUNE = 11;
+const DB_VERSIUNE = 12;
 const STORES_DATE = ['sesiuni', 'exercitii', 'masuratori', 'rutine', 'alimente', 'retete', 'zileNutritie', 'planuriNutritie', 'listeCumparaturi'];
 const MAX_INSTANTANEE = 5;
 
@@ -55,6 +55,8 @@ function deschideBaza() {
       // (amprentă + versiune din cloud pentru fiecare înregistrare), „conflicte” = ce așteaptă alegerea ta.
       creeaza('sincron', { keyPath: 'k' });
       creeaza('conflicte', { keyPath: 'k' });
+      // v12: istoricul meselor fotografiate (doar pe acest telefon: nu se sincronizează și nu intră în backup).
+      creeaza('scanari', { keyPath: 'id' });
       // Înregistrările cu cheie numerică locală primesc un id comun tuturor dispozitivelor („uid”).
       for (const nume of ['sesiuni', 'masuratori', 'rutine', 'poze']) {
         const st = cerere.transaction.objectStore(nume);
@@ -572,10 +574,26 @@ function citesteInstantaneu(id) {
   return cere('instantanee', 'readonly', st => st.get(id));
 }
 
+// ----- Istoricul scanărilor (v12) -----
+// { id, creat, data, ora, masa, nume, idIntrare, articole (copia), total, poza (Blob JPEG mic) | null, tokeni }
+function salveazaScanareIstoric(s) { return cere('scanari', 'readwrite', st => st.put(s)); }
+async function toateScanarileIstoric() {
+  const l = await cere('scanari', 'readonly', st => st.getAll());
+  return l.map(curataInregistrareScanare).filter(Boolean).sort((a, b) => b.creat - a.creat);
+}
+function stergeScanareIstoric(id) { return cere('scanari', 'readwrite', st => st.delete(id)); }
+// Scoate pozele (dar păstrează valorile) din scanările mai vechi decât „inainte” (ms); Infinity = toate.
+async function stergePozeScanariIstoric(inainte = Infinity) {
+  const l = await cere('scanari', 'readonly', st => st.getAll());
+  let n = 0;
+  for (const x of l) if (x && x.poza && x.creat < inainte) { await cere('scanari', 'readwrite', st => st.put({ ...x, poza: null })); n++; }
+  return n;
+}
+
 // ----- Ștergerea tuturor datelor -----
 async function stergeToateDatele() {
   const bd = await baza();
-  const toate = [...STORES_DATE, 'ciorna', 'instantanee', 'meta', 'poze', 'pozeRetete', 'cos', 'sincron', 'conflicte'];
+  const toate = [...STORES_DATE, 'ciorna', 'instantanee', 'meta', 'poze', 'pozeRetete', 'cos', 'sincron', 'conflicte', 'scanari'];
   return new Promise((rezolva, respinge) => {
     const tranzactie = bd.transaction(toate, 'readwrite');
     tranzactie.__dinSincron = true; // ștergerea de pe telefon nu se trimite în cont

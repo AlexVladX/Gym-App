@@ -70,3 +70,11 @@ O singură dată:
      Apoi GitHub → Actions → „Funcții Supabase” → Run workflow (și se republică singură la fiecare modificare).
    - sau manual, din panoul Supabase (Edge Functions → Deploy a new function → Via Editor), cu numele `scanare`,
      cele două fișiere (`index.ts`, `logica.js`) și „Verify JWT” dezactivat (funcția verifică singură contul).
+
+### Securitate și costuri (scanarea meselor)
+- Cheile Gemini și USDA stau doar în Supabase → Edge Functions → Secrets; aplicația și GitHub nu le conțin.
+- Funcția `scanare` verifică la fiecare cerere contul (tokenul de autentificare), tipul real al pozei (semnătura JPEG/PNG/WebP), mărimea (max. 1,5 MB), are timp maxim (30 s AI, 12 s căutare) și răspunde doar paginii aplicației (CORS).
+- Limita zilnică de scanări e numărată în baza de date (`scanari_utilizare`, regula „vad doar ale mele”; nimeni nu scrie direct în tabel). În aplicație poți pune o limită proprie, mai mică.
+- Căutările în USDA / Open Food Facts: maximum 15 pe cerere și 200 pe oră pe cont (în memoria funcției).
+- Pozele nu se urcă nicăieri: poza micșorată merge doar la Gemini (varianta plătită, fără folosire la antrenare) și nu e păstrată pe server. Istoricul scanărilor, cu miniaturile, stă doar pe telefon și se șterge după setare (Setări → Scanarea meselor).
+- Răspunsul AI e verificat după schemă; AI-ul nu dă valori nutriționale.

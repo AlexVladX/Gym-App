@@ -48,7 +48,7 @@ async function utilizatorDinToken(req: Request) {
   if (!r.ok) throw new EroareScanare('neautentificat', 'Sesiunea a expirat. Conectează-te din nou din Setări → Cont.', 401);
   const u = await r.json();
   if (!u || !u.id) throw new EroareScanare('neautentificat', 'Sesiunea a expirat. Conectează-te din nou din Setări → Cont.', 401);
-  return { auth, cheie, url };
+  return { auth, cheie, url, idUtilizator: String(u.id) };
 }
 
 // Numără scanarea în baza de date (funcția SQL inregistreaza_scanare, cu regulile „doar ale mele”).
@@ -84,6 +84,18 @@ async function intreabaGemini(cerere: { imagine: string; tip: string; nota: stri
   return { rezultat: curataRaspunsAI(extrageTextGemini(corp)), tokeni: utilizareTokeni(corp) };
 }
 
+// Căutările nu folosesc AI, dar consumă din limita orară a cheii USDA (1000/oră): maximum 200 de căutări pe oră pe cont,
+// ținute în memoria funcției (o protecție de bază; se resetează când Supabase repornește funcția).
+const CAUTARI_PE_ORA = 200;
+const cautariRecente = new Map<string, number[]>();
+function verificaRitmCautari(idUtilizator: string, numar: number) {
+  const acum = Date.now();
+  const lista = (cautariRecente.get(idUtilizator) || []).filter(t => acum - t < 3_600_000);
+  if (lista.length + numar > CAUTARI_PE_ORA) throw new EroareScanare('limita_cautari', 'Prea multe căutări într-o oră. Încearcă din nou mai târziu.', 429);
+  for (let k = 0; k < numar; k++) lista.push(acum);
+  cautariRecente.set(idUtilizator, lista);
+}
+
 async function cuTimp(url: string, init: RequestInit) {
   const ctrl = new AbortController();
   const ceas = setTimeout(() => ctrl.abort(), TIMP_MAXIM_CAUTARE_MS);
@@ -92,8 +104,9 @@ async function cuTimp(url: string, init: RequestInit) {
 
 // Căutarea valorilor: USDA pentru alimente generice (și produse de marcă), Open Food Facts doar pentru produse ambalate.
 // Nu consumă din limita de scanări (nu folosește AI). Erorile unei surse nu le blochează pe celelalte: apar în „avertizari”.
-async function cautaValori(corp: unknown) {
+async function cautaValori(corp: unknown, idUtilizator: string) {
   const cereri = valideazaCautare(corp);
+  verificaRitmCautari(idUtilizator, cereri.length);
   const cheieFdc = Deno.env.get('FDC_API_KEY');
   const azi = new Date().toISOString().slice(0, 10);
   const avertizari = new Set<string>();
@@ -143,7 +156,7 @@ Deno.serve(async (req: Request) => {
     if (textCorp.length > MAX_CORP) throw new EroareScanare('imagine_prea_mare', 'Poza e prea mare.', 413);
     let corp: unknown;
     try { corp = JSON.parse(textCorp); } catch (_) { throw new EroareScanare('cerere_invalida', 'Cererea nu are formatul așteptat.', 400); }
-    if (corp && typeof corp === 'object' && (corp as { actiune?: string }).actiune === 'cauta') return raspuns(200, await cautaValori(corp), origine);
+    if (corp && typeof corp === 'object' && (corp as { actiune?: string }).actiune === 'cauta') return raspuns(200, await cautaValori(corp, sesiune.idUtilizator), origine);
     const cerere = valideazaCerere(corp);
     const utilizare = await numaraScanarea(sesiune);
     const { rezultat, tokeni } = await intreabaGemini(cerere);

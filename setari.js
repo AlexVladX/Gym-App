@@ -11,7 +11,7 @@
 const SETARI_IMPLICITE = { minRep: 8, maxRep: 12, pasKg: 2.5, ecranAprins: true, pauzaSec: 90, pauzaAutomata: true, semnal: true, notificariPauza: false,
   inaltimeCm: null, obiectiv: null, obiectivSaptamanal: 3, retetePreferate: [],
   tinteNutritie: null, anNastere: null, sex: null, activitate: null, scopNutritie: null, preferinteNutritie: null, mod: 'gym',
-  cafeleZilnice: [], limitaCofeina: 400 };
+  cafeleZilnice: [], limitaCofeina: 400, pozeScanare: '30', limitaScanari: null };
 const setari = { ...SETARI_IMPLICITE };
 
 // Corectează valorile venite din stocare sau dintr-un backup; ce nu e valid revine la implicit.
@@ -48,6 +48,9 @@ function curataSetari(sursa) {
   if (pref) rez.preferinteNutritie = pref;
   if (Array.isArray(sursa.cafeleZilnice)) rez.cafeleZilnice = curataCafeleZilnice(sursa.cafeleZilnice);
   if (intreg(sursa.limitaCofeina, 50, 1000)) rez.limitaCofeina = sursa.limitaCofeina;
+  // Scanarea meselor (etapa 4): câte zile se păstrează pozele ('nu' | '30' | '90' | 'mereu') și limita ta de scanări pe zi (null = a serverului).
+  if (['nu', '30', '90', 'mereu'].includes(sursa.pozeScanare)) rez.pozeScanare = sursa.pozeScanare;
+  if (sursa.limitaScanari === null || intreg(sursa.limitaScanari, 1, 200)) rez.limitaScanari = sursa.limitaScanari;
   return rez;
 }
 
@@ -94,6 +97,7 @@ function afiseazaSetari() {
   $('set-semnal').checked = setari.semnal;
   $('set-notif').checked = setari.notificariPauza && notificariPermise();
   $('set-obiectiv-sapt').value = setari.obiectivSaptamanal;
+  if (typeof deseneazaSetariScanare === 'function') deseneazaSetariScanare();
 }
 
 function citesteCampuriSetari() {

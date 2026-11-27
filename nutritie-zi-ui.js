@@ -187,6 +187,7 @@ function randIntrare(i) {
     onclick: () => schimbaStarea(i, s.id),
   }));
   return el('li', { class: `zi-intrare stare-${i.stare}` }, [
+    el('button', { type: 'button', class: 'btn-sterge-rapid', 'aria-label': `Șterge ${i.nume} din ziua aceasta`, title: 'Șterge din zi', onclick: () => scoateIntrarea(i) }, [el('span', { 'aria-hidden': 'true', text: '−' })]),
     el('button', { class: 'zi-intrare-principal', type: 'button', onclick: () => deschideIntrarea(i),
       'aria-label': `${i.nume}, ${fmtPortii(i.portii)}, ${fmtNr(vPlan.kcal)} kcal, ${textStareIntrare(i)}. Detalii` }, [
       imagineIntrare(i),

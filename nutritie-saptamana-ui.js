@@ -310,6 +310,8 @@ function deseneazaZileSapt() {
       ]));
     }).flat();
     return el('section', { class: 'card sapt-zi' + (data === azi ? ' azi' : '') + (trecuta ? ' trecuta' : ''), 'aria-label': `${ZILE_LUNG[k]} ${z} ${LUNI_ANULUI[l - 1]}` }, [
+      t.numar ? el('button', { type: 'button', class: 'btn-sterge-rapid', 'aria-label': `Șterge toate felurile de mâncare din ${ZILE_LUNG[k].toLowerCase()}`, title: 'Golește ziua',
+        onclick: () => golesteZiSapt(data, ZILE_LUNG[k]) }, [el('span', { 'aria-hidden': 'true', text: '−' })]) : null,
       el('div', { class: 'card-cap' }, [
         el('h2', {}, [`${ZILE_LUNG[k]} `, el('span', { class: 'nota', text: `${z} ${LUNI_ANULUI[l - 1].slice(0, 3)}` }), data === azi ? el('span', { class: 'eticheta-tip', text: 'azi' }) : null]),
         el('span', { class: 'nota sapt-kcal', text: t.numar ? `${fmtNr(t.planificat.kcal)}${tinte ? ` / ${fmtNr(tinte.kcal)}` : ''} kcal` : '' }),
@@ -325,6 +327,23 @@ function deseneazaZileSapt() {
       ].filter(Boolean)),
     ]);
   }));
+}
+
+// Golește o zi: șterge toate felurile de mâncare (cafelele rămân). Cu confirmare, apoi „Anulează” câteva secunde.
+async function golesteZiSapt(data, numeZi) {
+  const zi = ziSapt(data);
+  const n = zi.mese.length;
+  if (!n) return;
+  const mancate = zi.mese.filter(i => i.stare !== 'neinceput').length;
+  const ok = await confirma({
+    titlu: `Golești ${numeZi.toLowerCase()}?`, ok: 'Șterge tot', pericol: true,
+    text: `Se ${n === 1 ? 'șterge felul de mâncare' : `șterg toate cele ${n} feluri de mâncare`} din ${numeZi.toLowerCase()}${mancate ? `, inclusiv ${mancate === 1 ? (n === 1 ? 'deși e notat ca mâncat' : 'unul notat ca mâncat') : `${mancate} notate ca mâncate`}` : ''}. Cafelele rămân. Poți anula imediat după.`,
+  });
+  if (!ok) return;
+  try { await salveazaZileSapt({ [data]: { ...zi, mese: [] } }); }
+  catch (err) { notifica(mesajEroareSalvare(err, 'Ziua nu a putut fi golită.'), 'eroare'); return; }
+  await randeazaSaptamana();
+  notificaCuAnulare(`${numeZi}: ${plural(n, 'fel de mâncare șters', 'feluri de mâncare șterse')}.`, { [data]: zi }, 'info');
 }
 
 // Zilele în care se poate copia: din săptămâna afișată și cea următoare, de azi încolo, fără ziua sursă.

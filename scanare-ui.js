@@ -19,6 +19,8 @@ function deschideScanare(tinta = null) {
 function inchideResurseScanare() {
   if (scanare.url) URL.revokeObjectURL(scanare.url);
   scanare.url = null;
+  for (const u of scanare.urluriRecente || []) URL.revokeObjectURL(u);
+  scanare.urluriRecente = [];
 }
 
 function zonaScanare() { return scanare.ctrl && scanare.ctrl.caseta.querySelector('.scan-zona'); }
@@ -53,6 +55,15 @@ function pasAlegereScanare(eroare = '') {
     ]),
   );
   butoaneScanare(buton({ text: 'Închide', tip: 'fantoma', onclick: inchideScanare }));
+  if (typeof blocScanariRecente === 'function') {
+    const zona = zonaScanare();
+    blocScanariRecente().then(b => {
+      if (!b) return;
+      if (zonaScanare() !== zona || !zona.querySelector('.scan-alegeri') || zona.querySelector('.scan-recente')) { (b.urluri || []).forEach(u => URL.revokeObjectURL(u)); return; }
+      zona.append(b);
+      scanare.urluriRecente = b.urluri || [];
+    });
+  }
 }
 
 // Scanarea are nevoie de cont și de internet; spunem asta de la început, nu după ce alegi poza.
@@ -153,6 +164,9 @@ async function analizeazaScanare() {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return pasPrevizualizareScanare(mesajEroareScanare({ cod: 'offline' }));
   if (!sinc.utilizator || !sinc.adaptor || typeof sinc.adaptor.functie !== 'function') return pasPrevizualizareScanare(mesajEroareScanare({ cod: 'fara_cont' }));
   const amprenta = scanare.imagine.amprenta;
+  const cheieCacheVerif = amprenta ? `p3:${amprenta}:${scanare.nota.trim()}` : null;
+  const limitaMea = typeof limitaProprieAtinsa === 'function' ? limitaProprieAtinsa() : null;
+  if (limitaMea && !(cheieCacheVerif && citesteCacheScanare(localStorage, cheieCacheVerif))) return pasPrevizualizareScanare(mesajEroareScanare(limitaMea));
   const cheieCache = amprenta ? `p3:${amprenta}:${scanare.nota.trim()}` : null;
   const dinCache = cheieCache ? citesteCacheScanare(localStorage, cheieCache) : null;
   if (dinCache) return arataRezultatScanare(dinCache, true);
@@ -172,6 +186,8 @@ async function analizeazaScanare() {
     const raspuns = await sinc.adaptor.functie('scanare', corp, { semnal: ctrl.signal });
     if (ctrl.signal.aborted) throw Object.assign(new Error('oprit'), { cod: 'anulat' });
     if (cheieCache) scrieCacheScanare(localStorage, cheieCache, raspuns);
+    if (typeof noteazaScanareReusita === 'function') noteazaScanareReusita(raspuns);
+    scanare.tokeni = raspuns && raspuns.tokeni ? raspuns.tokeni : null;
     arataRezultatScanare(raspuns, false);
   } catch (err) {
     if (ctrl.signal.aborted) err = Object.assign(new Error('oprit'), { cod: 'anulat' });
@@ -410,6 +426,8 @@ async function salveazaScanareInZi() {
   }
   scanare.salvareInCurs = false;
   const data = st.data;
+  // Istoricul (cu miniatura) se scrie în fundal: masa e deja salvată, dialogul se poate închide imediat.
+  if (typeof inregistreazaScanareInIstoric === 'function') inregistreazaScanareInIstoric({ intrare, data, blob: scanare.imagine && scanare.imagine.blob, tokeni: scanare.tokeni });
   inchideScanare();
   notifica(`${intrare.nume}: ${Math.round(intrare.valoriPortie.kcal)} kcal adăugate la ${numeMasa(intrare.masa).toLowerCase()}${data === dataLocala() ? '' : `, ${afiseazaData(data)}`}.`, 'succes', 6000, {
     text: 'Vezi ziua', onclick: () => { dataZiNutritie = data; arataEcran('ecran-nutritie'); arataFilaNutritie('zi'); },

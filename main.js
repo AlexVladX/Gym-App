@@ -28,6 +28,7 @@ let ecranCurent = 'ecran-acasa';
 function arataEcran(id) {
   asiguraModulEcranului(id);
   if (id === 'ecran-setari' && ecranCurent !== 'ecran-setari') ecranInainteDeSetari = ecranCurent;
+  if (id === 'ecran-setari' && typeof deseneazaSetariScanare === 'function') deseneazaSetariScanare();
   const schimbat = id !== ecranCurent;
   ecranCurent = id;
   document.querySelectorAll('.ecran').forEach(s => {

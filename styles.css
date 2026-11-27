@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "47";
+  --versiune-css: "48";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -2003,3 +2003,40 @@ html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
 .zi-adauga { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .zi-adauga .btn { flex: 1 1 auto; }
 .dialog-scanare .dialog-butoane .btn-lat + .btn-lat { margin-top: -4px; }
+
+/* Ștergere rapidă: „−” roșu în colț (fel de mâncare în zi, zi întreagă în săptămână) */
+.zi-intrare, .sapt-zi { position: relative; }
+.btn-sterge-rapid {
+  position: absolute; top: -10px; right: -8px; z-index: 2; display: grid; place-items: center; width: 32px; height: 32px; padding: 0;
+  border: 2px solid var(--suprafata); border-radius: 50%; background: var(--pericol); color: #fff; font-size: 20px; font-weight: 700; line-height: 1; cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+.btn-sterge-rapid::before { content: ''; position: absolute; inset: -6px; } /* zonă de atingere de ~44 px */
+.btn-sterge-rapid:active { transform: scale(0.92); }
+.btn-sterge-rapid:focus-visible { outline: 2px solid var(--pericol); outline-offset: 2px; }
+.sapt-zi > .btn-sterge-rapid { top: 10px; right: 10px; }
+.sapt-zi > .card-cap { padding-right: 34px; }
+
+/* ---------- Scanarea meselor (etapa 4: istoric) ---------- */
+.scan-recente { margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--bordura); }
+.scan-recente-cap { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--s2); }
+.scan-istoric input[type=search] { width: 100%; margin-bottom: var(--s2); }
+.scan-istoric-lista { display: flex; flex-direction: column; gap: 6px; }
+.scan-istoric-rand { display: flex; align-items: center; gap: 6px; }
+.scan-istoric-bifa { display: grid; place-items: center; width: 36px; height: 44px; flex: none; }
+.scan-istoric-bifa input { width: 20px; height: 20px; }
+.scan-istoric-btn { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--s2); padding: 6px 8px; border-radius: var(--raza-mica); border: 1px solid var(--bordura); background: var(--suprafata-2); color: inherit; text-align: left; cursor: pointer; }
+.scan-istoric-img { width: 52px; height: 52px; flex: none; border-radius: var(--raza-mica); object-fit: cover; background: var(--suprafata-3); }
+.scan-istoric-fara { display: grid; place-items: center; color: var(--text-2); }
+.scan-istoric-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.scan-istoric-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scan-istoric-text .nota { margin: 0; }
+.scan-istoric-kcal { flex: none; font-size: 14px; }
+.scan-comparare { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: var(--s3); }
+.scan-comparare th, .scan-comparare td { padding: 6px 4px; border-bottom: 1px solid var(--bordura); text-align: right; }
+.scan-comparare th:first-child { text-align: left; }
+.scan-comparare thead th { font-size: 12px; font-weight: 600; color: var(--text-2); overflow-wrap: anywhere; }
+.scan-comparare .mai-mult { color: var(--avertizare); font-weight: 600; }
+.scan-comparare .mai-putin { color: var(--pozitiv); font-weight: 600; }
+#set-scanare select { max-width: 55%; }
+.scan-setari-butoane { display: grid; gap: var(--s2); margin-top: var(--s3); }

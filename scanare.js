@@ -148,6 +148,8 @@ function mesajEroareScanare(err) {
   const m = err && err.message ? String(err.message) : '';
   if (cod === 'anulat') return { tip: 'anulat', titlu: 'Analiza a fost oprită', text: '' };
   if (cod === 'limita_zilnica') return { tip: 'limita', titlu: 'Limita zilnică de scanări', text: m || 'Ai atins limita de scanări pe azi.' };
+  if (cod === 'limita_cautari') return { tip: 'limita', titlu: 'Prea multe căutări', text: m || 'Prea multe căutări într-o oră. Încearcă din nou mai târziu.' };
+  if (cod === 'limita_proprie') return { tip: 'limita', titlu: 'Limita ta zilnică de scanări', text: m };
   if (cod === 'limita_furnizor') return { tip: 'limita', titlu: 'Limita furnizorului AI', text: m || 'Furnizorul AI a refuzat temporar cererea (limită de utilizare sau buget). Încearcă mai târziu.' };
   if (cod === 'neautentificat' || cod === 'fara_cont') return { tip: 'cont', titlu: 'E nevoie de cont', text: m || 'Conectează-te la contul din cloud (Setări → Cont) ca să folosești scanarea.' };
   if (cod === 'retea' || cod === 'offline') return { tip: 'retea', titlu: 'Fără internet', text: 'Scanarea are nevoie de internet. Verifică conexiunea și încearcă din nou.' };
