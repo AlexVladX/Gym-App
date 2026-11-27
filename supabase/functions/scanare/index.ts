@@ -6,10 +6,11 @@
 //   GEMINI_API_KEY  (obligatoriu)     — cheia din Google AI Studio
 //   MODEL_AI        (opțional)        — implicit gemini-3.1-flash-lite
 //   SCAN_LIMITA_ZI  (opțional)        — câte scanări pe zi are voie un cont (implicit 20)
+//   FDC_API_KEY     (pentru căutare)  — cheia USDA FoodData Central (api.data.gov)
 //   SUPABASE_URL                      — pusă automat de Supabase
 import {
   EroareScanare, valideazaCerere, corpCerereGemini, extrageTextGemini, curataRaspunsAI,
-  eroareDinStatusGemini, utilizareTokeni,
+  eroareDinStatusGemini, utilizareTokeni, valideazaCautare, candidatDinFDC, candidatDinOFF, adresaCautareFDC, adresaCautareOFF,
 } from './logica.js';
 
 const ORIGINI = (Deno.env.get('ORIGINI_PERMISE') || 'https://alexvladx.github.io,http://localhost:8765,http://127.0.0.1:8765')
@@ -17,7 +18,10 @@ const ORIGINI = (Deno.env.get('ORIGINI_PERMISE') || 'https://alexvladx.github.io
 const MODEL = Deno.env.get('MODEL_AI') || 'gemini-3.1-flash-lite';
 const LIMITA_ZI = Math.min(200, Math.max(1, Number(Deno.env.get('SCAN_LIMITA_ZI')) || 20));
 const GEMINI_BAZA = Deno.env.get('GEMINI_BAZA') || 'https://generativelanguage.googleapis.com';
+const USDA_BAZA = Deno.env.get('USDA_BAZA') || 'https://api.nal.usda.gov';
+const OFF_BAZA = Deno.env.get('OFF_BAZA') || 'https://world.openfoodfacts.org';
 const TIMP_MAXIM_AI_MS = 30_000;
+const TIMP_MAXIM_CAUTARE_MS = 12_000;
 const MAX_CORP = 2_200_000;
 
 function antetCors(origine: string | null): Record<string, string> {
@@ -80,6 +84,49 @@ async function intreabaGemini(cerere: { imagine: string; tip: string; nota: stri
   return { rezultat: curataRaspunsAI(extrageTextGemini(corp)), tokeni: utilizareTokeni(corp) };
 }
 
+async function cuTimp(url: string, init: RequestInit) {
+  const ctrl = new AbortController();
+  const ceas = setTimeout(() => ctrl.abort(), TIMP_MAXIM_CAUTARE_MS);
+  try { return await fetch(url, { ...init, signal: ctrl.signal }); } finally { clearTimeout(ceas); }
+}
+
+// Căutarea valorilor: USDA pentru alimente generice (și produse de marcă), Open Food Facts doar pentru produse ambalate.
+// Nu consumă din limita de scanări (nu folosește AI). Erorile unei surse nu le blochează pe celelalte: apar în „avertizari”.
+async function cautaValori(corp: unknown) {
+  const cereri = valideazaCautare(corp);
+  const cheieFdc = Deno.env.get('FDC_API_KEY');
+  const azi = new Date().toISOString().slice(0, 10);
+  const avertizari = new Set<string>();
+  if (!cheieFdc) avertizari.add('Cheia USDA nu e adăugată în Supabase (FDC_API_KEY); căutarea în USDA e oprită.');
+  const rezultate = await Promise.all(cereri.map(async (c: { id: string; text: string; ambalat: boolean; marca: string }) => {
+    const candidati: unknown[] = [];
+    if (cheieFdc) {
+      try {
+        const r = await cuTimp(USDA_BAZA + adresaCautareFDC(c.text, c.ambalat), { headers: { 'X-Api-Key': cheieFdc, Accept: 'application/json' } });
+        if (r.status === 429) avertizari.add('USDA a refuzat temporar cererile (limita orară a cheii). Încearcă peste o oră.');
+        else if (r.status === 401 || r.status === 403) avertizari.add('Cheia USDA din Supabase nu e validă.');
+        else if (!r.ok) avertizari.add('USDA nu a răspuns corect acum.');
+        else {
+          const d = await r.json();
+          for (const f of (d && Array.isArray(d.foods) ? d.foods : [])) { const k = candidatDinFDC(f, azi); if (k) candidati.push(k); }
+        }
+      } catch (_) { avertizari.add('USDA nu poate fi contactat acum.'); }
+    }
+    if (c.ambalat) {
+      try {
+        const r = await cuTimp(OFF_BAZA + adresaCautareOFF([c.marca, c.text].filter(Boolean).join(' ')), { headers: { 'User-Agent': 'JurnalDeAntrenament/1.0 (https://alexvladx.github.io/Gym-App/)', Accept: 'application/json' } });
+        if (r.status === 429) avertizari.add('Open Food Facts a limitat temporar căutările.');
+        else if (r.ok) {
+          const d = await r.json();
+          for (const p of (d && Array.isArray(d.products) ? d.products : [])) { const k = candidatDinOFF(p, azi); if (k) candidati.push(k); }
+        } else avertizari.add('Open Food Facts nu a răspuns corect acum.');
+      } catch (_) { avertizari.add('Open Food Facts nu poate fi contactat acum.'); }
+    }
+    return { id: c.id, text: c.text, candidati };
+  }));
+  return { rezultate, avertizari: [...avertizari] };
+}
+
 Deno.serve(async (req: Request) => {
   const origine = req.headers.get('origin');
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: antetCors(origine) });
@@ -91,6 +138,7 @@ Deno.serve(async (req: Request) => {
     if (textCorp.length > MAX_CORP) throw new EroareScanare('imagine_prea_mare', 'Poza e prea mare.', 413);
     let corp: unknown;
     try { corp = JSON.parse(textCorp); } catch (_) { throw new EroareScanare('cerere_invalida', 'Cererea nu are formatul așteptat.', 400); }
+    if (corp && typeof corp === 'object' && (corp as { actiune?: string }).actiune === 'cauta') return raspuns(200, await cautaValori(corp), origine);
     const cerere = valideazaCerere(corp);
     const utilizare = await numaraScanarea(sesiune);
     const { rezultat, tokeni } = await intreabaGemini(cerere);

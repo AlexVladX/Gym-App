@@ -76,6 +76,7 @@ function curataRezultatScanare(r) {
       note: textScurt(a.note, 200),
       ambalat: a.ambalat === true,
       marca: textScurt(a.marca, 60),
+      bucati: intregIn(a.bucati, 2, 60) || null,
     });
   }
   const u = r.utilizare && typeof r.utilizare === 'object' ? r.utilizare : null;
@@ -94,7 +95,7 @@ function articolManualScanare(nume = '') {
   return {
     id: idArticolScanare(), nume: textScurt(nume, 80), numeEn: '', alternative: [],
     grame: null, grameEstimat: null, grameMin: null, grameMax: null, sursaGramaj: 'manual',
-    preparare: 'necunoscut', incredere: 'manual', vizibile: [], ascunse: [], note: '', ambalat: false, marca: '',
+    preparare: 'necunoscut', incredere: 'manual', vizibile: [], ascunse: [], note: '', ambalat: false, marca: '', bucati: null,
   };
 }
 

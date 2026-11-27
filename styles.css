@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "42";
+  --versiune-css: "43";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -1926,8 +1926,11 @@ html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
 .scan-chips .chip .iconita { width: 14px; height: 14px; }
 .scan-aliment-jos { display: flex; gap: var(--s2); margin-top: var(--s2); }
 .scan-gramaj { display: flex; align-items: center; gap: 6px; flex: none; }
-.scan-gramaj input { width: 96px; }
-.scan-aliment-jos select { flex: 1; min-width: 0; }
+.scan-aliment-jos { flex-wrap: wrap; }
+.scan-gramaj { display: flex; gap: 6px; flex: 1 1 200px; min-width: 0; }
+.scan-gramaj .scan-cantitate { width: 84px; flex: none; }
+.scan-gramaj .scan-unitate { flex: 1; min-width: 0; }
+.scan-aliment-jos .scan-preparare { flex: 1 1 120px; min-width: 0; }
 .scan-aliment-info { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-top: 6px; }
 .scan-insigna { padding: 2px 8px; border-radius: 999px; font-size: 12px; background: var(--suprafata-3); color: var(--text-2); }
 .scan-insigna-manual { background: var(--accent-slab); color: var(--accent); }
@@ -1938,3 +1941,44 @@ html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
 .scan-ascunse { margin-bottom: var(--s3); }
 .scan-ascunse .nota { margin: 0; }
 .scan-urmeaza { margin-top: var(--s3); }
+
+/* ---------- Scanarea meselor (etapa 2: valori și surse) ---------- */
+.scan-total { margin-bottom: var(--s3); padding: var(--s3); border-radius: var(--raza); background: var(--accent-slab); border: 1px solid var(--bordura-tare); }
+.scan-total-sus { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s2); }
+.scan-total-sus strong { font-size: 22px; }
+.scan-total-macro { display: flex; gap: var(--s3); margin-top: 2px; font-weight: 600; font-size: 14px; }
+.scan-total .nota { margin: 4px 0 0; }
+.scan-total-lipsa { margin: 6px 0 0; font-size: 13px; color: var(--avertizare); font-weight: 600; }
+.scan-valori { margin: 8px 0 0; font-weight: 600; font-size: 14px; }
+.scan-valori-lipsa { color: var(--text-2); font-weight: 400; font-style: italic; }
+.scan-sursa-bloc { margin-top: var(--s2); }
+.scan-sursa { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); padding: 8px 10px; border-radius: var(--raza-mica); background: var(--suprafata); border: 1px solid var(--bordura); }
+.scan-sursa-lipsa { border-style: dashed; border-color: var(--avertizare); }
+.scan-sursa-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; font-size: 13.5px; }
+.scan-sursa-lipsa .scan-sursa-text { flex-direction: row; align-items: center; gap: 8px; }
+.scan-sursa-eticheta { font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: var(--accent); }
+.scan-sursa-manual .scan-sursa-eticheta { color: var(--text-2); }
+.scan-sursa-nume { font-weight: 600; overflow-wrap: anywhere; }
+.scan-sursa-text .nota { margin: 0; overflow-wrap: anywhere; }
+.scan-sursa .btn { flex: none; }
+.scan-rotita-mica { width: 16px; height: 16px; border-width: 2px; }
+.scan-avertizari { margin: 6px 0 0; padding-left: 1.1em; font-size: 12.5px; color: var(--avertizare); line-height: 1.4; }
+.scan-potriviri { margin-top: var(--s2); padding: var(--s2); border-radius: var(--raza-mica); background: var(--suprafata); border: 1px solid var(--bordura); }
+.scan-variante { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
+.scan-varianta { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; padding: 8px 10px; text-align: left; border-radius: var(--raza-mica); border: 1px solid var(--bordura-tare); background: var(--suprafata-2); color: inherit; cursor: pointer; }
+.scan-varianta.activ { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.scan-varianta .nota { margin: 0; }
+.scan-varianta-nume { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+.scan-varianta-atentie { color: var(--avertizare); }
+.scan-cauta-rand { display: flex; gap: 6px; margin-top: var(--s2); }
+.scan-cauta-rand input { flex: 1; min-width: 0; }
+.scan-potriviri > .nota { margin: 6px 0; }
+.scan-manual { margin-top: var(--s2); }
+.scan-manual .nota { margin: 0 0 4px; }
+.scan-manual-campuri { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
+.scan-manual-camp { display: flex; flex-direction: column; gap: 2px; }
+.scan-manual-camp input { width: 100%; }
+.scan-manual-butoane { display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px; }
+.scan-eroare-mica { margin: 4px 0 0; font-size: 12.5px; color: var(--pericol); }
+.scan-eroare-mica:empty { display: none; }
+.scan-gramaj-text:empty { display: none; }

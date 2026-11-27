@@ -12,6 +12,9 @@ export const CALITATI = ['buna', 'slaba', 'inutilizabila'];
 export const INSTRUCTIUNI = `You analyse a photo of a meal for a personal nutrition-tracking app used in Romania.
 Identify every separate food component (e.g. grilled chicken breast, white rice, broccoli, olive-oil dressing) as its own item.
 Only name a whole dish as one item when its parts cannot be separated visually (soup, stew, sarmale, lasagna, pizza slice).
+For composite foods built from distinct visible parts (burger, sandwich, wrap, bowl), list the main parts as separate items
+(e.g. burger bun, beef patty, cheese slice, lettuce) so they can be looked up in a food database.
+When several identical pieces are visible (6 burgers, 3 eggs, 2 slices), set bucati to their number and give grame for ALL pieces together.
 For every item return:
 - nume: short Romanian name; nume_en: generic English name with its state, good for searching USDA FoodData Central
   (e.g. "chicken breast, grilled", "rice, white, cooked", "broccoli, boiled").
@@ -21,6 +24,7 @@ For every item return:
 - preparare: one of crud, fiert, gratar, prajit, cuptor, fript, abur, necunoscut.
 - incredere: your qualitative confidence in the identification: ridicata, medie or scazuta.
 - vizibile: visible ingredients; ascunse: ingredients that may be hidden (cooking oil, butter, sauce underneath, filling).
+- bucati: number of identical pieces when countable (else omit).
 - note: one short Romanian remark if useful (else empty). ambalat: true for a packaged product; marca: brand as printed, if legible.
 Also return este_mancare (false if the photo shows no food), calitate_imagine (buna, slaba, inutilizabila)
 and observatii (one short Romanian sentence, or empty).
@@ -47,7 +51,7 @@ export const SCHEMA_RASPUNS = {
           incredere: { type: 'STRING', enum: INCREDERI },
           vizibile: { type: 'ARRAY', items: S('STRING') },
           ascunse: { type: 'ARRAY', items: S('STRING') },
-          note: S('STRING'), ambalat: S('BOOLEAN'), marca: S('STRING'),
+          note: S('STRING'), ambalat: S('BOOLEAN'), marca: S('STRING'), bucati: S('INTEGER'),
         },
         required: ['nume', 'nume_en', 'grame', 'grame_min', 'grame_max', 'preparare', 'incredere'],
       },
@@ -156,6 +160,8 @@ function curataAliment(a) {
     ascunse: listaText(a.ascunse, 10, 60),
     note: text(a.note, 200),
   };
+  const bucati = intreg(a.bucati, 1, 60);
+  if (bucati && bucati > 1) r.bucati = bucati;
   if (a.ambalat === true) r.ambalat = true;
   const marca = text(a.marca, 60);
   if (marca) r.marca = marca;
@@ -179,4 +185,89 @@ export function utilizareTokeni(r) {
   if (!u) return null;
   const n = v => (Number.isFinite(v) ? v : 0);
   return { intrare: n(u.promptTokenCount), iesire: n(u.candidatesTokenCount) + n(u.thoughtsTokenCount), total: n(u.totalTokenCount) };
+}
+
+// ---------- Căutarea valorilor nutriționale (USDA FoodData Central, Open Food Facts) ----------
+// Valorile vin numai din aceste baze de date, per 100 g, cu sursa, id-ul înregistrării și data preluării.
+// Câmpurile lipsă rămân lipsă (null), nu se completează.
+
+export const MAX_CAUTARI = 15;
+
+export function valideazaCautare(corp) {
+  const lista = corp && Array.isArray(corp.cereri) ? corp.cereri : null;
+  if (!lista || !lista.length) throw new EroareScanare('cerere_invalida', 'Nu e nimic de căutat.', 400);
+  if (lista.length > MAX_CAUTARI) throw new EroareScanare('cerere_invalida', `Cel mult ${MAX_CAUTARI} căutări o dată.`, 400);
+  return lista.map((c, i) => {
+    const t = text(c && c.text, 80);
+    if (!t || t.length < 2) throw new EroareScanare('cerere_invalida', 'Textul de căutat lipsește.', 400);
+    return { id: text(c.id, 60) || String(i), text: t, ambalat: c.ambalat === true, marca: text(c.marca, 60) };
+  });
+}
+
+// Nutrienții FDC: după id (nutrientId) sau număr (nutrientNumber). Energia: kcal; Foundation are uneori doar Atwater (2047/2048).
+const NUTRIENTI_FDC = {
+  kcal: [[1008, '208'], [2047, '957'], [2048, '958']],
+  proteine: [[1003, '203']], grasimi: [[1004, '204']], carbohidrati: [[1005, '205']],
+  fibre: [[1079, '291']], zahar: [[2000, '269'], [1063, '269.3']], saturate: [[1258, '606']],
+};
+
+const numar = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
+
+function valoareFDC(lista, perechi, kcal) {
+  for (const [id, nr] of perechi) {
+    const n = lista.find(x => x && (x.nutrientId === id || String(x.nutrientNumber) === nr));
+    if (!n) continue;
+    if (kcal && n.unitName && !/kcal/i.test(n.unitName)) continue;
+    const v = numar(n.value);
+    if (v != null) return v;
+  }
+  return null;
+}
+
+// Un rezultat din /foods/search → candidat (valori per 100 g, așa cum le dă FDC în căutare).
+export function candidatDinFDC(f, azi) {
+  if (!f || !Number.isFinite(f.fdcId) || typeof f.description !== 'string') return null;
+  const n = Array.isArray(f.foodNutrients) ? f.foodNutrients : [];
+  const per100 = {};
+  for (const [camp, perechi] of Object.entries(NUTRIENTI_FDC)) per100[camp] = valoareFDC(n, perechi, camp === 'kcal');
+  if (per100.kcal == null || per100.proteine == null || per100.carbohidrati == null || per100.grasimi == null) return null;
+  const portii = (Array.isArray(f.foodMeasures) ? f.foodMeasures : [])
+    .map(m => ({ nume: text(m && (m.disseminationText || m.modifier), 60), grame: numar(m && m.gramWeight) }))
+    .filter(p => p.nume && p.grame && p.grame > 0 && p.grame <= 3000 && !/^quantity not specified$/i.test(p.nume)).slice(0, 6);
+  const c = {
+    sursa: 'usda', id: String(f.fdcId), nume: text(f.description, 160), tipDate: text(f.dataType, 40),
+    per100, portii, url: `https://fdc.nal.usda.gov/food-details/${f.fdcId}/nutrients`, preluat: azi,
+  };
+  const marca = text(f.brandName || f.brandOwner, 80);
+  if (marca) c.marca = marca;
+  return c;
+}
+
+// Un produs Open Food Facts → candidat (doar dacă are kcal și macronutrienții la 100 g).
+export function candidatDinOFF(p, azi) {
+  if (!p || typeof p.code !== 'string' || !/^\d{6,14}$/.test(p.code)) return null;
+  const m = p.nutriments || {};
+  const v = k => numar(typeof m[k] === 'string' ? Number(m[k]) : m[k]);
+  const per100 = { kcal: v('energy-kcal_100g'), proteine: v('proteins_100g'), carbohidrati: v('carbohydrates_100g'), grasimi: v('fat_100g'), fibre: v('fiber_100g'), zahar: v('sugars_100g'), saturate: v('saturated-fat_100g') };
+  if (per100.kcal == null || per100.proteine == null || per100.carbohidrati == null || per100.grasimi == null) return null;
+  const nume = text(p.product_name, 160);
+  if (!nume) return null;
+  const c = { sursa: 'off', id: p.code, nume, tipDate: 'Open Food Facts', per100, portii: [], url: `https://world.openfoodfacts.org/product/${p.code}`, preluat: azi };
+  const marca = text(p.brands, 80);
+  if (marca) c.marca = marca;
+  const g = numar(Number(p.serving_quantity));
+  if (g && g <= 3000) c.portii.push({ nume: text(p.serving_size, 60) || 'porție', grame: g });
+  return c;
+}
+
+export function adresaCautareFDC(textCautat, ambalat) {
+  const tipuri = ['Foundation', 'SR Legacy', 'Survey (FNDDS)'];
+  if (ambalat) tipuri.push('Branded');
+  const q = new URLSearchParams({ query: textCautat, pageSize: '8', dataType: tipuri.join(',') });
+  return `/fdc/v1/foods/search?${q}`;
+}
+
+export function adresaCautareOFF(textCautat) {
+  const q = new URLSearchParams({ search_terms: textCautat, search_simple: '1', action: 'process', json: '1', page_size: '6', fields: 'code,product_name,brands,nutriments,serving_size,serving_quantity' });
+  return `/cgi/search.pl?${q}`;
 }
