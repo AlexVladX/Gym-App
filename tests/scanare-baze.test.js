@@ -27,12 +27,28 @@ test('local: alimentele simple din aplicație se aleg automat (fără rețea)', 
 });
 
 test('local: valori pentru crud NU se folosesc automat pentru un aliment gătit (orez fiert, pui la grătar)', () => {
-  for (const [n, e, p] of [['Orez alb fiert', 'rice, white, cooked', 'fiert'], ['Piept de pui la grătar', 'chicken breast, grilled', 'gratar'], ['Ouă fierte', 'egg, hard-boiled', 'fiert']]) {
+  for (const [n, e, p] of [['Piept de pui la grătar', 'chicken breast, grilled', 'gratar'], ['Ouă fierte', 'egg, hard-boiled', 'fiert']]) {
     const { c, ales } = local(n, e, p);
     assert.equal(ales, null, n);
     const crud = c.find(x => x.tip === 'local' && x.stare === 'crud');
     assert.ok(crud && crud.avertizari[0].includes('crud'), `${n}: varianta crudă rămâne propusă, cu avertizare`);
   }
+  // Orezul fiert are acum varianta gătită în aplicație (USDA SR28 20045): se alege ea, nu orezul crud.
+  const orez = local('Orez alb fiert', 'rice, white, cooked', 'fiert');
+  assert.equal(orez.ales && orez.ales.id, 'orez-fiert');
+  const crud = orez.c.find(x => x.tip === 'local' && x.id === 'orez');
+  assert.ok(!crud || crud.avertizari[0].includes('crud'), 'orezul crud, dacă e propus, are avertizare');
+});
+
+test('local: cerealele și leguminoasele gătite din poză primesc varianta fiartă (mămăligă, paste, bulgur, linte)', () => {
+  for (const [n, e, p, id] of [['mămăligă', 'polenta', 'fiert', 'mamaliga'], ['Mămăligă', 'polenta', 'necunoscut', 'mamaliga'], ['paste', 'spaghetti', 'fiert', 'paste-fierte'],
+    ['bulgur', 'bulgur', 'fiert', 'bulgur-fiert'], ['linte', 'lentils', 'fiert', 'linte-fiarta'], ['fasole', 'white beans', 'fiert', 'fasole-alba-fiarta']]) {
+    const { ales } = local(n, e, p);
+    assert.equal(ales && ales.id, id, `${n} (${p})`);
+  }
+  // Crud rămâne crud.
+  assert.equal(local('orez', 'rice', 'crud').ales.id, 'orez');
+  assert.equal(local('mălai', 'cornmeal', 'crud').ales.id, 'malai');
 });
 
 test('local: rețetele — „Ciorbă de perișoare” automat; „Sarmale” (3 rețete) și „Pizza” rămân la alegere', () => {

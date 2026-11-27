@@ -454,3 +454,11 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
   desktop → primul câmp. Un dialog înlocuit de altul primește propriul `laAnulare` (nu pe al celui nou).
 - **„Odihnă”** pentru timerul dintre serii în toată interfața; „Pauză antrenament” rămâne. Cheile setărilor sunt aceleași.
 - `numarDe(n)` pentru „cele 20 de …”; textele cu „Cele 1 …” au variantă de singular.
+
+## Cereale și leguminoase gătite (v54)
+
+- 11 alimente noi, valori pentru produsul **fiert** din USDA SR28 (prin `genereaza.js`, ca toate): mămăligă (aproximată cu
+  grișul de porumb galben fiert în apă, 08164), orez alb/brun fiert (20045, 20037), paste/paste integrale fierte (20121, 20125),
+  quinoa (20137), cuscus (20029), bulgur (20013), hrișcă (20010), linte (16070), fasole albă (16050). Biblioteca are 203 alimente.
+- Rețetele folosesc în continuare variantele crude/uscate (cum se cântărește la gătit); variantele fierte sunt pentru mesele
+  fotografiate, cântărite gătite sau adăugate cu „Adaugă un aliment”. Scanarea alege automat varianta după starea din poză.

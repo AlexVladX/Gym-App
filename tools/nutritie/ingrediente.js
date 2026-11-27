@@ -241,4 +241,19 @@ module.exports = [
   ['vin-alb', 'Vin alb sec', '14106', 'altele', 'lichid', '#EFE6B0', ['sulfiti'], null],
   ['cimbru', 'Cimbru uscat', '02042', 'altele', 'verdeata', '#8E9A63', [], null],
   ['dafin', 'Foi de dafin', '02004', 'altele', 'frunze', '#9AA06A', [], null],
+  // ---------- Cereale și leguminoase gătite (pentru mesele fotografiate sau cântărite gătite) ----------
+  // Aceleași alimente ca mai sus, dar valorile sunt pentru produsul fiert (USDA SR28, „cooked”).
+  // Rețetele folosesc în continuare varianta crudă/uscată (cum se cântărește la gătit).
+  ['mamaliga', 'Mămăligă (fiartă în apă)', '08164', 'cereale', 'mamaliga', '#F3C94C', [], null,
+    { nota: 'Aproximată cu grișul de porumb galben fiert în apă, fără sare (USDA). O mămăligă mai tare, cu mai puțină apă, are mai multe calorii la 100 g.' }],
+  ['orez-fiert', 'Orez alb fiert', '20045', 'cereale', 'boabe', '#F5F1E6', [], null, { nota: 'Cantitatea e pentru orezul fiert.' }],
+  ['orez-brun-fiert', 'Orez brun fiert', '20037', 'cereale', 'boabe', '#D7C29A', [], null, { nota: 'Cantitatea e pentru orezul fiert.' }],
+  ['paste-fierte', 'Paste fierte', '20121', 'cereale', 'paste', '#EAC66A', ['gluten'], null, { nota: 'Cantitatea e pentru pastele fierte.' }],
+  ['paste-integrale-fierte', 'Paste integrale fierte', '20125', 'cereale', 'paste', '#C49A5C', ['gluten'], null, { nota: 'Cantitatea e pentru pastele fierte.' }],
+  ['quinoa-fiarta', 'Quinoa fiartă', '20137', 'cereale', 'boabe', '#E7D9B5', [], null, { nota: 'Cantitatea e pentru quinoa fiartă.' }],
+  ['cuscus-fiert', 'Cuscus fiert', '20029', 'cereale', 'boabe', '#E9CF8E', ['gluten'], null, { nota: 'Cantitatea e pentru cuscusul preparat.' }],
+  ['bulgur-fiert', 'Bulgur fiert', '20013', 'cereale', 'boabe', '#C9A66B', ['gluten'], null, { nota: 'Cantitatea e pentru bulgurul fiert.' }],
+  ['hrisca-fiarta', 'Hrișcă fiartă', '20010', 'cereale', 'boabe', '#A47A52', [], null, { nota: 'Cantitatea e pentru hrișca fiartă.' }],
+  ['linte-fiarta', 'Linte fiartă', '16070', 'legume', 'bile-mici', '#8B6B3F', [], null, { nota: 'Cantitatea e pentru lintea fiartă.' }],
+  ['fasole-alba-fiarta', 'Fasole albă fiartă', '16050', 'legume', 'bile', '#EFE9DA', [], null, { nota: 'Cantitatea e pentru fasolea fiartă (din boabe uscate).' }],
 ];
