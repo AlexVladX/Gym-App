@@ -82,6 +82,7 @@ function curataRezultatScanare(r) {
   const u = r.utilizare && typeof r.utilizare === 'object' ? r.utilizare : null;
   return {
     esteMancare: r.esteMancare !== false,
+    portieIndividuala: r.portieIndividuala !== false,
     calitate: ['buna', 'slaba', 'inutilizabila'].includes(r.calitate) ? r.calitate : 'slaba',
     observatii: textScurt(r.observatii, 240),
     eliminate: intregIn(r.eliminate, 0, 100) || 0,

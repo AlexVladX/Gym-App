@@ -199,6 +199,10 @@ function ordoneazaExterneScanare(a, candidatiServer) {
   for (const c of candidatiServer || []) {
     const p = potrivireDinExtern(c, a);
     if (!p || vazute.has(p.tip + p.id)) continue;
+    // Variantele care au în comun cu numele căutat doar un cuvânt secundar („platter”, „cold”) nu se arată.
+    const d = detaliiAsemanareScanare(a.numeEn || a.nume, p.nume);
+    const marcaPotrivita = a.marca && p.marca && asemanareScanare(a.marca, p.marca) >= 0.5;
+    if (d.acoperire < 0.5 && !marcaPotrivita) continue;
     vazute.add(p.tip + p.id);
     lista.push({ ...p, scor: scorExternScanare(a, p) });
   }

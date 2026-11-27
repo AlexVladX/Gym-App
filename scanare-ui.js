@@ -152,7 +152,7 @@ async function analizeazaScanare() {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return pasPrevizualizareScanare(mesajEroareScanare({ cod: 'offline' }));
   if (!sinc.utilizator || !sinc.adaptor || typeof sinc.adaptor.functie !== 'function') return pasPrevizualizareScanare(mesajEroareScanare({ cod: 'fara_cont' }));
   const amprenta = scanare.imagine.amprenta;
-  const cheieCache = amprenta ? `p2:${amprenta}:${scanare.nota.trim()}` : null;
+  const cheieCache = amprenta ? `p3:${amprenta}:${scanare.nota.trim()}` : null;
   const dinCache = cheieCache ? citesteCacheScanare(localStorage, cheieCache) : null;
   if (dinCache) return arataRezultatScanare(dinCache, true);
 
@@ -299,6 +299,10 @@ function pasRevizuireScanare() {
       ]),
     ]),
     blocTotalScanare(),
+    !r.portieIndividuala ? el('div', { class: 'scan-atentie', role: 'note' }, [
+      el('strong', { text: 'Poza arată un bufet sau o masă comună, nu porția ta.' }),
+      el('p', { text: 'Gramajele de mai jos sunt pentru tot ce se vede. Pentru caloriile tale, fotografiază farfuria ta — sau schimbă cantitățile la cât ai mâncat.' }),
+    ]) : null,
     r.calitate === 'slaba' ? el('p', { class: 'scan-atentie', text: 'Poza e neclară sau întunecată; verifică atent fiecare aliment.' }) : null,
     r.observatii ? el('p', { class: 'nota scan-observatii', text: r.observatii }) : null,
     r.eliminate ? el('p', { class: 'nota nota-mica', text: `${plural(r.eliminate, 'element', 'elemente')} din răspunsul AI nu au avut formatul corect și au fost ignorate.` }) : null,

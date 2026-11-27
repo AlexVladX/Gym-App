@@ -196,3 +196,16 @@ test('potrivire: cuvintele se compară întregi — „cheeseburger” nu propun
     { sursa: 'usda', id: '1', nume: 'Mushrooms, white, cooked, boiled', tipDate: 'SR Legacy', per100: { kcal: 28, proteine: 2.2, carbohidrati: 5.3, grasimi: 0.5 } }]);
   assert.equal(ext.ales, null, 'doar „mushrooms” fără „pizza” → nu se alege automat');
 });
+
+test('bufet: AI-ul poate spune că nu e o porție individuală; variantele fără legătură nu se arată', async () => {
+  const L = await logica();
+  const r = L.curataRaspunsAI({ este_mancare: true, portie_individuala: false, calitate_imagine: 'buna', alimente: [{ nume: 'Cașcaval cuburi', nume_en: 'cheese cubes', grame: 600, grame_min: 400, grame_max: 800, preparare: 'crud', incredere: 'ridicata' }] });
+  assert.equal(r.portieIndividuala, false);
+  assert.equal(L.curataRaspunsAI({ este_mancare: true, calitate_imagine: 'buna', alimente: [] }).portieIndividuala, true, 'lipsă → porție individuală');
+  assert.match(L.INSTRUCTIUNI, /Never lump many different foods/);
+  const ext = B.ordoneazaExterneScanare({ nume: 'Platou aperitive reci', numeEn: 'cold appetizer platter' }, [
+    { sursa: 'usda', id: '169841', nume: "APPLEBEE'S, chicken tenders platter", tipDate: 'SR Legacy', per100: { kcal: 297, proteine: 18, carbohidrati: 20, grasimi: 16 } },
+    { sursa: 'usda', id: '167702', nume: 'Oil, flaxseed, cold pressed', tipDate: 'SR Legacy', per100: { kcal: 884, proteine: 0.1, carbohidrati: 0, grasimi: 99.9 } },
+  ]);
+  assert.deepEqual(ext.candidati, [], 'doar „platter”/„cold” în comun → ascunse');
+});
