@@ -152,7 +152,7 @@ async function analizeazaScanare() {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return pasPrevizualizareScanare(mesajEroareScanare({ cod: 'offline' }));
   if (!sinc.utilizator || !sinc.adaptor || typeof sinc.adaptor.functie !== 'function') return pasPrevizualizareScanare(mesajEroareScanare({ cod: 'fara_cont' }));
   const amprenta = scanare.imagine.amprenta;
-  const cheieCache = amprenta ? `${amprenta}:${scanare.nota.trim()}` : null;
+  const cheieCache = amprenta ? `p2:${amprenta}:${scanare.nota.trim()}` : null;
   const dinCache = cheieCache ? citesteCacheScanare(localStorage, cheieCache) : null;
   if (dinCache) return arataRezultatScanare(dinCache, true);
 

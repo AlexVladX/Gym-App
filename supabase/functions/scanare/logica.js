@@ -260,11 +260,12 @@ export function candidatDinOFF(p, azi) {
   return c;
 }
 
-export function adresaCautareFDC(textCautat, ambalat) {
-  const tipuri = ['Foundation', 'SR Legacy', 'Survey (FNDDS)'];
-  if (ambalat) tipuri.push('Branded');
-  const q = new URLSearchParams({ query: textCautat, pageSize: '8', dataType: tipuri.join(',') });
-  return `/fdc/v1/foods/search?${q}`;
+export const CALE_CAUTARE_FDC = '/fdc/v1/foods/search';
+// Căutarea FDC prin POST cu JSON (forma documentată pentru listele de tipuri de date).
+export function corpCautareFDC(textCautat, ambalat) {
+  const dataType = ['Foundation', 'SR Legacy', 'Survey (FNDDS)'];
+  if (ambalat) dataType.push('Branded');
+  return { query: textCautat, dataType, pageSize: 8 };
 }
 
 export function adresaCautareOFF(textCautat) {

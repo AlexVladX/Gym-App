@@ -18,22 +18,28 @@ const NEUTRE_SCANARE = new Set(('de cu si in la din pe pentru fara sau a al ale 
   'gratar fiert fierte fiarta prajit prajite prajita copt coapta cuptor abur crud cruda crude rumenit fript friptura ' +
   'grilled boiled fried baked roasted steamed raw cooked broiled braised stewed sauteed poached toasted fresh plain').split(' '));
 const GATIT_EN = /\b(cooked|boiled|roasted|grilled|broiled|fried|baked|steamed|braised|stewed|stir fried|sauteed|poached|microwaved|toasted)\b/;
-const CRUD_EN = /\b(raw|uncooked|dry|dried)\b/;
+const CRUD_EN = /\b(raw|uncooked|unprepared|dry|dried)\b/;
 
 function tokeniScanare(t) {
   const { normalizeazaText } = calculScanareBaze();
   return normalizeazaText(t).replace(/[^a-z0-9]+/g, ' ').split(' ').filter(w => w.length > 1 && !NEUTRE_SCANARE.has(w));
 }
-// Rădăcină grosieră, ca „burgeri” să găsească „burger” și „chicken” → „chick”.
-const radacinaScanare = w => (w.length > 5 ? w.slice(0, 5) : w);
+// Același cuvânt sau o formă apropiată („burger”/„burgeri”, „ou”/„oua”, „tomato”/„tomatoes”), dar nu
+// „cheeseburger” ≈ „cheese” (prefix scurt dintr-un cuvânt mult mai lung).
+function cuvinteEgaleScanare(x, y) {
+  if (x === y) return true;
+  const [s, l] = x.length <= y.length ? [x, y] : [y, x];
+  return s.length >= 3 && l.startsWith(s) && l.length - s.length <= 3;
+}
 
 // 0–1: cât din întrebare se regăsește în țintă (70%) și cât din țintă e acoperit (30%).
 function detaliiAsemanareScanare(intrebare, tinta) {
-  const q = [...new Set(tokeniScanare(intrebare).map(radacinaScanare))];
-  const t = new Set(tokeniScanare(tinta).map(radacinaScanare));
-  if (!q.length || !t.size) return { scor: 0, acoperire: 0, precizie: 0 };
-  const comune = q.filter(w => t.has(w)).length;
-  const acoperire = comune / q.length, precizie = comune / t.size;
+  const q = [...new Set(tokeniScanare(intrebare))];
+  const t = [...new Set(tokeniScanare(tinta))];
+  if (!q.length || !t.length) return { scor: 0, acoperire: 0, precizie: 0 };
+  const comuneQ = q.filter(w => t.some(v => cuvinteEgaleScanare(w, v))).length;
+  const comuneT = t.filter(v => q.some(w => cuvinteEgaleScanare(w, v))).length;
+  const acoperire = comuneQ / q.length, precizie = comuneT / t.length;
   return { scor: acoperire * 0.7 + precizie * 0.3, acoperire, precizie };
 }
 function asemanareScanare(intrebare, tinta) { return detaliiAsemanareScanare(intrebare, tinta).scor; }
@@ -136,22 +142,25 @@ function candidatiLocaliScanare(a, alimente, retete, idx, max = 6) {
   const scoruri = [];
   for (const al of alimente || []) {
     if (!al || !al.id || !(al.kcal >= 0)) continue;
-    const s = Math.max(asemanareScanare(a.nume, al.nume), a.numeEn ? asemanareScanare(a.numeEn, al.sursa || '') : 0);
+    const ro = detaliiAsemanareScanare(a.nume, al.nume);
+    const en = a.numeEn ? detaliiAsemanareScanare(a.numeEn, al.sursa || '') : { scor: 0, acoperire: 0, precizie: 0 };
+    const d = ro.scor >= en.scor ? ro : en;
+    const s = d.scor;
     if (s < 0.4) continue;
     const stare = stareDinTextScanare(al.sursa || '');
-    scoruri.push({ s: s - (st && stare && st !== stare ? 0.3 : 0), sBrut: s, tip: 'aliment', ob: al });
+    scoruri.push({ s: s - (st && stare && st !== stare ? 0.3 : 0), sBrut: s, acoperire: d.acoperire, tip: 'aliment', ob: al });
   }
   for (const r of retete || []) {
     if (!r || !r.id) continue;
     const d = detaliiAsemanareScanare(a.nume, r.nume);
     // Rețetele trec după alimente la scor egal (un aliment simplu e o potrivire mai sigură decât un fel compus).
-    if (d.scor >= PRAG_RETETA_SCANARE) scoruri.push({ s: d.scor - 0.05, sBrut: d.scor, precizie: d.precizie, tip: 'reteta', ob: r });
+    if (d.scor >= PRAG_RETETA_SCANARE) scoruri.push({ s: d.scor - 0.05, sBrut: d.scor, precizie: d.precizie, acoperire: d.acoperire, tip: 'reteta', ob: r });
   }
   scoruri.sort((x, y) => y.s - x.s);
   const rez = [];
   for (const x of scoruri) {
     const p = x.tip === 'aliment' ? potrivireDinAliment(x.ob, a) : potrivireDinReteta(x.ob, idx);
-    if (p) rez.push({ ...p, scor: Math.round(x.s * 100) / 100, scorBrut: x.sBrut, precizie: x.precizie });
+    if (p) rez.push({ ...p, scor: Math.round(x.s * 100) / 100, scorBrut: x.sBrut, precizie: x.precizie, acoperire: x.acoperire });
     if (rez.length >= max) break;
   }
   return rez;
@@ -163,15 +172,16 @@ function candidatiLocaliScanare(a, alimente, retete, idx, max = 6) {
 function alegeLocalScanare(candidati) {
   const alimente = candidati.filter(c => c.tip === 'local');
   const a = alimente[0];
-  if (a && a.scorBrut >= PRAG_LOCAL_SCANARE && !a.avertizari.length && a === candidati.find(c => c.tip === 'local' || c.scorBrut >= a.scorBrut)) return a;
+  if (a && a.scorBrut >= PRAG_LOCAL_SCANARE && a.acoperire >= 0.999 && !a.avertizari.length && a === candidati.find(c => c.tip === 'local' || c.scorBrut >= a.scorBrut)) return a;
   if (a && a.scorBrut >= 0.6) return null;
   const r = candidati.find(c => c.tip === 'reteta');
-  if (r && r.scorBrut >= 0.85 && r.precizie >= 0.66) return r;
+  if (r && r.scorBrut >= 0.85 && r.acoperire >= 0.999 && r.precizie >= 0.66) return r;
   return null;
 }
 
 function scorExternScanare(a, p) {
   let s = asemanareScanare(a.numeEn || a.nume, p.nume);
+  if (detaliiAsemanareScanare(a.numeEn || a.nume, p.nume).acoperire < 0.999) s -= 0.15;
   const st = stareArticolScanare(a);
   if (st && p.stare) s += st === p.stare ? 0.1 : -0.35;
   const deMarca = p.tip === 'off' || p.tipDate === 'Branded';

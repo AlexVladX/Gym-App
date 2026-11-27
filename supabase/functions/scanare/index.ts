@@ -10,7 +10,7 @@
 //   SUPABASE_URL                      — pusă automat de Supabase
 import {
   EroareScanare, valideazaCerere, corpCerereGemini, extrageTextGemini, curataRaspunsAI,
-  eroareDinStatusGemini, utilizareTokeni, valideazaCautare, candidatDinFDC, candidatDinOFF, adresaCautareFDC, adresaCautareOFF,
+  eroareDinStatusGemini, utilizareTokeni, valideazaCautare, candidatDinFDC, candidatDinOFF, CALE_CAUTARE_FDC, corpCautareFDC, adresaCautareOFF,
 } from './logica.js';
 
 const ORIGINI = (Deno.env.get('ORIGINI_PERMISE') || 'https://alexvladx.github.io,http://localhost:8765,http://127.0.0.1:8765')
@@ -102,10 +102,15 @@ async function cautaValori(corp: unknown) {
     const candidati: unknown[] = [];
     if (cheieFdc) {
       try {
-        const r = await cuTimp(USDA_BAZA + adresaCautareFDC(c.text, c.ambalat), { headers: { 'X-Api-Key': cheieFdc, Accept: 'application/json' } });
+        const cere = () => cuTimp(USDA_BAZA + CALE_CAUTARE_FDC, {
+          method: 'POST', headers: { 'X-Api-Key': cheieFdc, Accept: 'application/json', 'Content-Type': 'application/json' },
+          body: JSON.stringify(corpCautareFDC(c.text, c.ambalat)),
+        });
+        let r = await cere();
+        if (r.status >= 500) { await new Promise(ok => setTimeout(ok, 600)); r = await cere(); }
         if (r.status === 429) avertizari.add('USDA a refuzat temporar cererile (limita orară a cheii). Încearcă peste o oră.');
         else if (r.status === 401 || r.status === 403) avertizari.add('Cheia USDA din Supabase nu e validă.');
-        else if (!r.ok) avertizari.add('USDA nu a răspuns corect acum.');
+        else if (!r.ok) { console.warn('USDA', r.status, c.text, (await r.text().catch(() => '')).slice(0, 300)); avertizari.add(`USDA nu a răspuns corect acum (cod ${r.status}). Încearcă din nou sau caută alt nume.`); }
         else {
           const d = await r.json();
           for (const f of (d && Array.isArray(d.foods) ? d.foods : [])) { const k = candidatDinFDC(f, azi); if (k) candidati.push(k); }

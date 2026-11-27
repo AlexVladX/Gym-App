@@ -85,9 +85,9 @@ test('server: Open Food Facts → doar cu kcal și macro la 100 g; adresele de c
   assert.deepEqual(c.portii, [{ nume: '150 g', grame: 150 }]);
   assert.equal(L.candidatDinOFF({ ...p, nutriments: { 'energy-kj_100g': 300 } }, 'd'), null);
   assert.equal(L.candidatDinOFF({ ...p, code: 'abc' }, 'd'), null);
-  assert.match(L.adresaCautareFDC('rice, white, cooked', false), /dataType=Foundation%2CSR\+Legacy%2CSurvey\+%28FNDDS%29&?/);
-  assert.match(L.adresaCautareFDC('chips', true), /Branded/);
-  assert.ok(!/api_key/.test(L.adresaCautareFDC('x', false)), 'cheia USDA nu e în adresă (merge în antet)');
+  assert.deepEqual(L.corpCautareFDC('rice, white, cooked', false), { query: 'rice, white, cooked', dataType: ['Foundation', 'SR Legacy', 'Survey (FNDDS)'], pageSize: 8 });
+  assert.ok(L.corpCautareFDC('chips', true).dataType.includes('Branded'));
+  assert.ok(!/api_key/.test(L.CALE_CAUTARE_FDC), 'cheia USDA nu e în adresă (merge în antet)');
   assert.throws(() => L.valideazaCautare({ cereri: [] }));
   assert.throws(() => L.valideazaCautare({ cereri: Array(16).fill({ text: 'ou' }) }));
   assert.deepEqual(L.valideazaCautare({ cereri: [{ id: 'a', text: ' egg ', ambalat: true, marca: 'X' }] }), [{ id: 'a', text: 'egg', ambalat: true, marca: 'X' }]);
@@ -183,4 +183,16 @@ test('cache-ul căutărilor: 30 de zile, cheie după text, marcă și tip', () =
   B.scrieCacheCautari(st, k, [{ id: 1 }], 1e12);
   assert.deepEqual(B.citesteCacheCautari(st, k, 1e12 + 1000), [{ id: 1 }]);
   assert.equal(B.citesteCacheCautari(st, k, 1e12 + 31 * 86400000), null);
+});
+
+test('potrivire: cuvintele se compară întregi — „cheeseburger” nu propune brânză; bacon „unprepared” = crud', () => {
+  assert.equal(local('mini burgeri', 'mini cheeseburgers', 'gratar').c.filter(x => x.tip === 'local').length, 0);
+  assert.equal(local('pizza cu ciuperci', 'mushroom pizza', 'cuptor').ales, null, 'nu „Ciuperci” pentru pizza');
+  assert.equal(B.stareDinTextScanare('Pork, cured, bacon, unprepared'), 'crud');
+  assert.ok(B.asemanareScanare('burgeri', 'burger') > 0.9);
+  assert.ok(B.asemanareScanare('tomatoes', 'tomato') > 0.9);
+  assert.equal(B.asemanareScanare('cheeseburger', 'cheese'), 0);
+  const ext = B.ordoneazaExterneScanare({ nume: 'Pizza cu ciuperci', numeEn: 'mushroom pizza', preparare: 'cuptor' }, [
+    { sursa: 'usda', id: '1', nume: 'Mushrooms, white, cooked, boiled', tipDate: 'SR Legacy', per100: { kcal: 28, proteine: 2.2, carbohidrati: 5.3, grasimi: 0.5 } }]);
+  assert.equal(ext.ales, null, 'doar „mushrooms” fără „pizza” → nu se alege automat');
 });
