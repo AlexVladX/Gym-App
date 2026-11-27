@@ -22,10 +22,11 @@ Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (Indexed
 | `nutritie-cumparaturi.js` | Nutriție (etapa 10): lista de cumpărături — adună ingredientele meselor neîncepute pe aliment, categorii, rotunjire, suprapune bifele/scoaterile/cantitățile tale, export text (fără DOM) |
 | `nutritie-imagini.js` | Nutriție: fotografia rețetei din bibliotecă (Pexels, locală, WebP), atribuirea și imaginea de rezervă |
 | `catalog.js` | Biblioteca unificată: catalog + exercițiile și preferințele tale, grupe, alternative, validarea exercițiilor proprii |
-| `ui.js` | Componente comune: `el`, iconițe, butoane, notificări, dialoguri, stări goale, formatări |
+| `ui.js` | Componente comune: `el`, iconițe, butoane, notificări, dialoguri (cu regulile de focus), stări goale, formatări (`plural`, `numarDe`) |
+| `navigare.js` | Butonul/gestul „Înapoi”: istoricul browserului pentru ecrane și dialoguri |
 | `grafice.js` | Grafice pe canvas, cu redesenare la redimensionare și valoare la atingere |
 | `setari.js` | Setările (localStorage + incluse în backup) și ecranul Setări |
-| `timer.js` | Timerul de pauză și semnalul sonor |
+| `timer.js` | Timerul de odihnă dintre serii (salvat în `meta`, supraviețuiește reîncărcării) și semnalul sonor |
 | `sesiune.js` | Antrenamentul în curs: exerciții, serii, ciornă, recorduri, închidere |
 | `corp-calcul.js` | Calcule pentru Corp (etapa 6): tipuri și unități, media pe 7 zile, IMC, obiectiv, comparare (fără DOM) |
 | `corp.js` | Ecranul Corp: greutate, profil și obiectiv, măsurători, corectare, comparare, poze de progres |
@@ -435,3 +436,21 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
 - **Generatorul:** cafeaua planificată în zi e tratată ca fixă; mesele completează restul țintei, iar raportul o include.
 - **Cofeina:** avertizare peste limita ta pe zi și pentru o singură cafea peste 200 mg (EFSA 2015: până la 400 mg/zi și 200 mg/doză pentru adulții sănătoși; 200 mg/zi în sarcină). Informativ, nu sfat medical.
 - **Interfață:** `cafea-ui.js` — cardul „Cafea” în Ziua mea, cardul „Cafea azi” pe Acasă (MEAL PREP), formularul cu variante rapide, dialogul „Cafeaua zilnică” (pornește/oprește/șterge, limita ta). GYM MODE neschimbat.
+
+## Îmbunătățiri — Etapa 1: fiabilitate în sală (v53)
+
+- **Timerul de odihnă** se salvează în `meta` (cheia `timerOdihna`): `{ sfarsit }` când merge sau `{ ramasMs }` când e pe pauză,
+  plus `durata` și `pusDeAntrenament`. `meta` nu se sincronizează și nu declanșează sincronizarea. La pornire (după ciornă),
+  `decizieTimerLaPornire` (testată): activ → continuă cu timpul calculat din ora de final; pe pauză → rămâne pe pauză;
+  expirat de < 2 min → „Odihna s-a terminat.” fără sunet; mai vechi → șters în liniște. Starea se șterge la „Sari”, la final,
+  la încheierea și la abandonarea antrenamentului. Notificarea folosește același `tag` (se înlocuiește, nu se dublează).
+- **„Înapoi”** (`navigare.js`): rădăcina istoricului = Acasă al modului de la pornire (de acolo „Înapoi” iese din aplicație);
+  fiecare ecran (cu grupul de file din Nutriție) și fiecare dialog adaugă o intrare. „Înapoi” închide dialogul de deasupra ca
+  „Renunță” (`laAnulare`). Un dialog închis normal își scoate intrarea cu un `history.back()` controlat sau o lasă refolosită de
+  dialogul/ecranul deschis imediat după; cât timp o navigare de-a noastră e în curs, intrările noi așteaptă în coadă. Butonul
+  Acasă al modului de la pornire întoarce istoricul la rădăcină. `cloud.js` păstrează `history.state` când curăță adresa.
+  Setările au „Înapoi” în antet.
+- **Focus în dialoguri**: periculos → butonul de anulare; ecran tactil → titlul (fără tastatură); `cereText` → câmpul;
+  desktop → primul câmp. Un dialog înlocuit de altul primește propriul `laAnulare` (nu pe al celui nou).
+- **„Odihnă”** pentru timerul dintre serii în toată interfața; „Pauză antrenament” rămâne. Cheile setărilor sunt aceleași.
+- `numarDe(n)` pentru „cele 20 de …”; textele cu „Cele 1 …” au variantă de singular.

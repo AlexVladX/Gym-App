@@ -13,14 +13,17 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
   <title>Jurnal de antrenament</title>
-  <link rel="stylesheet" href="styles.css?v=52">
-  <script src="tema.js?v=52"></script>
+  <link rel="stylesheet" href="styles.css?v=53">
+  <script src="tema.js?v=53"></script>
 </head>
-<body class="se-incarca" data-versiune="52">
+<body class="se-incarca" data-versiune="53">
   <header class="topbar">
     <div class="topbar-interior">
       <div class="marca">
         <span class="marca-semn" aria-hidden="true"></span>
+        <button id="btn-inapoi" class="btn btn-fantoma btn-icon" type="button" aria-label="Înapoi" hidden>
+          <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
         <h1 id="titlu-ecran">Acasă</h1>
       </div>
       <div class="comutator-mod" role="group" aria-label="Modul aplicației">
@@ -57,8 +60,8 @@
         </div>
         <div id="sesiune-comenzi" class="rand-butoane" hidden>
           <button id="btn-pauza-antrenament" class="btn btn-secundar" type="button">Pauză antrenament</button>
-          <button id="btn-timer-manual" class="btn btn-secundar" type="button" aria-label="Pornește timerul de pauză dintre serii">
-            <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4l2.5 2M9 2h6"/></svg><span>Timer</span>
+          <button id="btn-timer-manual" class="btn btn-secundar" type="button" aria-label="Pornește odihna dintre serii">
+            <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4l2.5 2M9 2h6"/></svg><span>Odihnă</span>
           </button>
         </div>
       </div>
@@ -425,10 +428,10 @@
       <h2 class="titlu-sectiune">Antrenament</h2>
       <div class="card">
         <div class="rand aliniat">
-          <label for="set-pauza">Pauză între serii (secunde)</label>
+          <label for="set-pauza">Odihnă între serii (secunde)</label>
           <input id="set-pauza" class="camp-scurt" type="number" inputmode="numeric" min="10" max="600">
         </div>
-        <div class="chipuri mt" aria-label="Valori rapide pentru pauză">
+        <div class="chipuri mt" aria-label="Valori rapide pentru odihnă">
           <button class="chip" type="button" data-pauza="60">1:00</button>
           <button class="chip" type="button" data-pauza="90">1:30</button>
           <button class="chip" type="button" data-pauza="120">2:00</button>
@@ -436,18 +439,18 @@
         </div>
         <div class="separator"></div>
         <label class="rand aliniat comutator">
-          <span>Pornește pauza automat după fiecare serie bifată</span>
+          <span>Pornește odihna automat după fiecare serie bifată</span>
           <input id="set-pauza-auto" type="checkbox" role="switch">
         </label>
         <label class="rand aliniat comutator mt">
-          <span>Semnal la finalul pauzei (sunet; vibrație pe Android)</span>
+          <span>Semnal la finalul odihnei (sunet; vibrație pe Android)</span>
           <input id="set-semnal" type="checkbox" role="switch">
         </label>
         <label class="rand aliniat comutator mt">
-          <span>Pauza pe ecranul de blocare (notificare)</span>
+          <span>Odihna pe ecranul de blocare (notificare)</span>
           <input id="set-notif" type="checkbox" role="switch">
         </label>
-        <p class="nota" id="set-notif-nota">Arată ora la care se termină pauza și anunță finalul ei. Pe Android, notificarea are și butonul „Serie făcută”. Pe iPhone merge doar cu aplicația adăugată pe ecranul principal (iOS 16.4+), fără buton.</p>
+        <p class="nota" id="set-notif-nota">Arată ora la care se termină odihna și anunță finalul ei. Pe Android, notificarea are și butonul „Serie făcută”. Pe iPhone merge doar cu aplicația adăugată pe ecranul principal (iOS 16.4+), fără buton.</p>
         <div class="separator"></div>
         <label class="rand aliniat comutator">
           <span>Ține ecranul aprins în timpul antrenamentului</span>
@@ -534,17 +537,17 @@
     </section>
   </main>
 
-  <!-- Timerul de pauză: bară fixă deasupra navigației -->
-  <div id="timer" class="timer" role="timer" aria-live="off" hidden>
+  <!-- Timerul de odihnă dintre serii: bară fixă deasupra navigației -->
+  <div id="timer" class="timer" role="timer" aria-live="off" aria-label="Odihnă între serii" hidden>
     <div class="timer-progres"><div id="timer-progres"></div></div>
     <div class="timer-interior">
       <button id="btn-timer-minus" class="btn btn-fantoma btn-mic" type="button" aria-label="Scade 15 secunde">−15</button>
       <div class="timer-centru">
-        <span id="timer-eticheta" class="timer-eticheta">Pauză</span>
+        <span id="timer-eticheta" class="timer-eticheta">Odihnă</span>
         <span id="timer-afisaj" class="timer-cifre">0:00</span>
       </div>
       <button id="btn-timer-plus" class="btn btn-fantoma btn-mic" type="button" aria-label="Adaugă 15 secunde">+15</button>
-      <button id="btn-timer-pauza" class="btn btn-fantoma btn-mic btn-icon" type="button" aria-label="Oprește temporar timerul">
+      <button id="btn-timer-pauza" class="btn btn-fantoma btn-mic btn-icon" type="button" aria-label="Oprește temporar odihna">
         <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5v14M16 5v14"/></svg>
       </button>
       <button id="btn-timer-oprit" class="btn btn-secundar btn-mic" type="button">Sari</button>
@@ -594,52 +597,53 @@
     </button>
   </nav>
 
-  <script src="db.js?v=52"></script>
-  <script src="validare.js?v=52"></script>
-  <script src="exercitii.js?v=52"></script>
-  <script src="analiza.js?v=52"></script>
-  <script src="statistici.js?v=52"></script>
-  <script src="corp-calcul.js?v=52"></script>
-  <script src="realizari.js?v=52"></script>
-  <script src="nutritie-alimente.js?v=52"></script>
-  <script src="nutritie-retete.js?v=52"></script>
-  <script src="nutritie-calcul.js?v=52"></script>
-  <script src="nutritie-zi.js?v=52"></script>
-  <script src="cafea.js?v=52"></script>
-  <script src="nutritie-generator.js?v=52"></script>
-  <script src="nutritie-analiza.js?v=52"></script>
-  <script src="nutritie-cumparaturi.js?v=52"></script>
-  <script src="nutritie-imagini.js?v=52"></script>
-  <script src="catalog.js?v=52"></script>
-  <script src="figuri.js?v=52"></script>
-  <script src="ui.js?v=52"></script>
-  <script src="grafice.js?v=52"></script>
-  <script src="setari.js?v=52"></script>
-  <script src="timer.js?v=52"></script>
-  <script src="sesiune.js?v=52"></script>
-  <script src="corp.js?v=52"></script>
-  <script src="progres.js?v=52"></script>
-  <script src="realizari-ui.js?v=52"></script>
-  <script src="istoric.js?v=52"></script>
-  <script src="biblioteca.js?v=52"></script>
-  <script src="nutritie.js?v=52"></script>
-  <script src="nutritie-zi-ui.js?v=52"></script>
-  <script src="cafea-ui.js?v=52"></script>
-  <script src="nutritie-saptamana-ui.js?v=52"></script>
-  <script src="nutritie-analiza-ui.js?v=52"></script>
-  <script src="nutritie-cumparaturi-ui.js?v=52"></script>
-  <script src="scanare.js?v=52"></script>
-  <script src="scanare-baze.js?v=52"></script>
-  <script src="scanare-ui.js?v=52"></script>
-  <script src="scanare-istoric.js?v=52"></script>
-  <script src="acasa-mealprep.js?v=52"></script>
-  <script src="backup.js?v=52"></script>
-  <script src="siguranta.js?v=52"></script>
-  <script src="acasa.js?v=52"></script>
-  <script src="cloud-config.js?v=52"></script>
-  <script src="sincron.js?v=52"></script>
-  <script src="cloud.js?v=52"></script>
-  <script src="cloud-ui.js?v=52"></script>
-  <script src="main.js?v=52"></script>
+  <script src="db.js?v=53"></script>
+  <script src="validare.js?v=53"></script>
+  <script src="exercitii.js?v=53"></script>
+  <script src="analiza.js?v=53"></script>
+  <script src="statistici.js?v=53"></script>
+  <script src="corp-calcul.js?v=53"></script>
+  <script src="realizari.js?v=53"></script>
+  <script src="nutritie-alimente.js?v=53"></script>
+  <script src="nutritie-retete.js?v=53"></script>
+  <script src="nutritie-calcul.js?v=53"></script>
+  <script src="nutritie-zi.js?v=53"></script>
+  <script src="cafea.js?v=53"></script>
+  <script src="nutritie-generator.js?v=53"></script>
+  <script src="nutritie-analiza.js?v=53"></script>
+  <script src="nutritie-cumparaturi.js?v=53"></script>
+  <script src="nutritie-imagini.js?v=53"></script>
+  <script src="catalog.js?v=53"></script>
+  <script src="figuri.js?v=53"></script>
+  <script src="ui.js?v=53"></script>
+  <script src="navigare.js?v=53"></script>
+  <script src="grafice.js?v=53"></script>
+  <script src="setari.js?v=53"></script>
+  <script src="timer.js?v=53"></script>
+  <script src="sesiune.js?v=53"></script>
+  <script src="corp.js?v=53"></script>
+  <script src="progres.js?v=53"></script>
+  <script src="realizari-ui.js?v=53"></script>
+  <script src="istoric.js?v=53"></script>
+  <script src="biblioteca.js?v=53"></script>
+  <script src="nutritie.js?v=53"></script>
+  <script src="nutritie-zi-ui.js?v=53"></script>
+  <script src="cafea-ui.js?v=53"></script>
+  <script src="nutritie-saptamana-ui.js?v=53"></script>
+  <script src="nutritie-analiza-ui.js?v=53"></script>
+  <script src="nutritie-cumparaturi-ui.js?v=53"></script>
+  <script src="scanare.js?v=53"></script>
+  <script src="scanare-baze.js?v=53"></script>
+  <script src="scanare-ui.js?v=53"></script>
+  <script src="scanare-istoric.js?v=53"></script>
+  <script src="acasa-mealprep.js?v=53"></script>
+  <script src="backup.js?v=53"></script>
+  <script src="siguranta.js?v=53"></script>
+  <script src="acasa.js?v=53"></script>
+  <script src="cloud-config.js?v=53"></script>
+  <script src="sincron.js?v=53"></script>
+  <script src="cloud.js?v=53"></script>
+  <script src="cloud-ui.js?v=53"></script>
+  <script src="main.js?v=53"></script>
 </body>
 </html>

@@ -121,7 +121,8 @@ async function verificaAcum() {
     const v = await verificaCopiaDinCloud();
     notifica(v.diferite || v.lipsa
       ? `Verificare: ${v.identice} identice, ${v.diferite} diferite, ${v.lipsa} netrimise încă.`
-      : `Verificare reușită: toate cele ${v.identice} înregistrări de pe telefon sunt identice în cont.`, v.diferite || v.lipsa ? 'info' : 'succes', 6000);
+      : v.identice === 1 ? 'Verificare reușită: înregistrarea de pe telefon e identică în cont.'
+        : `Verificare reușită: toate cele ${numarDe(v.identice)} înregistrări de pe telefon sunt identice în cont.`, v.diferite || v.lipsa ? 'info' : 'succes', 6000);
   } catch (err) { notifica(mesajEroareCloud(err), 'eroare'); }
   deseneazaCardCont();
 }
@@ -173,7 +174,7 @@ async function propuneLegarea() {
       });
     });
     if (alegere === 'doarCont') {
-      const sigur = await confirma({ titlu: 'Înlocuiești datele de pe telefon?', text: `Cele ${local} înregistrări de pe acest telefon se înlocuiesc cu cele din cont. Facem întâi o copie locală.`, ok: 'Înlocuiește', pericol: true });
+      const sigur = await confirma({ titlu: 'Înlocuiești datele de pe telefon?', text: `${local === 1 ? 'Înregistrarea de pe acest telefon se înlocuiește' : `Cele ${numarDe(local)} înregistrări de pe acest telefon se înlocuiesc`} cu cele din cont. Facem întâi o copie locală.`, ok: 'Înlocuiește', pericol: true });
       if (sigur) await executa('doarCont', 'Aducem datele din cont…');
     } else if (alegere === 'combina') await executa('combina', 'Combinăm datele…');
     deseneazaCardCont();

@@ -114,7 +114,7 @@ function citesteCampuriSetari() {
   if (pasKg > 0 && pasKg <= 20) setari.pasKg = pasKg;
   else notifica('Pasul de greutate trebuie să fie între 0,5 și 20 kg.', 'eroare');
   if (pauza >= 10 && pauza <= 600) setari.pauzaSec = pauza;
-  else notifica('Pauza trebuie să fie între 10 și 600 de secunde.', 'eroare');
+  else notifica('Odihna trebuie să fie între 10 și 600 de secunde.', 'eroare');
   setari.ecranAprins = $('set-ecran').checked;
   setari.pauzaAutomata = $('set-pauza-auto').checked;
   setari.semnal = $('set-semnal').checked;

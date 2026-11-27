@@ -1,4 +1,6 @@
-// Timerul de pauză dintre serii și semnalul de final.
+// Timerul de odihnă dintre serii și semnalul de final.
+// (În cod variabilele păstrează numele vechi „pauză”; în interfață se numește „Odihnă”, ca să nu se confunde
+// cu „Pauză antrenament”, care oprește cronometrul antrenamentului.)
 // Ținem minte momentul de final, nu numărăm secunde. Așa, dacă ecranul se blochează
 // sau aplicația e în fundal, timpul rămas se recalculează corect la revenire.
 // Când timerul e pus pe pauză, ținem minte timpul rămas.
@@ -37,6 +39,68 @@ function sunaSemnalul() {
   }
 }
 
+// ---------- Starea salvată (supraviețuiește reîncărcării) ----------
+// Se ține în store-ul `meta` (nu se sincronizează și nu e în localStorage), cheia `timerOdihna`:
+// { sfarsit (ms, când merge), ramasMs (când e pe pauză), durata (secunde), pusDeAntrenament }.
+const CHEIE_TIMER = 'timerOdihna';
+const PRAG_ODIHNA_TERMINATA_MS = 2 * 60 * 1000; // expirat de mai puțin de atât → „Odihna s-a terminat”, fără sunet
+
+// Ce facem la pornire cu un timer salvat (logică pură, testată în Node):
+//   { tip: 'activ', ramasMs, durata } — încă merge: repornește cu timpul rămas, calculat din ora de final;
+//   { tip: 'pauza', ramasMs, durata } — era pus pe pauză: rămâne pe pauză cu același timp rămas;
+//   { tip: 'terminat' } — s-a terminat de curând (< 2 min): anunț scurt, fără sunet;
+//   { tip: 'expirat' } / { tip: 'nimic' } — se șterge în liniște / nu era nimic salvat.
+function decizieTimerLaPornire(salvat, acum = Date.now()) {
+  if (!salvat || typeof salvat !== 'object') return { tip: 'nimic' };
+  const durata = Number.isFinite(salvat.durata) && salvat.durata > 0 ? salvat.durata : null;
+  if (Number.isFinite(salvat.ramasMs) && salvat.ramasMs > 0) {
+    return { tip: 'pauza', ramasMs: salvat.ramasMs, durata: Math.max(durata || 0, Math.ceil(salvat.ramasMs / 1000)) };
+  }
+  if (!Number.isFinite(salvat.sfarsit)) return { tip: 'expirat' };
+  const ramas = salvat.sfarsit - acum;
+  if (ramas > 0) return { tip: 'activ', ramasMs: ramas, durata: Math.max(durata || 0, Math.ceil(ramas / 1000)) };
+  return -ramas < PRAG_ODIHNA_TERMINATA_MS ? { tip: 'terminat' } : { tip: 'expirat' };
+}
+
+function stareTimerDeSalvat() {
+  if (sfarsitPauza !== null) return { sfarsit: sfarsitPauza, durata: durataPauzaCurenta, pusDeAntrenament: false };
+  if (ramasPauzaMs !== null) return { ramasMs: ramasPauzaMs, durata: durataPauzaCurenta, pusDeAntrenament: timerPusDeAntrenamentActiv() };
+  return null;
+}
+function timerPusDeAntrenamentActiv() { return typeof timerPusDeAntrenament !== 'undefined' && timerPusDeAntrenament === true; }
+
+// Salvarea e „cel mai bine posibil”: dacă baza nu răspunde, timerul merge oricum în memorie.
+function salveazaStareTimer() {
+  if (typeof scrieMeta !== 'function') return;
+  const s = stareTimerDeSalvat();
+  (s ? scrieMeta(CHEIE_TIMER, s) : stergeMeta(CHEIE_TIMER)).catch(err => console.warn('Starea timerului nu a putut fi salvată', err));
+}
+
+// La pornire (după ciornă): repornește timerul salvat, anunță finalul recent sau îl șterge.
+async function restaureazaTimerul() {
+  let salvat = null;
+  try { salvat = await citesteMeta(CHEIE_TIMER); } catch (err) { console.warn('Timerul salvat nu a putut fi citit', err); return; }
+  const d = decizieTimerLaPornire(salvat);
+  if (d.tip === 'nimic') return;
+  if (d.tip === 'activ' || d.tip === 'pauza') {
+    durataPauzaCurenta = d.durata;
+    if (d.tip === 'activ') { sfarsitPauza = Date.now() + d.ramasMs; ramasPauzaMs = null; }
+    else {
+      sfarsitPauza = null; ramasPauzaMs = d.ramasMs;
+      if (salvat.pusDeAntrenament && typeof timerPusDeAntrenament !== 'undefined') timerPusDeAntrenament = true;
+    }
+    afiseazaBaraTimer(true);
+    clearInterval(intervalTimer);
+    if (d.tip === 'activ') intervalTimer = setInterval(actualizeazaTimerul, 250);
+    actualizeazaTimerul();
+    notificaPauza(); // același „tag”: înlocuiește notificarea veche, nu face una nouă
+    return;
+  }
+  stergeMeta(CHEIE_TIMER).catch(() => {});
+  inchideNotificarePauza();
+  if (d.tip === 'terminat') notifica('Odihna s-a terminat.', 'info');
+}
+
 // ---------- Stare ----------
 function timerActiv() { return sfarsitPauza !== null || ramasPauzaMs !== null; }
 function timerPePauza() { return ramasPauzaMs !== null; }
@@ -58,6 +122,7 @@ function porneshteTimerul(secunde = setari.pauzaSec) {
   intervalTimer = setInterval(actualizeazaTimerul, 250);
   actualizeazaTimerul();
   notificaPauza();
+  salveazaStareTimer();
 }
 
 function opresteTimerul() {
@@ -66,6 +131,7 @@ function opresteTimerul() {
   ramasPauzaMs = null;
   afiseazaBaraTimer(false);
   inchideNotificarePauza();
+  salveazaStareTimer(); // șterge starea salvată („Sari”, final, încheiere, abandon)
 }
 
 function pauzeazaTimerul() {
@@ -75,6 +141,7 @@ function pauzeazaTimerul() {
   clearInterval(intervalTimer);
   actualizeazaTimerul();
   notificaPauza();
+  salveazaStareTimer();
 }
 
 function reiaTimerul() {
@@ -85,6 +152,7 @@ function reiaTimerul() {
   intervalTimer = setInterval(actualizeazaTimerul, 250);
   actualizeazaTimerul();
   notificaPauza();
+  salveazaStareTimer();
 }
 
 function ajusteazaTimerul(secunde) {
@@ -94,6 +162,7 @@ function ajusteazaTimerul(secunde) {
   durataPauzaCurenta = Math.max(durataPauzaCurenta + secunde, Math.ceil(msRamase() / 1000), 1);
   actualizeazaTimerul();
   notificaPauza();
+  salveazaStareTimer();
 }
 
 function afiseazaBaraTimer(vizibil) {
@@ -109,17 +178,17 @@ function actualizeazaTimerul() {
   $('timer-progres').style.width = `${procent}%`;
   const pePauza = timerPePauza();
   $('timer').classList.toggle('pe-pauza', pePauza);
-  $('timer-eticheta').textContent = pePauza ? 'Pauză oprită' : 'Pauză';
+  $('timer-eticheta').textContent = pePauza ? 'Odihnă oprită' : 'Odihnă';
   const btn = $('btn-timer-pauza');
   btn.replaceChildren(iconita(pePauza ? 'play' : 'pauza'));
-  btn.setAttribute('aria-label', pePauza ? 'Pornește din nou timerul' : 'Oprește temporar timerul');
+  btn.setAttribute('aria-label', pePauza ? 'Pornește din nou odihna' : 'Oprește temporar odihna');
   if (rest === 0 && !pePauza) {
     opresteTimerul();
     if (setari.semnal) {
       sunaSemnalul();
       if (navigator.vibrate) navigator.vibrate([300, 150, 300]); // nu funcționează pe iPhone
     }
-    notifica('Pauza s-a terminat. Următoarea serie!', 'succes');
+    notifica('Odihna s-a terminat. Următoarea serie!', 'succes');
     notificaFinalPauza();
   }
 }
@@ -145,13 +214,13 @@ function notificaPauza() {
   if (!timerActiv()) return;
   const actiuni = [{ action: 'serie', title: 'Serie făcută' }];
   if (timerPePauza()) {
-    arataNotificare('Pauză oprită', { body: `Mai ai ${formatDurata(Math.ceil(msRamase() / 1000))}.`, silent: true, renotify: false, actions: actiuni });
+    arataNotificare('Odihnă oprită', { body: `Mai ai ${formatDurata(Math.ceil(msRamase() / 1000))}.`, silent: true, renotify: false, actions: actiuni });
   } else {
-    arataNotificare(`Pauză până la ${oraCeas(sfarsitPauza)}`, { body: urmatoareaSerieText(), silent: true, renotify: false, actions: actiuni });
+    arataNotificare(`Odihnă până la ${oraCeas(sfarsitPauza)}`, { body: urmatoareaSerieText(), silent: true, renotify: false, actions: actiuni });
   }
 }
 function notificaFinalPauza() {
-  arataNotificare('Pauza s-a terminat', { body: urmatoareaSerieText() || 'Următoarea serie!', silent: false, renotify: true,
+  arataNotificare('Odihna s-a terminat', { body: urmatoareaSerieText() || 'Următoarea serie!', silent: false, renotify: true,
     vibrate: [300, 150, 300], requireInteraction: false, actions: [{ action: 'serie', title: 'Serie făcută' }] });
 }
 function inchideNotificarePauza() {
@@ -189,3 +258,5 @@ function initTimer() {
   $('btn-timer-plus').addEventListener('click', () => ajusteazaTimerul(15));
   $('btn-timer-pauza').addEventListener('click', () => (timerPePauza() ? reiaTimerul() : pauzeazaTimerul()));
 }
+
+if (typeof module !== 'undefined') module.exports = { decizieTimerLaPornire, PRAG_ODIHNA_TERMINATA_MS };

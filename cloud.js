@@ -170,7 +170,7 @@ async function initializeazaAdaptor() {
   const u = await sinc.adaptor.utilizator();
   if (/access_token|type=recovery|error_description/.test(location.hash)) {
     if (/error_description/.test(location.hash) && typeof notifica === 'function') notifica('Linkul din e-mail nu mai e valabil. Cere unul nou.', 'eroare', 6000);
-    history.replaceState(null, '', location.pathname + location.search);
+    history.replaceState(history.state, '', location.pathname + location.search); // păstrăm starea de navigare (navigare.js)
   }
   if (u) await laConectare(u);
   return sinc.adaptor;

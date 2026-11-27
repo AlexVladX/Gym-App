@@ -497,7 +497,7 @@ function deschideInlocuire(i) {
       parti.push(el('div', { class: 'nota nota-avertizare fara-potrivire' }, [
         el('strong', { text: 'Nicio rețetă nu are valori suficient de apropiate. ' }),
         rez.totalCandidate
-          ? `Niciuna din cele ${rez.totalCandidate} rețete permise nu intră în toleranță la toate valorile, nici cu porția ajustată.${toateMesele ? '' : ' Poți căuta și în rețetele altor mese.'} Mai jos sunt cele mai apropiate, cu diferențele marcate — nu sunt echivalente.`
+          ? `${rez.totalCandidate === 1 ? 'Singura rețetă permisă nu intră' : `Niciuna din cele ${numarDe(rez.totalCandidate)} rețete permise nu intră`} în toleranță la toate valorile, nici cu porția ajustată.${toateMesele ? '' : ' Poți căuta și în rețetele altor mese.'} Mai jos sunt cele mai apropiate, cu diferențele marcate — nu sunt echivalente.`
           : `Nu există altă rețetă${toateMesele ? '' : ` de ${numeMasa(i.masa).toLowerCase()}`} care să respecte preferințele stricte și să nu fie deja în zi${rez.excluseFiltre ? ` (${rez.excluseFiltre} excluse de filtre)` : ''}.`,
       ]));
       parti.push(...rez.apropiate.filter(a => a.scor >= 40).slice(0, 3).map(card));

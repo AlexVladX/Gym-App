@@ -337,7 +337,7 @@ async function golesteZiSapt(data, numeZi) {
   const mancate = zi.mese.filter(i => i.stare !== 'neinceput').length;
   const ok = await confirma({
     titlu: `Golești ${numeZi.toLowerCase()}?`, ok: 'Șterge tot', pericol: true,
-    text: `Se ${n === 1 ? 'șterge felul de mâncare' : `șterg toate cele ${n} feluri de mâncare`} din ${numeZi.toLowerCase()}${mancate ? `, inclusiv ${mancate === 1 ? (n === 1 ? 'deși e notat ca mâncat' : 'unul notat ca mâncat') : `${mancate} notate ca mâncate`}` : ''}. Cafelele rămân. Poți anula imediat după.`,
+    text: `Se ${n === 1 ? 'șterge felul de mâncare' : `șterg toate cele ${numarDe(n)} feluri de mâncare`} din ${numeZi.toLowerCase()}${mancate ? `, inclusiv ${mancate === 1 ? (n === 1 ? 'deși e notat ca mâncat' : 'unul notat ca mâncat') : `${mancate} notate ca mâncate`}` : ''}. Cafelele rămân. Poți anula imediat după.`,
   });
   if (!ok) return;
   try { await salveazaZileSapt({ [data]: { ...zi, mese: [] } }); }

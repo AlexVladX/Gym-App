@@ -509,6 +509,10 @@ function scrieMeta(cheie, valoare) {
   return cere('meta', 'readwrite', st => st.put(valoare, cheie));
 }
 
+function stergeMeta(cheie) {
+  return cere('meta', 'readwrite', st => st.delete(cheie));
+}
+
 // ----- Backup -----
 // Datele brute din stores (fără setări). Setările se adaugă în backup.js.
 // Citim direct, nu prin funcțiile filtrate de mai sus, ca backupul să conțină tot ce e în bază.

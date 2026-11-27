@@ -146,7 +146,7 @@ function pePauza() { return stare.pauzaStart !== null; }
 function puneAntrenamentulPePauza() {
   if (stare.inceput === null || pePauza()) return;
   stare.pauzaStart = Date.now();
-  if (timerActiv() && !timerPePauza()) { pauzeazaTimerul(); timerPusDeAntrenament = true; }
+  if (timerActiv() && !timerPePauza()) { pauzeazaTimerul(); timerPusDeAntrenament = true; salveazaStareTimer(); }
   programeazaCiorna();
   notifica('Antrenament pus pe pauză. Durata nu mai crește până îl reiei.', 'info');
 }
@@ -866,7 +866,7 @@ async function renuntaLaSesiune() {
   const da = await confirma({
     titlu: 'Renunți la antrenament?',
     text: serii
-      ? `Cele ${plural(serii, 'serie bifată', 'serii bifate')} de azi se vor pierde. Istoricul salvat nu se schimbă.`
+      ? `${serii === 1 ? 'Seria bifată de azi se va pierde.' : `Cele ${plural(serii, 'serie bifată', 'serii bifate')} de azi se vor pierde.`} Istoricul salvat nu se schimbă.`
       : 'Antrenamentul în curs se golește. Istoricul salvat nu se schimbă.',
     ok: 'Renunță la antrenament', anulare: 'Continuă', pericol: true,
   });

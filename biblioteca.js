@@ -424,7 +424,7 @@ async function stergeExercitiuPropriu(e) {
   const da = await confirma({
     titlu: 'Ștergi exercițiul?',
     text: st.numar
-      ? `„${e.nume}" dispare din bibliotecă. Cele ${plural(st.numar, 'antrenament', 'antrenamente')} în care apare rămân în istoric, cu toate seriile.`
+      ? `„${e.nume}" dispare din bibliotecă. ${st.numar === 1 ? 'Antrenamentul în care apare rămâne' : `Cele ${plural(st.numar, 'antrenament', 'antrenamente')} în care apare rămân`} în istoric, cu toate seriile.`
       : `„${e.nume}" dispare din bibliotecă.`,
     ok: 'Șterge', pericol: true,
   });

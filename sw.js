@@ -4,12 +4,12 @@
 //
 // La fiecare publicare: mărește VERSIUNE aici, în index.html (?v=… și data-versiune)
 // și în styles.css (--versiune-css). Toate trei trebuie să fie egale.
-const VERSIUNE = '52';
+const VERSIUNE = '53';
 const CACHE = `jurnal-v${VERSIUNE}`;
 const FISIERE_FIXE = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-180.png', './icon-192.png', './icon-512.png'];
 const FISIERE_VERSIONATE = [
   'styles.css', 'tema.js', 'db.js', 'validare.js', 'exercitii.js', 'analiza.js', 'statistici.js', 'corp-calcul.js', 'realizari.js',
-  'nutritie-alimente.js', 'nutritie-retete.js', 'nutritie-calcul.js', 'nutritie-zi.js', 'cafea.js', 'nutritie-generator.js', 'nutritie-analiza.js', 'nutritie-cumparaturi.js', 'nutritie-imagini.js', 'catalog.js', 'figuri.js', 'ui.js', 'grafice.js',
+  'nutritie-alimente.js', 'nutritie-retete.js', 'nutritie-calcul.js', 'nutritie-zi.js', 'cafea.js', 'nutritie-generator.js', 'nutritie-analiza.js', 'nutritie-cumparaturi.js', 'nutritie-imagini.js', 'catalog.js', 'figuri.js', 'ui.js', 'navigare.js', 'grafice.js',
   'setari.js', 'timer.js', 'sesiune.js', 'corp.js', 'progres.js', 'realizari-ui.js', 'istoric.js',
   'biblioteca.js', 'nutritie.js', 'nutritie-zi-ui.js', 'cafea-ui.js', 'nutritie-saptamana-ui.js', 'nutritie-analiza-ui.js', 'nutritie-cumparaturi-ui.js', 'scanare.js', 'scanare-baze.js', 'scanare-ui.js', 'scanare-istoric.js', 'acasa-mealprep.js', 'cloud-config.js', 'sincron.js', 'cloud.js', 'cloud-ui.js', 'vendor/supabase.js', 'backup.js', 'siguranta.js', 'acasa.js', 'main.js',
 ].map(f => `./${f}?v=${VERSIUNE}`);

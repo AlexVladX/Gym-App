@@ -134,15 +134,37 @@ function mesajEroareSalvare(err, implicit) {
 }
 
 // ---------- Dialoguri ----------
-// Un singur dialog deschis o dată. Escape sau atingerea fundalului = anulare.
+// Un singur dialog deschis o dată. Escape, atingerea fundalului sau „Înapoi” (navigare.js) = anulare.
+//
+// Focusul la deschidere (ca o atingere grăbită sau un Enter să nu facă rău și tastatura să nu acopere dialogul):
+//   - dialog periculos (pericol: true sau un buton roșu) → butonul de anulare;
+//   - focus: 'camp' (dialoguri al căror singur scop e scrisul, ex. „Scrie ȘTERGE”) → primul câmp;
+//   - ecran tactil → titlul (tastatura nu apare până nu atingi un câmp);
+//   - altfel (desktop) → primul câmp, apoi butonul principal.
 let dialogDeschis = null;
 
-function deschideDialog({ titlu, text, continut, butoane, laAnulare }) {
-  if (dialogDeschis) dialogDeschis.inchide(laAnulare);
+function ecranTactil() {
+  return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+}
+
+function alegeFocusDialog(caseta, { focus, pericol }) {
+  const butoane = caseta.querySelector('.dialog-butoane');
+  const titlu = caseta.querySelector('h2');
+  const camp = caseta.querySelector('input:not([type=hidden]):not([disabled]), select, textarea');
+  if (focus === 'camp' && camp) return camp;
+  if (pericol || caseta.querySelector('.dialog-butoane .btn-pericol')) {
+    return (butoane && butoane.querySelector('.btn-fantoma, .btn-secundar')) || titlu;
+  }
+  if (ecranTactil()) return titlu;
+  return camp || caseta.querySelector('.btn-principal') || titlu;
+}
+
+function deschideDialog({ titlu, text, continut, butoane, laAnulare, focus = 'auto', pericol = false }) {
+  if (dialogDeschis) dialogDeschis.inchide(dialogDeschis.laAnulare);
   const anterior = document.activeElement;
   const fundal = el('div', { class: 'dialog-fundal' });
   const caseta = el('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'dialog-titlu' }, [
-    el('h2', { id: 'dialog-titlu', text: titlu }),
+    el('h2', { id: 'dialog-titlu', text: titlu, tabindex: '-1' }),
     text ? el('p', { class: 'dialog-text', text }) : null,
     continut || null,
     el('div', { class: 'dialog-butoane' }, butoane),
@@ -154,12 +176,16 @@ function deschideDialog({ titlu, text, continut, butoane, laAnulare }) {
   };
   const ctrl = {
     caseta,
-    inchide(actiune) {
+    laAnulare,
+    idNav: null,
+    // dinIstoric: închis de „Înapoi” (intrarea din istoric a dispărut deja)
+    inchide(actiune, { dinIstoric = false } = {}) {
       if (dialogDeschis !== ctrl) return;
       dialogDeschis = null;
       document.removeEventListener('keydown', tasta);
       fundal.classList.add('iese');
       setTimeout(() => fundal.remove(), 160);
+      if (!dinIstoric && typeof navigareDialogInchis === 'function') navigareDialogInchis(ctrl.idNav);
       if (anterior && anterior.focus) anterior.focus({ preventScroll: true });
       if (actiune) actiune();
     },
@@ -168,9 +194,14 @@ function deschideDialog({ titlu, text, continut, butoane, laAnulare }) {
   document.addEventListener('keydown', tasta);
   document.body.append(fundal);
   dialogDeschis = ctrl;
+  if (typeof navigareDialogDeschis === 'function') ctrl.idNav = navigareDialogDeschis();
   // Focus fără derulare: dialogul începe mereu de sus (titlul și primele informații vizibile).
-  const focus = caseta.querySelector('input, select') || caseta.querySelector('.btn-principal, .btn-pericol');
-  if (focus) setTimeout(() => { focus.focus({ preventScroll: true }); caseta.scrollTop = 0; }, 30);
+  setTimeout(() => {
+    if (dialogDeschis !== ctrl) return;
+    const tinta = alegeFocusDialog(caseta, { focus, pericol });
+    if (tinta) tinta.focus({ preventScroll: true });
+    caseta.scrollTop = 0;
+  }, 30);
   return ctrl;
 }
 
@@ -178,7 +209,7 @@ function deschideDialog({ titlu, text, continut, butoane, laAnulare }) {
 function confirma({ titlu, text, ok = 'Confirmă', anulare = 'Renunță', pericol = false, continut }) {
   return new Promise(rezolva => {
     const d = deschideDialog({
-      titlu, text, continut,
+      titlu, text, continut, pericol,
       laAnulare: () => rezolva(false),
       butoane: [
         buton({ text: anulare, tip: 'fantoma', onclick: () => d.inchide(() => rezolva(false)) }),
@@ -225,7 +256,7 @@ function cereText({ titlu, text, eticheta, valoare = '', ok = 'Salvează', peric
     input.addEventListener('input', verifica);
     input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); trimite(); } });
     const d = deschideDialog({
-      titlu, text,
+      titlu, text, focus: 'camp', // singurul scop e scrisul: câmpul primește focus (și tastatura)
       continut: el('label', { class: 'camp' }, [eticheta ? el('span', { class: 'camp-eticheta', text: eticheta }) : null, input]),
       laAnulare: () => rezolva(null),
       butoane: [buton({ text: 'Renunță', tip: 'fantoma', onclick: () => d.inchide(() => rezolva(null)) }), butonOk],
@@ -267,6 +298,13 @@ function plural(n, unu, multe) {
   return (n === 0 || (rest >= 1 && rest <= 19)) ? `${n} ${multe}` : `${n} de ${multe}`;
 }
 
+// Numărul cu „de” când româna îl cere: „5 serii”, „20 de serii”, „101 serii”, „120 de serii”.
+// Pentru propoziții în care numărul și cuvântul nu stau împreună (ex. „cele 20 de feluri”).
+function numarDe(n) {
+  const rest = Math.abs(n) % 100;
+  return (n === 0 || (rest >= 1 && rest <= 19)) ? String(n) : `${n} de`;
+}
+
 // Data locală AAAA-LL-ZZ (toISOString ar folosi UTC și ar muta sesiunile de seara).
 function formatData(d) {
   const luna = String(d.getMonth() + 1).padStart(2, '0');
@@ -306,3 +344,5 @@ function valoareNumerica(v) {
   const n = parseFloat(v);
   return Number.isFinite(n) ? n : null;
 }
+
+if (typeof module !== 'undefined') module.exports = { plural, numarDe, alegeFocusDialog };
