@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "40";
+  --versiune-css: "41";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -1870,3 +1870,71 @@ html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
   .cafea-rand { grid-template-columns: 1fr; }
   .cafea-baut-btn { width: 100%; }
 }
+
+/* ---------- Scanarea meselor (etapa 1) ---------- */
+.ascuns-vizual { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.scan-buton-acasa {
+  display: flex; align-items: center; gap: var(--s3); width: 100%; margin-bottom: var(--s3); padding: var(--s4);
+  border: 0; border-radius: var(--raza-mare); background: var(--accent); color: var(--pe-accent); text-align: left; cursor: pointer;
+  box-shadow: 0 6px 18px rgba(209, 86, 18, 0.22);
+}
+.scan-buton-acasa:active { transform: scale(0.985); }
+.scan-buton-icon { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); }
+.scan-buton-icon .iconita { width: 24px; height: 24px; }
+.scan-buton-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.scan-buton-text strong { font-size: 17px; letter-spacing: 0.01em; }
+.scan-buton-text span { font-size: 12.5px; opacity: 0.9; }
+.dialog.dialog-scanare { max-width: 520px; }
+.scan-alegeri { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); margin-bottom: var(--s3); }
+.scan-alegere {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: var(--s4); min-height: 120px;
+  border: 1px solid var(--bordura-tare); border-radius: var(--raza); background: var(--suprafata-2); color: inherit; text-align: left; cursor: pointer;
+}
+.scan-alegere:active { transform: scale(0.98); }
+.scan-alegere strong { font-size: 16px; }
+.scan-alegere .nota { margin: 0; font-size: 12.5px; }
+.scan-alegere-icon { display: grid; place-items: center; width: 40px; height: 40px; margin-bottom: 6px; border-radius: 50%; background: var(--accent-slab); color: var(--accent); }
+.scan-sfaturi { margin: 0 0 var(--s4); padding-left: 1.2em; line-height: 1.5; }
+.scan-poza { display: block; width: 100%; max-height: 46dvh; object-fit: contain; margin-bottom: var(--s3); border-radius: var(--raza); background: var(--suprafata-3); }
+.scan-poza-analiza { opacity: 0.75; }
+.scan-poza-mica { width: 72px; height: 72px; max-height: none; object-fit: cover; margin: 0; flex: none; }
+.scan-progres { display: flex; align-items: center; gap: var(--s3); padding: var(--s3) 0; color: var(--text-2); }
+.scan-rotita { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--accent-slab); border-top-color: var(--accent); animation: scan-roteste 0.9s linear infinite; }
+@keyframes scan-roteste { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .scan-rotita { animation-duration: 2.5s; } }
+.scan-eroare, .scan-atentie { margin-bottom: var(--s3); padding: var(--s3); border-radius: var(--raza-mica); font-size: 14px; line-height: 1.45; }
+.scan-eroare { background: var(--pericol-slab); border: 1px solid var(--pericol); }
+.scan-eroare p { margin: 4px 0 0; }
+.scan-eroare-limita, .scan-eroare-retea, .scan-atentie { background: rgba(211, 146, 35, 0.12); border: 1px solid var(--avertizare); }
+.scan-atentie p { margin: 0 0 var(--s2); }
+.scan-antet { display: flex; gap: var(--s3); align-items: center; margin-bottom: var(--s3); }
+.scan-antet .nota { margin: 2px 0 0; }
+.scan-observatii { margin-top: 0; }
+.scan-lista { display: flex; flex-direction: column; gap: var(--s3); margin-bottom: var(--s3); }
+.scan-aliment { padding: var(--s3); border-radius: var(--raza); border: 1px solid var(--bordura-tare); background: var(--suprafata-2); }
+.scan-aliment.scan-verifica { border-color: var(--avertizare); }
+.scan-aliment.scan-nesigur { border-color: var(--pericol); }
+.scan-aliment-sus { display: flex; align-items: center; gap: var(--s2); }
+.scan-nume { flex: 1; min-width: 0; font-weight: 600; }
+.scan-incredere { flex: none; padding: 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.scan-incredere-sigur { background: rgba(55, 148, 69, 0.14); color: #2E7D3A; }
+.scan-incredere-verifica { background: rgba(211, 146, 35, 0.16); color: #8A5A0B; }
+.scan-incredere-nesigur { background: var(--pericol-slab); color: var(--pericol); }
+.scan-incredere-manual { background: var(--suprafata-3); color: var(--text-2); }
+.scan-incredere-text { margin: 6px 0 0; }
+.scan-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: var(--s2); }
+.scan-chips .chip .iconita { width: 14px; height: 14px; }
+.scan-aliment-jos { display: flex; gap: var(--s2); margin-top: var(--s2); }
+.scan-gramaj { display: flex; align-items: center; gap: 6px; flex: none; }
+.scan-gramaj input { width: 96px; }
+.scan-aliment-jos select { flex: 1; min-width: 0; }
+.scan-aliment-info { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-top: 6px; }
+.scan-insigna { padding: 2px 8px; border-radius: 999px; font-size: 12px; background: var(--suprafata-3); color: var(--text-2); }
+.scan-insigna-manual { background: var(--accent-slab); color: var(--accent); }
+.scan-insigna-lipsa { background: var(--pericol-slab); color: var(--pericol); }
+.scan-detalii { margin-top: 6px; }
+.scan-detalii summary { cursor: pointer; font-size: 13px; color: var(--text-2); }
+.scan-detalii p { margin: 4px 0 0; }
+.scan-ascunse { margin-bottom: var(--s3); }
+.scan-ascunse .nota { margin: 0; }
+.scan-urmeaza { margin-top: var(--s3); }

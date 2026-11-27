@@ -1,0 +1,29 @@
+# Publică funcțiile Supabase (supabase/functions/*) la fiecare schimbare a lor pe main.
+# Are nevoie de un singur secret în GitHub → Settings → Secrets and variables → Actions:
+#   SUPABASE_ACCESS_TOKEN — un token personal din Supabase (Account → Access Tokens).
+# Cheile Gemini / USDA NU stau aici: ele stau doar în Supabase → Edge Functions → Secrets.
+name: Funcții Supabase
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/functions/**', '.github/workflows/supabase-functii.yml']
+  workflow_dispatch:
+jobs:
+  publica:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - name: Verifică tokenul
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then echo "::warning::Lipsește secretul SUPABASE_ACCESS_TOKEN; funcțiile nu au fost publicate."; exit 0; fi
+          echo "ARE_TOKEN=1" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+        if: env.ARE_TOKEN == '1'
+      - uses: supabase/setup-cli@v1
+        if: env.ARE_TOKEN == '1'
+        with:
+          version: latest
+      - name: Publică „scanare”
+        if: env.ARE_TOKEN == '1'
+        run: supabase functions deploy scanare --project-ref ibxqtjxlhywkvejbizqk --no-verify-jwt

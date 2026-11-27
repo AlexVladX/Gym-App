@@ -50,3 +50,23 @@ Pe al doilea dispozitiv: aceeași adresă, **Intră în cont** — datele vin si
   sincronizarea revine după ce apeși **Restore project** în panoul Supabase.
 - Copii de siguranță: aplicația face automat, săptămânal, o copie completă în cont (Setări → Cont → Copii în cont),
   iar exportul JSON din Setări → Backup rămâne disponibil.
+
+## Scanarea meselor (Fotografiază masa)
+
+Cheile stau DOAR în Supabase → Edge Functions → Secrets (niciodată în aplicație, pe GitHub sau în chat):
+
+| Nume | Ce e |
+|---|---|
+| `GEMINI_API_KEY` | cheia din Google AI Studio (cu plata activată, ca pozele să nu fie folosite la antrenarea modelelor) |
+| `FDC_API_KEY` | cheia gratuită USDA FoodData Central (pentru etapa cu baza de date) |
+| `SCAN_LIMITA_ZI` | opțional — câte scanări pe zi (implicit 20) |
+| `MODEL_AI` | opțional — implicit `gemini-3.1-flash-lite` |
+
+O singură dată:
+1. SQL Editor → lipești tot din `supabase/scanare.sql` → Run (contorul zilnic de scanări).
+2. Publicarea funcției `supabase/functions/scanare`:
+   - automat: în GitHub → Settings → Secrets and variables → Actions → New repository secret,
+     nume `SUPABASE_ACCESS_TOKEN`, valoare = un token din Supabase → Account → Access Tokens.
+     Apoi GitHub → Actions → „Funcții Supabase” → Run workflow (și se republică singură la fiecare modificare).
+   - sau manual, din panoul Supabase (Edge Functions → Deploy a new function → Via Editor), cu numele `scanare`,
+     cele două fișiere (`index.ts`, `logica.js`) și „Verify JWT” dezactivat (funcția verifică singură contul).

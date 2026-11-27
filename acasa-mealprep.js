@@ -25,6 +25,7 @@ async function randeazaAcasaMasa() {
   const tinte = setari.tinteNutritie;
   const carduri = [
     cardCaloriiMasa(ziAzi, tinte),
+    cardScanareAcasa(),
     cardCafeaAcasa(ziAzi),
     cardUrmatoareaMasa(ziAzi),
     cardMeseleZilei(ziAzi),

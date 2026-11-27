@@ -109,6 +109,17 @@ function adaptorSupabase(client) {
       if (error) throw error;
       return count || 0;
     },
+    // Funcțiile Supabase (ex. „scanare”): erorile păstrează codul trimis de server ({ cod, mesaj }).
+    async functie(nume, corp, { semnal } = {}) {
+      const { data, error, response } = await client.functions.invoke(nume, { body: corp, signal: semnal, timeout: 45000 });
+      if (!error) return data;
+      let det = null;
+      try { det = response ? await response.clone().json() : null; } catch (_) { det = null; }
+      const e = new Error((det && det.mesaj) || error.message || 'Eroare la server.');
+      e.cod = (det && det.cod) || (semnal && semnal.aborted ? 'anulat' : (error.name === 'FunctionsFetchError' ? 'retea' : 'eroare'));
+      e.status = response ? response.status : 0;
+      throw e;
+    },
     async urcaFisier(cale, blob) { verifica(await client.storage.from('poze').upload(cale, blob, { upsert: true, contentType: blob.type || 'application/octet-stream' })); },
     async descarcaFisier(cale) { return verifica(await client.storage.from('poze').download(cale)); },
     async stergeFisier(cale) { verifica(await client.storage.from('poze').remove([cale])); },
