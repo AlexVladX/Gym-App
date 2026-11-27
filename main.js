@@ -60,6 +60,9 @@ function arataEcran(id) {
 }
 
 async function initializeaza() {
+  // Subsolul din Setări: versiunea publicată (aceeași cu cea din sw.js și styles.css).
+  const v = $('versiune-app');
+  if (v && document.body.dataset.versiune) v.textContent = `Gym App 3.0 · versiunea ${document.body.dataset.versiune}`;
   document.querySelectorAll('.navigatie button').forEach(b => b.addEventListener('click', () => {
     if (b.dataset.grup) { arataFilaNutritie(filaDinGrup(b.dataset.grup), { randeaza: false }); }
     arataEcran(b.dataset.ecran);
