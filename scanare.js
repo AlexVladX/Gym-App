@@ -115,6 +115,11 @@ function textIntervalScanare(a) {
 }
 
 function etichetaGramajScanare(a) {
+  if (a.potrivire && a.potrivire.tip === 'reteta') {
+    if (!(a.cantitate > 0)) return { text: 'Scrie cantitatea', clasa: 'lipsa' };
+    const dinPoza = (a.unitate === 'gR' && a.grameEstimat != null && Math.abs(a.cantitate - a.grameEstimat) < 0.6) || (a.unitate === 'bucR' && a.bucati > 0 && a.cantitate === a.bucati);
+    return dinPoza ? { text: 'Estimat din poză', clasa: 'estimat' } : { text: 'Ales de tine', clasa: 'manual' };
+  }
   if (a.grame == null) return { text: 'Scrie gramajul', clasa: 'lipsa' };
   return a.sursaGramaj === 'estimat' ? { text: 'Estimat din poză', clasa: 'estimat' } : { text: 'Scris de tine', clasa: 'manual' };
 }

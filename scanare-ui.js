@@ -6,7 +6,7 @@ const scanare = { ctrl: null, fisier: null, imagine: null, url: null, rezultat: 
 // tinta (opțional): { masa, data } când pornești din „Ziua mea” pentru o masă anume.
 function deschideScanare(tinta = null) {
   inchideResurseScanare();
-  Object.assign(scanare, { fisier: null, imagine: null, rezultat: null, articole: [], nota: '', cerere: null, inCurs: false, deschise: new Set(), avertizariCautare: [], manualDeschis: null, tinta: tinta && typeof tinta === 'object' && !(tinta instanceof Event) ? tinta : null, salvare: null, probleme: [] });
+  Object.assign(scanare, { faraPoza: false, fisier: null, imagine: null, rezultat: null, articole: [], nota: '', cerere: null, inCurs: false, deschise: new Set(), avertizariCautare: [], manualDeschis: null, tinta: tinta && typeof tinta === 'object' && !(tinta instanceof Event) ? tinta : null, salvare: null, probleme: [] });
   const zona = el('div', { class: 'scan-zona' });
   scanare.ctrl = deschideDialog({
     titlu: 'Fotografiază masa', continut: zona, butoane: [],
@@ -14,6 +14,22 @@ function deschideScanare(tinta = null) {
   });
   scanare.ctrl.caseta.classList.add('dialog-scanare');
   pasAlegereScanare();
+}
+
+// „Adaugă un aliment”: același ecran de verificare, fără poză și fără AI — cauți alimentul, alegi cantitatea, salvezi.
+function deschideAdaugareAlimente(tinta = null) {
+  if (scanare.ctrl && dialogDeschis === scanare.ctrl) scanare.ctrl.inchide();
+  inchideResurseScanare();
+  Object.assign(scanare, { fisier: null, imagine: null, articole: [], nota: '', cerere: null, inCurs: false, deschise: new Set(), avertizariCautare: [], manualDeschis: null,
+    tinta: tinta && typeof tinta === 'object' && !(tinta instanceof Event) ? tinta : null, salvare: null, probleme: [], faraPoza: true, tokeni: null,
+    cautareRapida: '', rezultateExterne: null,
+    rezultat: { esteMancare: true, portieIndividuala: true, calitate: 'buna', observatii: '', eliminate: 0, articole: [], utilizare: null } });
+  const zona = el('div', { class: 'scan-zona' });
+  scanare.ctrl = deschideDialog({ titlu: 'Adaugă alimente', continut: zona, butoane: [], laAnulare: () => inchideResurseScanare() });
+  scanare.ctrl.caseta.classList.add('dialog-scanare');
+  pasRevizuireScanare();
+  const c = zona.querySelector('.scan-cauta-aliment input');
+  if (c) setTimeout(() => c.focus(), 60);
 }
 
 function inchideResurseScanare() {
@@ -27,6 +43,7 @@ function inchideResurseScanare() {
 const PASI_SCANARE = ['Poză', 'Analiză', 'Verificare', 'Salvare'];
 function pasScanare(n) {
   if (!scanare.ctrl) return;
+  if (scanare.faraPoza) { const b = scanare.ctrl.caseta.querySelector('.scan-pasi'); if (b) b.remove(); return; }
   let bara = scanare.ctrl.caseta.querySelector('.scan-pasi');
   if (!bara) { bara = el('ol', { class: 'scan-pasi', 'aria-label': 'Pașii scanării' }); scanare.ctrl.caseta.querySelector('h2').after(bara); }
   bara.replaceChildren(...PASI_SCANARE.map((t, k) => el('li', { class: k + 1 < n ? 'gata' : k + 1 === n ? 'activ' : '', 'aria-current': k + 1 === n ? 'step' : null, text: t })));
@@ -57,6 +74,7 @@ function pasAlegereScanare(eroare = '') {
       mare('camera', 'Fă o poză', 'cu camera telefonului', camera),
       mare('galerie', 'Din galerie', 'o poză pe care o ai deja', galerie),
     ]),
+    buton({ text: 'Fără poză: caută alimentul (ex. un măr)', icon: 'cauta', tip: 'secundar', lat: true, onclick: () => deschideAdaugareAlimente(scanare.tinta) }),
     camera, galerie,
     el('ul', { class: 'scan-sfaturi nota' }, [
       el('li', { text: 'Fotografiază de sus, cu toată farfuria în cadru și lumină bună.' }),
@@ -321,6 +339,20 @@ function pasRevizuireScanare() {
     return;
   }
   const ascunse = ascunseDeAdaugat(scanare.articole);
+  if (scanare.faraPoza) {
+    puneInZona(zona,
+      blocCautareAlimentScanare(),
+      scanare.articole.length ? blocTotalScanare() : el('p', { class: 'nota', text: 'Caută un aliment (ex. „măr”), alege-l, apoi scrie cantitatea. Poți adăuga mai multe în aceeași masă.' }),
+      scanare.avertizariCautare.length ? el('div', { class: 'scan-atentie' }, scanare.avertizariCautare.map(t => el('p', { text: t }))) : null,
+      el('div', { class: 'scan-lista' }, scanare.articole.map(cardArticolScanare)),
+      scanare.probleme.length ? el('div', { class: 'scan-eroare scan-probleme', role: 'alert' }, [el('strong', { text: 'Înainte de salvare:' }), el('ul', {}, scanare.probleme.map(t => el('li', { text: t })))]) : null,
+    );
+    butoaneScanare(
+      scanare.articole.length ? buton({ text: textButonSalvareScanare(), icon: 'bifa', tip: 'principal', lat: true, onclick: incearcaSalvareScanare }) : null,
+      buton({ text: 'Închide', tip: 'fantoma', lat: true, onclick: inchideScanare }),
+    );
+    return;
+  }
   puneInZona(zona,
     el('div', { class: 'scan-antet' }, [
       el('img', { class: 'scan-poza scan-poza-mica', src: scanare.url, alt: 'Poza analizată' }),
@@ -352,6 +384,74 @@ function pasRevizuireScanare() {
     buton({ text: textButonSalvareScanare(), icon: 'bifa', tip: 'principal', lat: true, onclick: incearcaSalvareScanare }),
     buton({ text: 'Altă poză', icon: 'camera', tip: 'fantoma', lat: true, onclick: () => pasAlegereScanare() }),
   );
+}
+
+// Căutarea unui aliment: întâi în aplicație (pe loc), apoi, la cerere, în USDA / Open Food Facts.
+function blocCautareAlimentScanare() {
+  const rezultate = el('div', { class: 'scan-variante scan-rezultate-aliment', role: 'group', 'aria-label': 'Rezultate' });
+  const input = el('input', { type: 'search', value: scanare.cautareRapida, maxlength: '80', placeholder: 'ex.: măr, iaurt grecesc, nuci', 'aria-label': 'Caută un aliment', autocomplete: 'off' });
+  const deseneaza = () => {
+    const t = scanare.cautareRapida.trim();
+    if (t.length < 2) { rezultate.replaceChildren(); return; }
+    const locale = cautaLocalScanare(t, { preparare: 'necunoscut' }, toateAlimentele(), toateRetetele(), indexNutritie);
+    const ext = scanare.rezultateExterne && scanare.rezultateExterne.text === t ? scanare.rezultateExterne : null;
+    const lista = [...locale, ...(ext ? ext.candidati : [])];
+    puneInZona(rezultate,
+      ...lista.map(c => el('button', { type: 'button', class: 'scan-varianta', onclick: () => adaugaAlimentGasitScanare(c, t) }, [
+        el('span', { class: 'scan-varianta-nume', text: c.nume }),
+        el('span', { class: 'nota nota-mica', text: `${c.eticheta} · ${c.tip === 'reteta' ? `${Math.round(c.valoriPortie.kcal)} kcal / porție` : `${Math.round(c.per100.kcal)} kcal / 100 g`}${c.portii && c.portii[0] ? ` · ${c.portii[0].unu ? `1 ${c.portii[0].unu}` : c.portii[0].nume} ≈ ${Math.round(c.portii[0].grame)} g` : ''}` }),
+      ])),
+      ext && !ext.candidati.length ? el('p', { class: 'nota nota-mica', text: 'Nimic în USDA pentru acest nume. Încearcă în engleză (ex. „apple, raw”) sau scrie valorile de pe etichetă după ce adaugi alimentul.' }) : null,
+      ext && ext.eroare ? el('p', { class: 'nota nota-mica', text: ext.eroare }) : null,
+      !ext ? buton({ text: ext === null && scanare.rezultateExterne && scanare.rezultateExterne.inCurs === t ? 'Caut în USDA…' : `Caută „${t}” și în USDA`, icon: 'cauta', tip: 'fantoma', mic: true, onclick: () => cautaAlimentExternScanare(t) }) : null,
+      el('button', { type: 'button', class: 'scan-varianta scan-varianta-noua', onclick: () => { const a = { ...initializeazaCantitateScanare(articolManualScanare(t)), candidatiLocali: locale, candidatiExterni: ext ? ext.candidati : [], potrivire: null, stareCautare: 'alege' }; scanare.articole = [...scanare.articole, a]; scanare.deschise.add(a.id); scanare.cautareRapida = ''; scanare.manualDeschis = a.id; pasRevizuireScanare(); } }, [
+        el('span', { class: 'scan-varianta-nume', text: `„${t}” cu valori scrise de tine` }), el('span', { class: 'nota nota-mica', text: 'de pe etichetă, la 100 g' }),
+      ]),
+    );
+  };
+  input.addEventListener('input', () => { scanare.cautareRapida = input.value; deseneaza(); });
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const prim = rezultate.querySelector('.scan-varianta'); if (prim) prim.click(); } });
+  deseneaza();
+  return el('div', { class: 'scan-cauta-aliment' }, [el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: scanare.articole.length ? 'Adaugă încă un aliment' : 'Caută un aliment' }), input]), rezultate]);
+}
+
+async function cautaAlimentExternScanare(text) {
+  if (!sinc.utilizator || !sinc.adaptor || typeof sinc.adaptor.functie !== 'function' || navigator.onLine === false) {
+    scanare.rezultateExterne = { text, candidati: [], eroare: navigator.onLine === false ? 'Fără internet: caută doar în aplicație.' : 'Căutarea în USDA cere contul din cloud (Setări → Cont).' };
+    return redeseneazaRevizuireScanare();
+  }
+  scanare.rezultateExterne = { inCurs: text };
+  redeseneazaRevizuireScanare();
+  const cerere = { id: 'r', text, ambalat: false, marca: '' };
+  let lista = citesteCacheCautari(localStorage, cheieCautareScanare(cerere));
+  let eroare = '';
+  if (!lista) {
+    try {
+      const r = await sinc.adaptor.functie('scanare', { actiune: 'cauta', cereri: [cerere] });
+      lista = (r && r.rezultate && r.rezultate[0] && r.rezultate[0].candidati) || [];
+      if (r && r.avertizari && r.avertizari.length) eroare = r.avertizari[0]; else scrieCacheCautari(localStorage, cheieCautareScanare(cerere), lista);
+    } catch (err) { lista = []; eroare = mesajEroareScanare(err).text || 'Căutarea nu a reușit.'; }
+  }
+  if (!scanare.ctrl || dialogDeschis !== scanare.ctrl) return;
+  const { candidati } = ordoneazaExterneScanare({ nume: text, numeEn: text, preparare: 'necunoscut' }, lista);
+  scanare.rezultateExterne = { text, candidati, eroare };
+  redeseneazaRevizuireScanare();
+}
+
+// Alimentul ales intră în listă cu o cantitate de pornire: 1 bucată dacă are greutatea unei bucăți, 1 porție la rețete, altfel 100 g.
+function adaugaAlimentGasitScanare(p, textCautat) {
+  const nume = p.tip === 'local' || p.tip === 'reteta' ? p.nume : (textCautat.charAt(0).toUpperCase() + textCautat.slice(1));
+  let a = { ...initializeazaCantitateScanare(articolManualScanare(nume)), candidatiLocali: [], candidatiExterni: [], stareCautare: 'gata' };
+  a = aplicaPotrivireScanare({ ...a, unitate: 'g', cantitate: 100, grame: 100 }, p);
+  if (p.tip !== 'reteta' && p.portii && p.portii[0]) a = { ...a, unitate: 'p0', cantitate: 1, grame: Math.round(p.portii[0].grame * 10) / 10 };
+  a = { ...a, sursaGramaj: 'manual' };
+  scanare.articole = [...scanare.articole, a];
+  scanare.cautareRapida = '';
+  scanare.rezultateExterne = null;
+  scanare.probleme = [];
+  pasRevizuireScanare();
+  const c = zonaScanare().querySelector(`[data-id="${a.id}"] .scan-cantitate`);
+  if (c) setTimeout(() => { c.focus(); c.select(); }, 30);
 }
 
 function textButonSalvareScanare() {
@@ -394,7 +494,7 @@ function pasConfirmareScanare() {
   const fmt = x => String(x).replace('.', ',');
   puneInZona(zonaScanare(),
     el('div', { class: 'scan-antet' }, [
-      el('img', { class: 'scan-poza scan-poza-mica', src: scanare.url, alt: 'Poza mesei' }),
+      scanare.url ? el('img', { class: 'scan-poza scan-poza-mica', src: scanare.url, alt: 'Poza mesei' }) : el('span', { class: 'scan-istoric-img scan-istoric-fara' }, [iconita('nutritie')]),
       el('div', {}, [
         el('strong', { text: `${total.valori.kcal} kcal` }),
         el('p', { class: 'nota', text: `P ${fmt(total.valori.proteine)} g · C ${fmt(total.valori.carbohidrati)} g · G ${fmt(total.valori.grasimi)} g · ${plural(scanare.articole.length, 'aliment', 'alimente')}` }),
@@ -410,7 +510,7 @@ function pasConfirmareScanare() {
       const v = valoriArticolScanare(a);
       return el('li', {}, [el('span', { text: `${a.nume} · ${fmt(a.cantitate)} ${a.unitate === 'g' ? 'g' : (unitatiArticolScanare(a).find(u => u.id === a.unitate) || {}).nume || ''}`.trim() }), el('b', { text: `${Math.round(v.kcal)} kcal` })]);
     })),
-    el('p', { class: 'nota nota-mica', text: 'Masa se salvează ca „Mâncată”, cu valorile de acum ale fiecărui aliment. Dacă un aliment din bibliotecă se schimbă mai târziu, masa aceasta rămâne la fel. O poți edita sau șterge din „Ziua mea”.' }),
+    el('p', { class: 'nota nota-mica', text: 'Se salvează ca „Mâncată”, cu valorile de acum ale fiecărui aliment. Dacă un aliment din bibliotecă se schimbă mai târziu, masa aceasta rămâne la fel. O poți edita sau șterge din „Ziua mea”.' }),
   );
   const butoaneConfirmare = () => butoaneScanare(
     buton({ text: st.data === dataLocala() ? 'Adaugă la nutriția de azi' : `Adaugă în ${afiseazaData(st.data)}`, icon: 'bifa', tip: 'principal', lat: true, onclick: salveazaScanareInZi }),
@@ -427,7 +527,7 @@ async function salveazaScanareInZi() {
   try {
     const articole = scanare.articole.map(instantaneuArticolScanare);
     if (articole.some(x => !x)) throw new Error('Unele alimente nu au valori complete.');
-    intrare = intrareDinScanare({ id: idNutritieNou(), masa: st.masa, nume: st.nume, articole, ora: st.ora, portieIndividuala: scanare.rezultat.portieIndividuala });
+    intrare = intrareDinScanare({ id: idNutritieNou(), masa: st.masa, nume: st.nume, articole, ora: st.ora, portieIndividuala: scanare.rezultat.portieIndividuala, sursa: scanare.faraPoza ? 'alimente' : 'scanare' });
   } catch (err) { notifica(err.message, 'eroare'); return; }
   scanare.salvareInCurs = true;
   try {
@@ -442,7 +542,7 @@ async function salveazaScanareInZi() {
   scanare.salvareInCurs = false;
   const data = st.data;
   // Istoricul (cu miniatura) se scrie în fundal: masa e deja salvată, dialogul se poate închide imediat.
-  if (typeof inregistreazaScanareInIstoric === 'function') inregistreazaScanareInIstoric({ intrare, data, blob: scanare.imagine && scanare.imagine.blob, tokeni: scanare.tokeni });
+  if (!scanare.faraPoza && typeof inregistreazaScanareInIstoric === 'function') inregistreazaScanareInIstoric({ intrare, data, blob: scanare.imagine && scanare.imagine.blob, tokeni: scanare.tokeni });
   inchideScanare();
   notifica(`${intrare.nume}: ${Math.round(intrare.valoriPortie.kcal)} kcal adăugate la ${numeMasa(intrare.masa).toLowerCase()}${data === dataLocala() ? '' : `, ${afiseazaData(data)}`}.`, 'succes', 6000, {
     text: 'Vezi ziua', onclick: () => { dataZiNutritie = data; arataEcran('ecran-nutritie'); arataFilaNutritie('zi'); },
@@ -530,10 +630,12 @@ function cardArticolScanare(a) {
   const valori = el('p', { class: 'scan-valori' });
   const gramaj = el('span', { class: 'nota nota-mica scan-gramaj-text' });
   const deseneaza = x => {
-    const e = etichetaGramajScanare(x.unitate === 'portie' ? { ...x, grame: x.cantitate, sursaGramaj: 'manual' } : x);
-    insigna.textContent = x.unitate === 'portie' ? (x.cantitate ? 'Porții alese de tine' : 'Scrie numărul de porții') : e.text;
-    insigna.className = `scan-insigna scan-insigna-${x.unitate === 'portie' ? (x.cantitate ? 'manual' : 'lipsa') : e.clasa}`;
-    gramaj.textContent = [x.unitate !== 'g' && x.grame != null ? `= ${fmtNrScan(x.grame)} g` : '', textIntervalScanare(x)].filter(Boolean).join(' · ');
+    const e = etichetaGramajScanare(x);
+    insigna.textContent = e.text;
+    insigna.className = `scan-insigna scan-insigna-${e.clasa}`;
+    const reteta = x.potrivire && x.potrivire.tip === 'reteta';
+    const portii = reteta && x.unitate !== 'portie' ? portiiRetetaScanare(x) : null;
+    gramaj.textContent = [x.unitate !== 'g' && x.grame != null ? `= ${fmtNrScan(x.grame)} g` : '', portii ? `= ${fmtNrScan(portii)} ${portii === 1 ? 'porție' : 'porții'}` : '', textIntervalScanare(x)].filter(Boolean).join(' · ');
     const v = valoriArticolScanare(x);
     valori.textContent = v ? textValoriScanare(v) : (x.potrivire ? 'Scrie cantitatea ca să calculez valorile.' : 'Fără valori încă — alege sursa de mai jos.');
     valori.classList.toggle('scan-valori-lipsa', !v);
@@ -573,7 +675,7 @@ function cardArticolScanare(a) {
         pasRevizuireScanare();
       } }, [el('span', { text: alt })])),
     ]) : null,
-    el('div', { class: 'scan-aliment-jos' }, [el('div', { class: 'scan-gramaj' }, [cantitate, unitate]), prep]),
+    el('div', { class: 'scan-aliment-jos' }, [el('div', { class: 'scan-gramaj' }, [cantitate, unitate]), scanare.faraPoza ? null : prep]),
     el('div', { class: 'scan-aliment-info' }, [insigna, gramaj]),
     valori,
     blocSursaScanare(a),
@@ -756,7 +858,7 @@ function deschideIntrareScanata(i) {
   };
   deseneazaLista(); deseneazaTotal();
   const d = deschideDialog({
-    titlu: 'Masă din poză',
+    titlu: i.sursa === 'alimente' ? 'Alimente adăugate' : 'Masă din poză',
     continut: el('div', {}, [
       el('p', { class: 'nota', text: `${numeMasa(i.masa)} · ${textStareIntrare(i)}${i.ora ? ` · ${i.ora}` : ''}` }),
       el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Numele mesei' }), nume]),

@@ -228,3 +228,35 @@ test('alimente unite („cartofi prăjiți cu morcov”): promptul le interzice;
   const fara = B.imparteArticolScanare({ id: 'y', nume: 'pui cu orez', numeEn: 'chicken', grame: 300, grameEstimat: 300, grameMin: 250, grameMax: 350, incredere: 'medie' }, () => 'z');
   assert.deepEqual(fara.map(a => a.numeEn), ['', ''], 'numele englezesc nepereche → căutare după numele românesc');
 });
+
+test('rețete: bucăți pe porție (doar unde rețeta o spune) și greutatea gătită din rețetă ca unități', () => {
+  const ch = RETETE_BAZA.find(r => r.id === 'ro-chiftele');
+  assert.deepEqual(ch.bucatiPortie, [4, 'chiftea', 'chiftele']);
+  assert.ok(RETETE_BAZA.filter(r => r.bucatiPortie).length >= 10);
+  const p = B.potrivireDinReteta(ch, idx);
+  assert.match(p.detaliu, /≈4 chiftele pe porție/);
+  const baza = { id: 'x', nume: 'chiftele', numeEn: 'meatballs', grame: 240, grameEstimat: 240, grameMin: 200, grameMax: 280, sursaGramaj: 'estimat', preparare: 'prajit' };
+  // AI-ul a numărat 7 chiftele → 7 bucăți = 1,75 porții
+  let a = B.aplicaPotrivireScanare(B.initializeazaCantitateScanare({ ...baza, bucati: 7 }), p);
+  assert.deepEqual([a.unitate, a.cantitate], ['bucR', 7]);
+  assert.equal(B.portiiRetetaScanare(a), 1.75);
+  assert.ok(Math.abs(B.valoriArticolScanare(a).kcal - 1.75 * p.valoriPortie.kcal) < 1e-9);
+  assert.deepEqual(B.unitatiArticolScanare(a).map(u => u.id), ['portie', 'bucR', 'gR']);
+  a = B.seteazaUnitateScanare(a, 'portie');
+  assert.equal(a.cantitate, 1.75);
+  assert.equal(B.seteazaUnitateScanare(a, 'bucR').cantitate, 7, 'dus-întors fără abatere');
+  // fără bucăți numărate: gramajul din poză → porții prin greutatea gătită din rețetă (1150 g / 6)
+  const g = B.aplicaPotrivireScanare(B.initializeazaCantitateScanare(baza), p);
+  assert.deepEqual([g.unitate, g.cantitate], ['gR', 240]);
+  assert.ok(Math.abs(B.portiiRetetaScanare(g) - 240 / (1150 / 6)) < 1e-9);
+  // copia salvată ține minte porțiile pe bucată; editarea în zi recalculează corect
+  const s = B.instantaneuArticolScanare(a.unitate === 'bucR' ? a : B.seteazaUnitateScanare(a, 'bucR'));
+  assert.equal(s.portiiPeUnitate, 0.25);
+  const Z = require('../nutritie-zi.js');
+  const i = Z.intrareDinScanare({ id: 'u', masa: 'cina', articole: [s] });
+  assert.equal(i.scanare.articole[0].portiiPeUnitate, 0.25);
+  assert.equal(Z.scaleazaArticolScanat(i.scanare.articole[0], 8).valori.kcal, Math.round(p.valoriPortie.kcal * 2 * 10) / 10);
+  // o rețetă fără bucăți în text nu primește bucăți inventate
+  const fara = RETETE_BAZA.find(r => /Sarmale/.test(r.nume));
+  assert.equal(fara.bucatiPortie, undefined);
+});

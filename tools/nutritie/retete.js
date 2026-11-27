@@ -13,7 +13,7 @@ const SURSE = [['mic-dejun', 'mic-dejun.js'], ['gustare-1', 'gustare-1.js'], ['p
 const MESE_ID = ['mic-dejun', 'gustare-1', 'pranz', 'gustare-2', 'cina'];
 const FELURI = ['fel-principal', 'ciorba', 'patiserie', 'desert'];
 // Câmpuri opționale (Faza 3), copiate doar dacă există.
-const CAMPURI_OPTIONALE = ['numeEn', 'fel', 'bucatarie', 'timpPregatire', 'timpGatire', 'gatit', 'estimari', 'varianta'];
+const CAMPURI_OPTIONALE = ['numeEn', 'fel', 'bucatarie', 'timpPregatire', 'timpGatire', 'gatit', 'estimari', 'varianta', 'bucatiPortie'];
 const VASE = ['farfurie', 'bol', 'pahar', 'borcan', 'tocator'];
 
 const FOTO = require('./foto.js');
@@ -64,6 +64,8 @@ for (const [masaFisier, fisier] of SURSE) {
     if (!/^[a-z0-9-]+$/.test(r.id || '')) e('id invalid');
     if (toate.some(x => x.id === r.id)) e('id dublu');
     if (!r.nume || !r.descriere) e('fără nume sau descriere');
+    // bucatiPortie: [câte bucăți are o porție, singular, plural] — doar când rețeta o spune în text.
+    if (r.bucatiPortie && !(Array.isArray(r.bucatiPortie) && r.bucatiPortie[0] > 0 && r.bucatiPortie[0] <= 50 && r.bucatiPortie[1] && r.bucatiPortie[2])) e('bucatiPortie invalid');
     if (!(r.timp > 0) || !(r.portii >= 1)) e('timp sau porții invalide');
     if (!c.DIFICULTATI[r.dificultate]) e('dificultate necunoscută');
     if (!VASE.includes(r.vas)) e('vas necunoscut');

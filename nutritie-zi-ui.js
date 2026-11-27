@@ -196,7 +196,7 @@ function randIntrare(i) {
         el('span', { class: 'zi-intrare-kcal' }, [el('b', { text: fmtNr(vPlan.kcal) }), ` kcal · ${fmtPortii(i.portii)}${i.timp ? ` · ${i.timp} min` : ''}`]),
         el('span', { class: 'nota', text: `P ${fmtNr(vPlan.proteine)} g · C ${fmtNr(vPlan.carbohidrati)} g · G ${fmtNr(vPlan.grasimi)} g${i.ajustat ? ' · cantități ajustate' : ''}` }),
         i.stare === 'partial' ? el('span', { class: 'zi-partial', text: textStareIntrare(i) }) : null,
-        i.scanare ? el('span', { class: 'zi-din-poza' }, [iconita('camera', 'iconita mica'), el('span', { text: ` din poză${i.ora ? ` · ${i.ora}` : ''}` })]) : null,
+        i.scanare ? el('span', { class: 'zi-din-poza' }, [iconita(i.sursa === 'alimente' ? 'nutritie' : 'camera', 'iconita mica'), el('span', { text: ` ${i.sursa === 'alimente' ? 'alimente' : 'din poză'}${i.ora ? ` · ${i.ora}` : ''}` })]) : null,
       ]),
     ]),
     el('div', { class: 'zi-intrare-actiuni' }, [
@@ -227,6 +227,7 @@ function deseneazaMeseZi() {
       el('div', { class: 'zi-adauga' }, [
         m.id !== 'alta' ? buton({ text: intrari.length ? 'Adaugă încă o rețetă' : 'Adaugă o rețetă', icon: 'plus', tip: intrari.length ? 'fantoma' : 'secundar',
           mic: true, onclick: () => alegeRetetaPentruMasa(m.id) }) : null,
+        buton({ text: 'Aliment', icon: 'plus', tip: 'fantoma', mic: true, eticheta: `Adaugă un aliment la ${m.nume.toLowerCase()}`, onclick: () => deschideAdaugareAlimente({ masa: m.id, data: dataZiNutritie }) }),
         buton({ text: 'Din poză', icon: 'camera', tip: 'fantoma', mic: true, eticheta: `Fotografiază ${m.nume.toLowerCase()}`, onclick: () => deschideScanare({ masa: m.id, data: dataZiNutritie }) }),
       ]),
     ]);

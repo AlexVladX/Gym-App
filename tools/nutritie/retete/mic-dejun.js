@@ -191,7 +191,7 @@ module.exports = [
   {
     id: 'md-briose-ou-legume', nume: 'Brioșe din ouă cu legume',
     descriere: 'Brioșe la cuptor din ouă, ardei, spanac și cașcaval. Se iau la pachet; 2 brioșe pe porție.',
-    timp: 30, portii: 3, dificultate: 'usor', vas: 'farfurie', etichete: ['meal-prep'],
+    timp: 30, portii: 3, bucatiPortie: [2, 'brioșă', 'brioșe'], dificultate: 'usor', vas: 'farfurie', etichete: ['meal-prep'],
     ingrediente: [['ou', 360], ['albus', 150], ['cascaval', 60], ['ardei-rosu', 120], ['spanac', 60], ['ceapa-verde', 20], ['sare', 2], ['piper', 0.5]],
     pasi: ['Toacă mărunt legumele și împarte-le în 6 forme de brioșe.', 'Bate ouăle și albușurile cu sare și piper; toarnă peste legume.',
       'Presară cașcavalul ras.', 'Coace 20 de minute la 180 °C.'],

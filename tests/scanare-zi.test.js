@@ -115,3 +115,11 @@ test('biblioteca ta: doar USDA / Open Food Facts / scris de tine, cu provenienț
   assert.equal(B.duplicatAlimentScanare([{ ...am, id: 'u-z', nume: 'sos de casa' }], man).id, 'u-z', 'același nume, fără diacritice');
   assert.equal(B.duplicatAlimentScanare([], pui), null);
 });
+
+test('alimente adăugate fără poză: aceeași intrare, cu sursa „alimente”', () => {
+  const art = B.instantaneuArticolScanare(broccoli);
+  const i = Z.intrareDinScanare({ id: 'u-a1', masa: 'gustare-1', articole: [art], sursa: 'alimente' });
+  assert.equal(i.sursa, 'alimente');
+  assert.equal(Z.intrareDinScanare({ id: 'u-a2', masa: 'gustare-1', articole: [art], sursa: 'altceva' }).sursa, 'scanare');
+  assert.equal(Z.curataZiNutritie({ data: '2026-11-27', mese: [i] }).mese[0].sursa, 'alimente');
+});

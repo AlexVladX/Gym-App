@@ -59,7 +59,7 @@ module.exports = [
   {
     id: 'g1-batoane-ovaz-curmale', nume: 'Batoane de ovăz cu curmale și cacao',
     descriere: 'Batoane fără coacere din ovăz, curmale, unt de arahide și cacao. 8 batoane; o porție = un baton.',
-    timp: 20, portii: 8, dificultate: 'mediu', vas: 'tocator', etichete: ['meal-prep'],
+    timp: 20, portii: 8, bucatiPortie: [1, 'baton', 'batoane'], dificultate: 'mediu', vas: 'tocator', etichete: ['meal-prep'],
     ingrediente: [['ovaz', 160], ['curmale', 120], ['unt-arahide', 80], ['cacao', 10], ['chia', 15]],
     pasi: ['Înmoaie curmalele fără sâmburi 10 minute în apă caldă, apoi scurge-le.', 'Mixează-le cu untul de arahide până obții o pastă.',
       'Amestecă pasta cu ovăzul, cacaua și chia.', 'Presează compoziția într-o tavă cu hârtie de copt și las-o o oră la frigider. Taie 8 batoane.'],

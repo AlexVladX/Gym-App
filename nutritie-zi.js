@@ -293,6 +293,7 @@ function curataSnapshotScanare(s) {
     if (per100) r.per100 = per100;
     const vp = valoriDin(a.valoriPortie, { kcal: 10000, alt: 1000 }, false);
     if (vp) r.valoriPortie = vp;
+    if (vp && typeof a.portiiPeUnitate === 'number' && a.portiiPeUnitate > 0 && a.portiiPeUnitate <= 10) r.portiiPeUnitate = a.portiiPeUnitate;
     articole.push(r);
   }
   if (!articole.length) return null;
@@ -308,14 +309,14 @@ function sumaArticoleScanate(articole) {
 }
 
 // Intrarea în zi pentru o masă din poză (marcată ca mâncată: ai confirmat-o după ce ai mâncat).
-function intrareDinScanare({ id, masa, nume, articole, ora, portieIndividuala = true, acum = Date.now() }) {
+function intrareDinScanare({ id, masa, nume, articole, ora, portieIndividuala = true, sursa = 'scanare', acum = Date.now() }) {
   const sc = curataSnapshotScanare({ articole, portieIndividuala });
   if (!sc) throw new Error('Nu există niciun aliment cu valori de salvat.');
   if (sc.articole.length !== articole.length) throw new Error('Unele alimente nu au valori complete.');
   const valoriPortie = sumaArticoleScanate(sc.articole);
   for (const c of CAMPURI_VALORI) if (valoriPortie[c] > LIMITA_INTRARE[c]) throw new Error('Valorile depășesc limita unei mese (10 000 kcal). Verifică cantitățile.');
   const numeCurat = String(nume || '').trim().slice(0, 80) || sc.articole.map(a => a.nume).join(', ').slice(0, 80);
-  const i = { id, masa, idReteta: null, nume: numeCurat, portii: 1, valoriPortie, stare: 'complet', adaugat: acum, modificat: acum, sursa: 'scanare', scanare: sc };
+  const i = { id, masa, idReteta: null, nume: numeCurat, portii: 1, valoriPortie, stare: 'complet', adaugat: acum, modificat: acum, sursa: sursa === 'alimente' ? 'alimente' : 'scanare', scanare: sc };
   if (typeof ora === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(ora)) i.ora = ora;
   return i;
 }
@@ -326,7 +327,8 @@ function scaleazaArticolScanat(a, cantitate) {
   if (!(n > 0 && n <= 5000)) throw new Error('Cantitate invalidă.');
   if (a.valoriPortie && a.grame == null) {
     const v = {};
-    for (const c of CAMPURI_VALORI) v[c] = rot1Zi(a.valoriPortie[c] * n);
+    const portii = n * (a.portiiPeUnitate || 1);
+    for (const c of CAMPURI_VALORI) v[c] = rot1Zi(a.valoriPortie[c] * portii);
     return { ...a, cantitate: n, valori: v, estimat: false };
   }
   if (!a.per100 || !(a.grame > 0) || !(a.cantitate > 0)) throw new Error('Cantitatea acestui aliment nu se poate schimba.');

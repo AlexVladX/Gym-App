@@ -29,7 +29,8 @@ function tokeniScanare(t) {
 function cuvinteEgaleScanare(x, y) {
   if (x === y) return true;
   const [s, l] = x.length <= y.length ? [x, y] : [y, x];
-  return s.length >= 3 && l.startsWith(s) && l.length - s.length <= 3;
+  if (!l.startsWith(s)) return false;
+  return s.length >= 4 ? l.length - s.length <= 3 : s.length >= 2 && l.length - s.length <= 1; // „ou”/„ouă” da, „mar”/„mărar” nu
 }
 
 // 0–1: cât din întrebare se regăsește în țintă (70%) și cât din țintă e acoperit (30%).
@@ -87,7 +88,7 @@ function potrivireDinAliment(al, a) {
     tip: 'local', id: al.id, nume: al.nume,
     eticheta: String(al.id).startsWith('u-') ? 'Alimentele tale' : 'Din aplicație · USDA SR28',
     detaliu: al.sursa || '', per100: { kcal: al.kcal, proteine: al.proteine, carbohidrati: al.carbohidrati, grasimi: al.grasimi, fibre: al.fibre, zahar: null, saturate: null },
-    portii: Array.isArray(al.buc) && al.buc[0] > 0 ? [{ nume: al.buc[2] || 'bucăți', grame: al.buc[0] }] : [],
+    portii: Array.isArray(al.buc) && al.buc[0] > 0 ? [{ nume: al.buc[2] || 'bucăți', unu: al.buc[1] || 'bucată', grame: al.buc[0] }] : [],
     stare,
   };
   const av = a ? avertizareStare(a, stare) : '';
@@ -101,11 +102,20 @@ function potrivireDinReteta(r, idx) {
   if (v.lipsa && v.lipsa.length) return null; // rețetă cu ingrediente lipsă: nu o folosim (totalul ar fi incomplet)
   return {
     tip: 'reteta', id: r.id, nume: r.nume, eticheta: 'Rețetă din aplicație',
-    detaliu: `${r.portii > 1 ? `din ${r.portii} porții` : '1 porție'}; ingrediente crude ~${Math.round(v.grame)} g pe porție`,
+    detaliu: `${r.portii > 1 ? `din ${r.portii} porții` : '1 porție'}; ${bucatiReteta(r) ? `≈${fmtBuc(bucatiReteta(r)[0])} ${bucatiReteta(r)[0] === 1 ? bucatiReteta(r)[1] : bucatiReteta(r)[2]} pe porție; ` : ''}ingrediente crude ~${Math.round(v.grame)} g pe porție`,
     valoriPortie: { kcal: v.kcal, proteine: v.proteine, carbohidrati: v.carbohidrati, grasimi: v.grasimi, fibre: v.fibre },
     gramePortie: v.grame, avertizari: ['Rețeta se măsoară în porții: alege câte porții ai mâncat (greutatea gătită diferă de cea a ingredientelor crude).'],
+    ...(bucatiReteta(r) ? { bucatiPortie: bucatiReteta(r) } : {}),
+    ...(r.gatit && r.gatit.greutateGatita > 0 && r.portii > 0 ? { gramePortieGatita: r.gatit.greutateGatita / r.portii } : {}),
   };
 }
+
+// [bucăți pe porție, singular, plural] — doar dacă rețeta o spune (ex. „≈4 chiftele pe porție”).
+function bucatiReteta(r) {
+  const b = r && r.bucatiPortie;
+  return Array.isArray(b) && b[0] > 0 && b[1] && b[2] ? [Number(b[0]), String(b[1]), String(b[2])] : null;
+}
+const fmtBuc = n => String(Math.round(n * 10) / 10).replace('.', ',');
 
 function potrivireDinExtern(c, a) {
   const per100 = per100Curat(c && c.per100);
@@ -157,11 +167,21 @@ function candidatiLocaliScanare(a, alimente, retete, idx, max = 6) {
     if (d.scor >= PRAG_RETETA_SCANARE) scoruri.push({ s: d.scor - 0.05, sBrut: d.scor, precizie: d.precizie, acoperire: d.acoperire, tip: 'reteta', ob: r });
   }
   scoruri.sort((x, y) => y.s - x.s);
+  // Locuri rezervate: cel puțin 4 alimente simple, ca rețetele cu nume asemănător să nu le împingă din listă.
+  const alim = scoruri.filter(x => x.tip === 'aliment').slice(0, 4);
+  const restul = scoruri.filter(x => !alim.includes(x));
+  const ordonate = [...alim, ...restul.slice(0, Math.max(2, max - alim.length) + 4)].sort((x, y) => y.s - x.s);
   const rez = [];
-  for (const x of scoruri) {
+  for (const x of ordonate) {
     const p = x.tip === 'aliment' ? potrivireDinAliment(x.ob, a) : potrivireDinReteta(x.ob, idx);
     if (p) rez.push({ ...p, scor: Math.round(x.s * 100) / 100, scorBrut: x.sBrut, precizie: x.precizie, acoperire: x.acoperire });
-    if (rez.length >= max) break;
+  }
+  // Prea multe: se scot rețetele cu scorul cel mai mic; alimentele simple rezervate rămân.
+  while (rez.length > Math.max(max, alim.length)) {
+    let k = -1;
+    for (let j = rez.length - 1; j >= 0; j--) if (rez[j].tip === 'reteta') { k = j; break; }
+    if (k < 0) { rez.length = max; break; }
+    rez.splice(k, 1);
   }
   return rez;
 }
@@ -226,7 +246,12 @@ function avertizariPotrivireScanare(a) {
 
 // Căutare locală după un text scris de tine (alimente și rețete, fără prag de stare).
 function cautaLocalScanare(text, a, alimente, retete, idx) {
-  return candidatiLocaliScanare({ ...a, nume: text, numeEn: text }, alimente, retete, idx, 8);
+  const { normalizeazaText } = calculScanareBaze();
+  const t = normalizeazaText(text);
+  // Numele identic primul, apoi cele care încep cu textul, apoi după asemănare (la egalitate, alimentele înaintea rețetelor).
+  const rang = c => { const n = normalizeazaText(c.nume); return n === t ? 0 : n.startsWith(t + ' ') || n.startsWith(t) ? 1 : 2; };
+  return candidatiLocaliScanare({ ...a, nume: text, numeEn: text }, alimente, retete, idx, 12)
+    .map((c, k) => ({ c, k })).sort((x, y) => rang(x.c) - rang(y.c) || x.k - y.k).map(x => x.c).slice(0, 8);
 }
 
 // ---------- Cantitate, unități, calcul ----------
@@ -234,7 +259,12 @@ const rotunjeste1 = x => Math.round(x * 10) / 10;
 
 function unitatiArticolScanare(a) {
   const p = a.potrivire;
-  if (p && p.tip === 'reteta') return [{ id: 'portie', nume: 'porții', grame: null }];
+  if (p && p.tip === 'reteta') {
+    const u = [{ id: 'portie', nume: 'porții', grame: null, portii: 1 }];
+    if (p.bucatiPortie) u.push({ id: 'bucR', nume: `${p.bucatiPortie[2]} (≈${fmtBuc(p.bucatiPortie[0])} pe porție)`, grame: null, portii: 1 / p.bucatiPortie[0] });
+    if (p.gramePortieGatita) u.push({ id: 'gR', nume: `g gătit (≈${Math.round(p.gramePortieGatita)} g pe porție, estimare din rețetă)`, grame: null, portii: 1 / p.gramePortieGatita });
+    return u;
+  }
   const u = [{ id: 'g', nume: 'g', grame: 1 }];
   if (a.bucati > 1 && a.grameEstimat > 0) u.push({ id: 'buc', nume: 'bucăți (greutate estimată din poză)', grame: rotunjeste1(a.grameEstimat / a.bucati) });
   (p && p.portii ? p.portii : []).forEach((x, i) => u.push({ id: `p${i}`, nume: `${x.nume} (${rotunjeste1(x.grame)} g, ${p.tip === 'local' ? 'din aplicație' : 'din sursă'})`, grame: x.grame }));
@@ -272,7 +302,11 @@ function seteazaCantitateScanare(a, valoare) {
 function seteazaUnitateScanare(a, unitate) {
   const u = unitatiArticolScanare(a).find(x => x.id === unitate);
   if (!u) return a;
-  if (u.grame == null) return { ...a, unitate, cantitate: a.unitate === unitate ? a.cantitate : 1, grame: null };
+  if (u.grame == null) {
+    if (a.unitate === unitate) return a;
+    const portii = portiiRetetaScanare(a) || 1;
+    return { ...a, unitate, cantitate: Math.round((portii / (u.portii || 1)) * 100) / 100, grame: null };
+  }
   const cantitate = a.grame != null ? Math.round((a.grame / u.grame) * 10) / 10 : null;
   return marcheazaSursaGramaj({ ...a, unitate, cantitate, grame: cantitate != null ? rotunjeste1(cantitate * u.grame) : null });
 }
@@ -280,7 +314,12 @@ function seteazaUnitateScanare(a, unitate) {
 // Alegerea unei potriviri: rețetele trec pe porții; restul păstrează gramajul.
 function aplicaPotrivireScanare(a, p) {
   let b = { ...a, potrivire: p, stareCautare: 'gata' };
-  if (p && p.tip === 'reteta') return { ...b, unitate: 'portie', cantitate: a.unitate === 'portie' && a.cantitate ? a.cantitate : 1, grame: null };
+  if (p && p.tip === 'reteta') {
+    if (p.bucatiPortie && a.bucati > 0) return { ...b, unitate: 'bucR', cantitate: a.bucati, grame: null };
+    // Cu greutatea gătită din rețetă, gramajul estimat din poză devine direct porții.
+    if (p.gramePortieGatita && a.grameEstimat > 0 && a.unitate !== 'portie') return { ...b, unitate: 'gR', cantitate: a.grameEstimat, grame: null };
+    return { ...b, unitate: 'portie', cantitate: a.unitate === 'portie' && a.cantitate ? a.cantitate : 1, grame: null };
+  }
   if (a.unitate === 'portie') {
     const g = a.grameEstimat;
     b = { ...b, unitate: 'g', cantitate: g, grame: g };
@@ -289,14 +328,22 @@ function aplicaPotrivireScanare(a, p) {
   return marcheazaSursaGramaj(b);
 }
 
+// Câte porții de rețetă înseamnă cantitatea (în porții sau în bucăți).
+function portiiRetetaScanare(a) {
+  if (!(a.cantitate > 0)) return null;
+  const u = unitatiArticolScanare(a).find(x => x.id === a.unitate);
+  return a.cantitate * (u && u.portii ? u.portii : 1);
+}
+
 // Valorile unui aliment: null dacă lipsesc potrivirea sau cantitatea (nu se ghicește nimic).
 function valoriArticolScanare(a) {
   const C = calculScanareBaze();
   const p = a.potrivire;
   if (!p) return null;
   if (p.tip === 'reteta') {
-    if (!(a.cantitate > 0) || !p.valoriPortie) return null;
-    return { ...C.inmultesteValori(p.valoriPortie, a.cantitate), zahar: null, saturate: null };
+    const portii = portiiRetetaScanare(a);
+    if (!portii || !p.valoriPortie) return null;
+    return { ...C.inmultesteValori(p.valoriPortie, portii), zahar: null, saturate: null };
   }
   if (!(a.grame > 0) || !p.per100) return null;
   const v = C.valoriAliment(p.per100, a.grame);
@@ -375,7 +422,10 @@ function instantaneuArticolScanare(a) {
     estimat: a.sursaGramaj === 'estimat', valori,
     sursa: { tip: p.tip, eticheta: p.eticheta, nume: p.nume, id: p.tip === 'manual' ? '' : String(p.id), url: p.url || '', preluat: p.preluat || '' },
   };
-  if (p.tip === 'reteta') r.valoriPortie = { ...p.valoriPortie };
+  if (p.tip === 'reteta') {
+    r.valoriPortie = { ...p.valoriPortie };
+    if (u && u.portii && u.portii !== 1) r.portiiPeUnitate = u.portii;
+  }
   else if (p.per100) {
     r.per100 = { kcal: p.per100.kcal, proteine: p.per100.proteine, carbohidrati: p.per100.carbohidrati, grasimi: p.per100.grasimi, fibre: p.per100.fibre || 0 };
     if (p.per100.zahar != null) r.per100.zahar = p.per100.zahar;
@@ -471,5 +521,5 @@ if (typeof module !== 'undefined') module.exports = {
   seteazaUnitateScanare, aplicaPotrivireScanare, avertizariPotrivireScanare, cautaLocalScanare, valoriArticolScanare, totalScanare, textValoriScanare,
   cheieCautareScanare, citesteCacheCautari, scrieCacheCautari,
   instantaneuArticolScanare, problemeSalvareScanare, masaImplicitaScanare, numeImplicitScanare,
-  poateIntraInBibliotecaScanare, duplicatAlimentScanare, alimentDinScanare, partiNumeScanare, imparteArticolScanare,
+  poateIntraInBibliotecaScanare, duplicatAlimentScanare, alimentDinScanare, partiNumeScanare, imparteArticolScanare, portiiRetetaScanare,
 };
