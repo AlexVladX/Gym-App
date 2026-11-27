@@ -328,6 +328,7 @@ function deseneazaVolumGrupe(sesiuni) {
 }
 
 function initProgres() {
+  $('btn-progres-incepe').addEventListener('click', () => arataEcran('ecran-sesiune'));
   $('progres-exercitiu').addEventListener('change', () => { progresStare.sesiuniExercitiu = 8; deseneazaProgresExercitiu(istoric); });
   $('saptamana').addEventListener('change', () => deseneazaVolumGrupe(istoric));
 }

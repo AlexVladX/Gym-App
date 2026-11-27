@@ -148,6 +148,29 @@ function recordPentruSerie(recorduri, nume, s) {
 }
 
 // Ultima sesiune în care apare exercițiul: { data, serii } sau null.
+// „Repetă ultimul antrenament”: aceleași exerciții, în aceeași ordine, cu același număr și tip de serii
+// și același superset. Fără greutăți sau repetări: valorile anterioare apar doar ca sugestie („Anterior”).
+// Un exercițiu care apare de două ori se ia o singură dată (seriile adunate).
+function planRepetare(sesiune) {
+  if (!sesiune || !Array.isArray(sesiune.exercitii)) return [];
+  const plan = [];
+  for (const ex of sesiune.exercitii) {
+    if (!ex || typeof ex.nume !== 'string' || !ex.nume.trim()) continue;
+    const tipuri = (Array.isArray(ex.serii) ? ex.serii : []).filter(Boolean).map(s => s.tip || 'normal');
+    const exista = plan.find(p => p.nume.toLowerCase() === ex.nume.toLowerCase());
+    if (exista) { exista.serii.push(...tipuri); continue; }
+    plan.push({ nume: ex.nume, tip: ex.tip || 'greutate', superset: ex.superset || null, serii: tipuri.length ? tipuri : ['normal'] });
+  }
+  return plan;
+}
+
+// Ultimul antrenament salvat (după început; la egalitate, ultimul din listă).
+function ultimaSesiune(sesiuni) {
+  let ultima = null;
+  for (const s of sesiuni || []) if (s && (!ultima || (s.inceput || 0) >= (ultima.inceput || 0))) ultima = s;
+  return ultima;
+}
+
 function ultimaSesiuneCu(sesiuni, nume) {
   const cautat = nume.toLowerCase();
   for (let i = sesiuni.length - 1; i >= 0; i--) {
@@ -472,7 +495,7 @@ function durataSesiuneMin(s) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { e1rm, recorduriDin, esteRecord, ultimaSesiuneCu, sugestieProgresie, rezumatSerii,
+  module.exports = { planRepetare, ultimaSesiune, e1rm, recorduriDin, esteRecord, ultimaSesiuneCu, sugestieProgresie, rezumatSerii,
     seriiPeGrupa, tendintaGreutate, actualizeazaRecorduri, ziDinData, dataDinZi, cheieSaptamana, statisticiSesiune,
     totaluri, rezumatSaptamani, serieSaptamani, zileActiveSaptamana, sesiuniRecente, recorduriNoi, urmatorulAntrenament,
     schimbareGreutate, serieValida, tipSerie, serieDeLucru, volumSerie, recordPentruSerie, formatSerie,

@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "54";
+  --versiune-css: "55";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -90,6 +90,11 @@ html, body {
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
   overflow-x: hidden;
+}
+/* „hidden” pe html și body face din body un container de defilare, iar position: sticky (antetul, bara
+   antrenamentului) nu mai rămâne lipit. „clip” taie la fel depășirile pe orizontală, fără acest efect. */
+@supports (overflow-x: clip) {
+  html, body { overflow-x: clip; }
 }
 
 body {
@@ -2069,3 +2074,30 @@ html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
 /* Butonul „Înapoi” din antet (Setări): ia locul semnului mărcii. */
 #btn-inapoi { margin-left: -8px; }
 @media (max-width: 559px) { #btn-inapoi { grid-area: semn; margin-left: -6px; } }
+
+/* ---------- Etapa 2: antrenamentul în curs, ecran compact ---------- */
+/* Bara lipită sub antet: durata, seriile, pauză, odihnă, meniu. Cel mult 56 px. */
+.sesiune-bara {
+  position: sticky; top: var(--topbar-h, 56px); z-index: 15;
+  display: flex; align-items: center; gap: var(--s1);
+  height: 56px; margin: calc(-1 * var(--s4)) calc(-1 * var(--s4)) var(--s3); padding: 0 var(--s2) 0 var(--s4);
+  background: var(--sticla-sus);
+  -webkit-backdrop-filter: saturate(160%) blur(16px); backdrop-filter: saturate(160%) blur(16px);
+  border-bottom: 1px solid var(--bordura);
+}
+.sesiune-bara-info { flex: 1 1 auto; min-width: 0; display: flex; align-items: baseline; gap: var(--s2); overflow: hidden; white-space: nowrap; }
+.sesiune-bara-durata { font-size: 22px; font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.sesiune-bara-info .nota { margin: 0; overflow: hidden; text-overflow: ellipsis; }
+.sesiune-bara .btn-icon { flex: 0 0 auto; }
+.sesiune-bara #btn-bara-pauza.activ { color: var(--pe-accent); background: var(--accent); }
+.pe-pauza .sesiune-bara-durata { color: var(--discret); }
+/* Cardul nou apare sub bară și antet când lista defilează la el. */
+#ecran-sesiune .exercitiu { scroll-margin-top: calc(var(--topbar-h, 56px) + 56px + var(--s2)); }
+.btn-plus-exercitiu { margin-top: var(--s1); margin-bottom: var(--s4); }
+
+/* Antrenament nou: trei acțiuni clare. */
+.sesiune-start { display: grid; gap: var(--s2); margin-top: var(--s4); }
+.sesiune-start .rand-butoane > .btn { flex: 1 1 0; }
+
+.acasa-rutine-rapide > .btn { flex: 1 1 auto; min-width: 0; }
+.acasa-rutine-rapide > .btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -13,10 +13,10 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
   <title>Jurnal de antrenament</title>
-  <link rel="stylesheet" href="styles.css?v=54">
-  <script src="tema.js?v=54"></script>
+  <link rel="stylesheet" href="styles.css?v=55">
+  <script src="tema.js?v=55"></script>
 </head>
-<body class="se-incarca" data-versiune="54">
+<body class="se-incarca" data-versiune="55">
   <header class="topbar">
     <div class="topbar-interior">
       <div class="marca">
@@ -44,7 +44,22 @@
 
     <!-- ================= Antrenament ================= -->
     <section id="ecran-sesiune" class="ecran" aria-labelledby="titlu-ecran">
-      <div class="card card-erou">
+      <!-- Antrenament în curs: bară compactă lipită sus (durata, seriile, pauză, odihnă, meniu) -->
+      <div id="sesiune-bara" class="sesiune-bara" role="group" aria-label="Antrenament în curs" hidden>
+        <div class="sesiune-bara-info">
+          <strong id="bara-durata" class="sesiune-bara-durata">0:00</strong>
+          <span id="bara-serii" class="nota">0 serii</span>
+        </div>
+        <button id="btn-bara-pauza" class="btn btn-fantoma btn-icon" type="button" aria-label="Pauză antrenament"></button>
+        <button id="btn-bara-odihna" class="btn btn-fantoma btn-icon" type="button" aria-label="Pornește odihna dintre serii">
+          <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4l2.5 2M9 2h6"/></svg>
+        </button>
+        <button id="btn-bara-meniu" class="btn btn-fantoma btn-icon" type="button" aria-label="Mai multe opțiuni pentru antrenament">
+          <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg>
+        </button>
+      </div>
+
+      <div id="sesiune-erou" class="card card-erou">
         <div class="card-cap">
           <div>
             <h2 id="sesiune-titlu">Antrenament nou</h2>
@@ -64,14 +79,22 @@
             <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4l2.5 2M9 2h6"/></svg><span>Odihnă</span>
           </button>
         </div>
+        <!-- Antrenament nou: trei moduri clare de a începe -->
+        <div id="sesiune-start" class="sesiune-start">
+          <button id="btn-start-repeta" class="btn btn-principal btn-lat btn-mare" type="button" hidden></button>
+          <div class="rand-butoane">
+            <button id="btn-start-rutina" class="btn btn-secundar" type="button">Din rutină</button>
+            <button id="btn-start-gol" class="btn btn-secundar" type="button">Antrenament gol</button>
+          </div>
+        </div>
       </div>
 
-      <div class="card">
+      <div id="sesiune-grupe-card" class="card">
         <p class="sectiune-eticheta">Grupe musculare</p>
         <div id="grupe" class="chipuri"></div>
       </div>
 
-      <div class="card">
+      <div id="sesiune-adauga-card" class="card">
         <p class="sectiune-eticheta">Adaugă exercițiu</p>
         <div class="rand">
           <input id="exercitiu-nume" type="text" placeholder="Ex. Împins cu bara pe bancă" list="biblioteca" autocomplete="off" enterkeyhint="done" aria-label="Numele exercițiului">
@@ -86,6 +109,9 @@
       </div>
 
       <div id="exercitii"></div>
+      <button id="btn-plus-exercitiu" class="btn btn-secundar btn-lat btn-mare btn-plus-exercitiu" type="button" hidden>
+        <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Exercițiu</span>
+      </button>
 
       <div id="sesiune-nota-card" class="card" hidden>
         <label class="camp">
@@ -239,6 +265,9 @@
             <div class="gol-icon"><svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
             <p class="gol-titlu">Încă nu sunt date</p>
             <p class="gol-text">Salvează primul antrenament ca să vezi forța, volumul și seriile pe grupă.</p>
+            <button id="btn-progres-incepe" class="btn btn-principal" type="button">
+              <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg><span>Începe antrenamentul</span>
+            </button>
           </div>
         </div>
         <div id="progres-continut">
@@ -597,53 +626,53 @@
     </button>
   </nav>
 
-  <script src="db.js?v=54"></script>
-  <script src="validare.js?v=54"></script>
-  <script src="exercitii.js?v=54"></script>
-  <script src="analiza.js?v=54"></script>
-  <script src="statistici.js?v=54"></script>
-  <script src="corp-calcul.js?v=54"></script>
-  <script src="realizari.js?v=54"></script>
-  <script src="nutritie-alimente.js?v=54"></script>
-  <script src="nutritie-retete.js?v=54"></script>
-  <script src="nutritie-calcul.js?v=54"></script>
-  <script src="nutritie-zi.js?v=54"></script>
-  <script src="cafea.js?v=54"></script>
-  <script src="nutritie-generator.js?v=54"></script>
-  <script src="nutritie-analiza.js?v=54"></script>
-  <script src="nutritie-cumparaturi.js?v=54"></script>
-  <script src="nutritie-imagini.js?v=54"></script>
-  <script src="catalog.js?v=54"></script>
-  <script src="figuri.js?v=54"></script>
-  <script src="ui.js?v=54"></script>
-  <script src="navigare.js?v=54"></script>
-  <script src="grafice.js?v=54"></script>
-  <script src="setari.js?v=54"></script>
-  <script src="timer.js?v=54"></script>
-  <script src="sesiune.js?v=54"></script>
-  <script src="corp.js?v=54"></script>
-  <script src="progres.js?v=54"></script>
-  <script src="realizari-ui.js?v=54"></script>
-  <script src="istoric.js?v=54"></script>
-  <script src="biblioteca.js?v=54"></script>
-  <script src="nutritie.js?v=54"></script>
-  <script src="nutritie-zi-ui.js?v=54"></script>
-  <script src="cafea-ui.js?v=54"></script>
-  <script src="nutritie-saptamana-ui.js?v=54"></script>
-  <script src="nutritie-analiza-ui.js?v=54"></script>
-  <script src="nutritie-cumparaturi-ui.js?v=54"></script>
-  <script src="scanare.js?v=54"></script>
-  <script src="scanare-baze.js?v=54"></script>
-  <script src="scanare-ui.js?v=54"></script>
-  <script src="scanare-istoric.js?v=54"></script>
-  <script src="acasa-mealprep.js?v=54"></script>
-  <script src="backup.js?v=54"></script>
-  <script src="siguranta.js?v=54"></script>
-  <script src="acasa.js?v=54"></script>
-  <script src="cloud-config.js?v=54"></script>
-  <script src="sincron.js?v=54"></script>
-  <script src="cloud.js?v=54"></script>
-  <script src="cloud-ui.js?v=54"></script>
-  <script src="main.js?v=54"></script>
+  <script src="db.js?v=55"></script>
+  <script src="validare.js?v=55"></script>
+  <script src="exercitii.js?v=55"></script>
+  <script src="analiza.js?v=55"></script>
+  <script src="statistici.js?v=55"></script>
+  <script src="corp-calcul.js?v=55"></script>
+  <script src="realizari.js?v=55"></script>
+  <script src="nutritie-alimente.js?v=55"></script>
+  <script src="nutritie-retete.js?v=55"></script>
+  <script src="nutritie-calcul.js?v=55"></script>
+  <script src="nutritie-zi.js?v=55"></script>
+  <script src="cafea.js?v=55"></script>
+  <script src="nutritie-generator.js?v=55"></script>
+  <script src="nutritie-analiza.js?v=55"></script>
+  <script src="nutritie-cumparaturi.js?v=55"></script>
+  <script src="nutritie-imagini.js?v=55"></script>
+  <script src="catalog.js?v=55"></script>
+  <script src="figuri.js?v=55"></script>
+  <script src="ui.js?v=55"></script>
+  <script src="navigare.js?v=55"></script>
+  <script src="grafice.js?v=55"></script>
+  <script src="setari.js?v=55"></script>
+  <script src="timer.js?v=55"></script>
+  <script src="sesiune.js?v=55"></script>
+  <script src="corp.js?v=55"></script>
+  <script src="progres.js?v=55"></script>
+  <script src="realizari-ui.js?v=55"></script>
+  <script src="istoric.js?v=55"></script>
+  <script src="biblioteca.js?v=55"></script>
+  <script src="nutritie.js?v=55"></script>
+  <script src="nutritie-zi-ui.js?v=55"></script>
+  <script src="cafea-ui.js?v=55"></script>
+  <script src="nutritie-saptamana-ui.js?v=55"></script>
+  <script src="nutritie-analiza-ui.js?v=55"></script>
+  <script src="nutritie-cumparaturi-ui.js?v=55"></script>
+  <script src="scanare.js?v=55"></script>
+  <script src="scanare-baze.js?v=55"></script>
+  <script src="scanare-ui.js?v=55"></script>
+  <script src="scanare-istoric.js?v=55"></script>
+  <script src="acasa-mealprep.js?v=55"></script>
+  <script src="backup.js?v=55"></script>
+  <script src="siguranta.js?v=55"></script>
+  <script src="acasa.js?v=55"></script>
+  <script src="cloud-config.js?v=55"></script>
+  <script src="sincron.js?v=55"></script>
+  <script src="cloud.js?v=55"></script>
+  <script src="cloud-ui.js?v=55"></script>
+  <script src="main.js?v=55"></script>
 </body>
 </html>

@@ -90,7 +90,38 @@ function textInCurs(serii) {
 
 function incepeAntrenament() {
   arataEcran('ecran-sesiune');
-  setTimeout(() => $('exercitiu-nume').focus(), 250);
+  // Pe telefon fără focus automat: tastatura ar acoperi cele trei acțiuni de start.
+  if (!ecranTactil()) setTimeout(() => $('exercitiu-nume').focus(), 250);
+}
+
+// ---------- Repetă ultimul antrenament (etapa 2) ----------
+// Sub „Începe antrenamentul”: ultimul antrenament cu „Repetă” și primele rutine ca acțiuni rapide.
+// Nu apare cât timp un antrenament e în curs (cardul principal arată atunci „Continuă antrenamentul”).
+function cardRepeta(sesiuni, rutine) {
+  if (stare.exercitii.length > 0) return null;
+  const ultima = ultimaSesiune(sesiuni);
+  const rapide = [...(rutine || [])].reverse().slice(0, 3);
+  if (!ultima && !rapide.length) return null;
+  const copii = [titluCard(ultima ? 'Ultimul antrenament' : 'Rutinele tale')];
+  if (ultima) {
+    const zile = Math.round((ziDinData(dataLocala()) - ziDinData(ultima.data)));
+    const nume = ultima.exercitii.map(e => e.nume);
+    const scurt = nume.slice(0, 4).join(' · ') + (nume.length > 4 ? ` · +${nume.length - 4}` : '');
+    copii.push(
+      el('p', { class: 'nota', text: `${textZile(zile).replace(/^./, c => c.toUpperCase())} (${afiseazaData(ultima.data)}) · ${plural(nume.length, 'exercițiu', 'exerciții')} · ${plural(ultima.serii ?? totaluri([ultima]).serii, 'serie', 'serii')}` }),
+      el('p', { class: 'descriere', text: scurt }),
+      buton({ text: 'Repetă', icon: 'gantera', tip: 'principal', lat: true, onclick: () => repetaAntrenamentul(ultima) }),
+    );
+  }
+  if (rapide.length) {
+    copii.push(
+      ultima ? el('p', { class: 'sectiune-eticheta mt', text: 'Sau din rutină' }) : null,
+      el('div', { class: 'rand-butoane acasa-rutine-rapide' }, rapide.map(r => buton({
+        text: r.nume, icon: 'lista', tip: 'secundar', eticheta: `Începe rutina „${r.nume}”`, onclick: () => adaugaInSesiune(r.exercitii, r.grupe || []),
+      }))),
+    );
+  }
+  return el('div', { class: 'card acasa-repeta' }, copii);
 }
 
 // ---------- Următorul antrenament ----------
@@ -391,7 +422,7 @@ async function randeazaAcasa() {
 
   const azi = dataLocala();
   const sesiuni = istoric;
-  const carduri = [cardAzi(azi, sesiuni), cardMementoBackup(sesiuni), cardPrimiiPasi(sesiuni, masuratori)];
+  const carduri = [cardAzi(azi, sesiuni), cardRepeta(sesiuni, rutine), cardMementoBackup(sesiuni), cardPrimiiPasi(sesiuni, masuratori)];
   if (sesiuni.length > 0) {
     const saptamani = rezumatSaptamani(sesiuni, azi, 8);
     carduri.push(

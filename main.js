@@ -86,6 +86,13 @@ async function initializeaza() {
   });
   $('btn-inapoi').addEventListener('click', iesiDinSetari);
 
+  // Înălțimea antetului (pe telefon are două rânduri): bara antrenamentului în curs se lipește sub el.
+  const antet = document.querySelector('.topbar');
+  const masoaraAntet = () => document.documentElement.style.setProperty('--topbar-h', `${antet.offsetHeight}px`);
+  masoaraAntet();
+  if (typeof ResizeObserver === 'function') new ResizeObserver(masoaraAntet).observe(antet);
+  else window.addEventListener('resize', masoaraAntet);
+
   citesteSetari();
   // tema.js a rulat înaintea butoanelor din antet: acum le marcăm și pe ele.
   if (setari.mod !== modCurent) modCurent = modValid(setari.mod);

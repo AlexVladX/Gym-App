@@ -189,14 +189,40 @@ function seriiCompletate() {
   return { serii, volum };
 }
 
+function antrenamentActiv() { return stare.inceput !== null || stare.exercitii.length > 0; }
+
+// Antrenament nou: „Repetă ultimul” (dacă există un antrenament salvat), „Din rutină”, „Antrenament gol”.
+function deseneazaStartSesiune() {
+  const ultima = typeof ultimaSesiune === 'function' ? ultimaSesiune(istoric) : null;
+  const btn = $('btn-start-repeta');
+  btn.hidden = !ultima;
+  if (ultima) {
+    btn.replaceChildren(iconita('gantera'), el('span', { text: 'Repetă ultimul antrenament' }));
+    btn.setAttribute('aria-label', `Repetă ultimul antrenament, din ${afiseazaData(ultima.data)}: ${ultima.exercitii.map(e => e.nume).join(', ')}`);
+  }
+  $('sesiune-subtitlu').textContent = ultima
+    ? `Ultimul: ${afiseazaData(ultima.data)} · ${plural(ultima.exercitii.length, 'exercițiu', 'exerciții')}. Sau alege grupele și adaugă exerciții mai jos.`
+    : 'Pornește de la o rutină, de la zero, sau alege grupele și adaugă primul exercițiu.';
+}
+
 function actualizeazaSumarSesiune() {
-  const activa = stare.inceput !== null || stare.exercitii.length > 0;
+  const activa = antrenamentActiv();
   const pauza = pePauza();
   $('sesiune-titlu').textContent = !activa ? 'Antrenament nou' : pauza ? 'Antrenament pe pauză' : 'Antrenament în curs';
-  $('sesiune-subtitlu').textContent = !activa
-    ? 'Alege grupele, apoi adaugă primul exercițiu.'
-    : pauza ? 'Durata nu crește cât timp e pe pauză. Datele sunt salvate.'
+  if (activa) {
+    $('sesiune-subtitlu').textContent = pauza ? 'Durata nu crește cât timp e pe pauză. Datele sunt salvate.'
       : 'Bifează ✓ fiecare serie făcută. Se salvează automat pe telefon.';
+  } else deseneazaStartSesiune();
+  // În timpul antrenamentului: doar bara compactă sus, exercițiile și „+ Exercițiu” jos (etapa 2).
+  $('sesiune-bara').hidden = !activa;
+  $('sesiune-erou').hidden = activa;
+  $('sesiune-grupe-card').hidden = activa;
+  $('sesiune-adauga-card').hidden = activa;
+  $('btn-plus-exercitiu').hidden = !activa || stare.exercitii.length === 0;
+  const btnBara = $('btn-bara-pauza');
+  btnBara.replaceChildren(iconita(pauza ? 'play' : 'pauza'));
+  btnBara.setAttribute('aria-label', pauza ? 'Reia antrenamentul' : 'Pauză antrenament');
+  btnBara.classList.toggle('activ', pauza);
   $('ecran-sesiune').classList.toggle('pe-pauza', pauza);
   $('sesiune-statistici').hidden = !activa;
   $('sesiune-comenzi').hidden = stare.inceput === null;
@@ -211,6 +237,7 @@ function actualizeazaSumarSesiune() {
   const { serii, volum } = seriiCompletate();
   $('stat-exercitii').textContent = String(stare.exercitii.length);
   $('stat-serii').textContent = String(serii);
+  $('bara-serii').textContent = `${plural(serii, 'serie', 'serii')}${pauza ? ' · pe pauză' : ''}`;
   $('stat-volum').textContent = formatMare(volum);
   actualizeazaDurata();
 
@@ -219,7 +246,9 @@ function actualizeazaSumarSesiune() {
 }
 
 function actualizeazaDurata() {
-  $('stat-durata').textContent = formatDurata(durataCurentaMs() / 1000);
+  const text = formatDurata(durataCurentaMs() / 1000);
+  $('stat-durata').textContent = text;
+  $('bara-durata').textContent = text;
 }
 
 // ---------- Exerciții ----------
@@ -255,6 +284,97 @@ async function adaugaExercitiu() {
   input.value = '';
   deseneazaExercitii();
   programeazaCiorna();
+}
+
+// După ce adaugi exerciții: tastatura se închide, lista merge la primul card nou, iar pe desktop focusul
+// intră în primul câmp al primei serii (pe telefon fără focus, ca să nu apară tastatura).
+function mergiLaExercitiuNou(iduriInainte) {
+  const nou = stare.exercitii.find(e => !iduriInainte.has(e.id));
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  if (!nou) return;
+  requestAnimationFrame(() => {
+    const card = document.querySelector(`[data-ex="${nou.id}"]`);
+    if (!card) return;
+    card.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    if (!ecranTactil()) {
+      const camp = card.querySelector('.serie:not(.serie-antet) input');
+      if (camp) camp.focus({ preventScroll: true });
+    }
+  });
+}
+
+async function adaugaDinCamp() {
+  const inainte = new Set(stare.exercitii.map(e => e.id));
+  await adaugaExercitiu();
+  if (stare.exercitii.some(e => !inainte.has(e.id))) mergiLaExercitiuNou(inainte);
+}
+
+// „+ Exercițiu” (și „Antrenament gol”): selectorul cu căutare, bibliotecă și nume scris de tine.
+function deschideAdaugareExercitii() {
+  deschideSelectorExercitii({
+    titlu: 'Adaugă exerciții',
+    laAlegere: async nume => {
+      const inainte = new Set(stare.exercitii.map(e => e.id));
+      await adaugaInSesiune(nume, [], { faraNavigare: true });
+      if (ecranCurent !== 'ecran-sesiune') arataEcran('ecran-sesiune');
+      mergiLaExercitiuNou(inainte);
+    },
+  });
+}
+
+// „Repetă”: aceleași exerciții, în aceeași ordine, cu același număr și tip de serii (planRepetare în analiza.js).
+// Câmpurile rămân goale; valorile de data trecută apar în „Anterior” și ca sugestie de progresie.
+function repetaAntrenamentul(sesiune) {
+  const plan = planRepetare(sesiune);
+  if (!plan.length) return;
+  deblocheazaAudio();
+  if (stare.inceput === null) stare.inceput = Date.now();
+  tineEcranulAprins();
+  let adaugate = 0;
+  for (const p of plan) {
+    const nume = numeInBiblioteca(p.nume);
+    if (stare.exercitii.some(e => e.nume.toLowerCase() === nume.toLowerCase())) continue;
+    const tip = TIPURI_EXERCITIU[p.tip] ? p.tip : tipExercitiu(nume);
+    stare.exercitii.push({ id: ++contorExercitii, nume, tip, nota: '', superset: p.superset,
+      serii: p.serii.map(t => serieGoala(TIPURI_SERIE[t] ? t : 'normal')) });
+    const grupa = grupaExercitiu(nume);
+    if (grupa) stare.grupe.add(grupa);
+    adaugate++;
+  }
+  normalizeazaSupersets();
+  deseneazaGrupe();
+  deseneazaExercitii();
+  programeazaCiorna();
+  arataEcran('ecran-sesiune');
+  window.scrollTo({ top: 0 });
+  notifica(`Antrenament repetat: ${plural(adaugate, 'exercițiu', 'exerciții')}, ca pe ${afiseazaData(sesiune.data)}.`, 'succes');
+}
+
+// „Din rutină”: rutinele tale, apoi șabloanele.
+async function alegeRutinaDeStart() {
+  let rutine = [];
+  try { rutine = await toateRutinele(); } catch (err) { console.warn(err); }
+  const optiuni = [
+    ...[...rutine].reverse().map(r => ({ text: r.nume, icon: 'lista', detaliu: plural(r.exercitii.length, 'exercițiu', 'exerciții'), actiune: () => adaugaInSesiune(r.exercitii, r.grupe || []) })),
+    ...ANTRENAMENTE.map(a => ({ text: a.nume, icon: 'carte', detaliu: `Șablon · ${plural(a.exercitii.length, 'exercițiu', 'exerciții')}`, actiune: () => adaugaInSesiune(a.exercitii, a.grupe || []) })),
+  ];
+  alegeDinLista({ titlu: 'Începe din rutină', text: rutine.length ? null : 'Nu ai încă rutine salvate. Poți porni de la un șablon.', optiuni });
+}
+
+// Meniul „…” din bara antrenamentului.
+function meniuAntrenament() {
+  alegeDinLista({
+    titlu: 'Antrenament',
+    optiuni: [
+      { text: 'Notă pentru antrenament', icon: 'editeaza', actiune: () => {
+        const t = $('sesiune-nota');
+        t.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        setTimeout(() => t.focus({ preventScroll: true }), 300);
+      } },
+      { text: 'Salvează ca rutină', icon: 'lista', dezactivat: stare.exercitii.length === 0, actiune: () => $('btn-rutina').click() },
+      { text: 'Renunță la antrenament', icon: 'cos', pericol: true, actiune: renuntaLaSesiune },
+    ],
+  });
 }
 
 function adaugaSerie(ex) {
@@ -372,6 +492,8 @@ function bifeazaSerie(ex, s, i) {
     if (v !== null && v < 0) { notifica('Valorile nu pot fi negative.', 'eroare'); return; }
   }
   s.facut = true;
+  // Confirmare tactilă scurtă (Android; iPhone nu permite vibrația din browser).
+  if (setari.semnal && typeof navigator.vibrate === 'function') { try { navigator.vibrate(15); } catch (_) { /* ignorat */ } }
   const tip = recordSerie(ex, s);
   if (tip) notifica(`Record nou la ${ex.nume}: ${ETICHETE_RECORD[tip]}!`, 'record');
   deseneazaExercitii();
@@ -665,15 +787,13 @@ async function scoateExercitiul(ex) {
 function deseneazaExercitii() {
   const lista = $('exercitii');
   if (stare.exercitii.length === 0) {
-    lista.replaceChildren(stareGoala({
+    // Antrenament nou: acțiunile sunt în cardul de sus. Antrenament început, dar golit: o singură acțiune.
+    lista.replaceChildren(...(antrenamentActiv() ? [stareGoala({
       icon: 'gantera',
       titlu: 'Niciun exercițiu încă',
-      text: 'Scrie numele unui exercițiu mai sus, sau pornește de la bibliotecă ori de la o rutină salvată.',
-      actiune: el('div', { class: 'rand-butoane' }, [
-        buton({ text: 'Bibliotecă', icon: 'carte', onclick: () => deschideBiblioteca('exercitii') }),
-        buton({ text: 'Rutine', icon: 'lista', onclick: () => deschideBiblioteca('antrenamente') }),
-      ]),
-    }));
+      text: 'Adaugă primul exercițiu din bibliotecă sau scrie-i numele.',
+      actiune: buton({ text: 'Adaugă exercițiu', icon: 'plus', tip: 'principal', onclick: deschideAdaugareExercitii }),
+    })] : []));
     actualizeazaSumarSesiune();
     return;
   }
@@ -939,13 +1059,17 @@ async function salveazaCaRutina(exercitii, grupe, numeImplicit) {
 
 // ---------- Inițializare ----------
 function initSesiune() {
-  $('btn-exercitiu').addEventListener('click', adaugaExercitiu);
-  $('btn-alege-exercitii').addEventListener('click', () => deschideSelectorExercitii({
-    titlu: 'Adaugă exerciții',
-    laAlegere: nume => adaugaInSesiune(nume, [], { faraNavigare: true }),
-  }));
+  $('btn-exercitiu').addEventListener('click', adaugaDinCamp);
+  $('btn-alege-exercitii').addEventListener('click', deschideAdaugareExercitii);
+  $('btn-plus-exercitiu').addEventListener('click', deschideAdaugareExercitii);
+  $('btn-start-gol').addEventListener('click', deschideAdaugareExercitii);
+  $('btn-start-rutina').addEventListener('click', alegeRutinaDeStart);
+  $('btn-start-repeta').addEventListener('click', () => { const u = ultimaSesiune(istoric); if (u) repetaAntrenamentul(u); });
+  $('btn-bara-pauza').addEventListener('click', () => (pePauza() ? reiaAntrenamentul() : puneAntrenamentulPePauza()));
+  $('btn-bara-odihna').addEventListener('click', () => porneshteTimerul());
+  $('btn-bara-meniu').addEventListener('click', meniuAntrenament);
   $('exercitiu-nume').addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); adaugaExercitiu(); }
+    if (e.key === 'Enter') { e.preventDefault(); adaugaDinCamp(); }
   });
   $('btn-inchide').addEventListener('click', () => inchideSesiunea());
   $('btn-renunta').addEventListener('click', renuntaLaSesiune);

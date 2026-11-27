@@ -462,3 +462,20 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
   quinoa (20137), cuscus (20029), bulgur (20013), hrișcă (20010), linte (16070), fasole albă (16050). Biblioteca are 203 alimente.
 - Rețetele folosesc în continuare variantele crude/uscate (cum se cântărește la gătit); variantele fierte sunt pentru mesele
   fotografiate, cântărite gătite sau adăugate cu „Adaugă un aliment”. Scanarea alege automat varianta după starea din poză.
+
+## Îmbunătățiri — Etapa 2: ecranul de antrenament (v55)
+
+- **Antrenament în curs = ecran compact.** `antrenamentActiv()` (început sau cu exerciții) ascunde cardul mare cu statistici,
+  chip-urile cu grupe și câmpul de adăugare; apare bara `#sesiune-bara` lipită sub antet (56 px: durată, serii, pauză
+  antrenament, odihnă, meniul „…” cu notă / salvează ca rutină / renunță). Grupele se deduc în continuare din exerciții
+  (`adaugaExercitiu` le adaugă în `stare.grupe`), deci sesiunile salvate și statisticile nu se schimbă.
+- „+ Exercițiu” (la finalul listei) deschide selectorul existent; după adăugare `mergiLaExercitiuNou` închide tastatura,
+  defilează la cardul nou (`scroll-margin-top` = antet + bară) și, doar pe desktop, pune focus în primul câmp.
+- **Antrenament nou**: trei acțiuni — „Repetă ultimul antrenament” (dacă există istoric), „Din rutină” (rutinele tale, apoi
+  șabloanele), „Antrenament gol” (selectorul). Câmpul cu nume și grupele rămân pe acest ecran.
+- **Repetă** (`planRepetare` în analiza.js, testată): aceleași exerciții, aceeași ordine, același număr și tip de serii,
+  același tip de exercițiu și superset; câmpuri goale, valorile de data trecută în „Anterior” și sugestia de progresie.
+  Pe Acasă (Sală): cardul „Ultimul antrenament” cu „Repetă” și primele 3 rutine, ascuns cât timp un antrenament e în curs.
+- Antetul (`.topbar`) și bara chiar rămân lipite acum: `overflow-x: hidden` pe html+body făcea din body un container de
+  defilare și anula `position: sticky`; acum `overflow-x: clip` (unde e suportat).
+- Progres fără date: butonul „Începe antrenamentul”. Vibrație de 15 ms la bifare (doar cu semnalul activ; nu pe iPhone).
