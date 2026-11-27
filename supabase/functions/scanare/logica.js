@@ -27,6 +27,9 @@ For every item return:
 - bucati: number of identical pieces when countable (else omit).
 - note: one short Romanian remark if useful (else empty). ambalat: true for a packaged product; marca: brand as printed, if legible.
 Never lump many different foods into one item such as "platter", "buffet" or "mixed appetizers": list each main food type separately.
+Each item must be exactly ONE food. Never join two foods in one name with "cu", "și", "with" or "and":
+wrong: "cartofi prăjiți cu morcov" (250 g); right: "cartofi prăjiți" (180 g) and "morcov" (70 g), each with its own weight.
+The only exception is a single named dish whose ingredients are cooked together and cannot be weighed apart (sarmale, ciorbă, tocăniță, pizza, lasagna).
 If the photo shows a buffet, a shared table or serving platters for several people rather than one person's portion,
 set portie_individuala to false, list the main food types with the weight visible in the photo, and say so in observatii.
 Also return portie_individuala (true for one person's plate or portion), este_mancare (false if the photo shows no food), calitate_imagine (buna, slaba, inutilizabila)

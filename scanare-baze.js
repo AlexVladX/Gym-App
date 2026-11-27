@@ -330,6 +330,34 @@ function textValoriScanare(v) {
   return `${Math.round(v.kcal)} kcal · P ${f(v.proteine)} g · C ${f(v.carbohidrati)} g · G ${f(v.grasimi)} g`;
 }
 
+// ---------- Un aliment care conține de fapt mai multe („cartofi prăjiți cu morcov”) ----------
+// Despărțit după „cu”, „și”, „+”, „,” (și „with”, „and” în numele englezesc). Butonul „Împarte” apare doar la cerere;
+// gramajul se împarte egal și rămâne „estimat”, ca să-l corectezi.
+const SEPARATOR_ALIMENTE = /\s*(?:,|\+|\s(?:și|si|cu|with|and|&)\s)\s*/i;
+function partiNumeScanare(nume) {
+  const p = String(nume || '').split(SEPARATOR_ALIMENTE).map(x => x.trim()).filter(x => x.length >= 2);
+  return p.length >= 2 && p.length <= 5 ? p : null;
+}
+
+function imparteArticolScanare(a, idNou) {
+  const parti = partiNumeScanare(a.nume);
+  if (!parti) return null;
+  const en = partiNumeScanare(a.numeEn || '');
+  const n = parti.length;
+  const imp = x => (x == null ? null : Math.max(1, Math.round(x / n)));
+  return parti.map((nume, k) => {
+    const g = imp(a.grame);
+    const b = {
+      ...a, id: idNou(), nume, numeEn: en && en.length === n ? en[k] : '', alternative: [],
+      grame: g, grameEstimat: imp(a.grameEstimat), grameMin: imp(a.grameMin), grameMax: imp(a.grameMax), sursaGramaj: 'estimat',
+      incredere: a.incredere === 'ridicata' ? 'medie' : a.incredere, bucati: null, vizibile: [], ascunse: k === 0 ? a.ascunse : [],
+      note: `Împărțit din „${a.nume}”: gramajul total s-a împărțit în ${n} părți egale; corectează-l după ce vezi în poză.`,
+      potrivire: null, candidatiLocali: [], candidatiExterni: [], stareCautare: 'cauta', salvatInBiblioteca: null,
+    };
+    return { ...b, unitate: 'g', cantitate: g };
+  });
+}
+
 // ---------- Salvarea în zi (etapa 3) ----------
 const r1 = x => Math.round(x * 10) / 10;
 
@@ -443,5 +471,5 @@ if (typeof module !== 'undefined') module.exports = {
   seteazaUnitateScanare, aplicaPotrivireScanare, avertizariPotrivireScanare, cautaLocalScanare, valoriArticolScanare, totalScanare, textValoriScanare,
   cheieCautareScanare, citesteCacheCautari, scrieCacheCautari,
   instantaneuArticolScanare, problemeSalvareScanare, masaImplicitaScanare, numeImplicitScanare,
-  poateIntraInBibliotecaScanare, duplicatAlimentScanare, alimentDinScanare,
+  poateIntraInBibliotecaScanare, duplicatAlimentScanare, alimentDinScanare, partiNumeScanare, imparteArticolScanare,
 };

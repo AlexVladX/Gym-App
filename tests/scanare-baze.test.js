@@ -209,3 +209,22 @@ test('bufet: AI-ul poate spune că nu e o porție individuală; variantele făr�
   ]);
   assert.deepEqual(ext.candidati, [], 'doar „platter”/„cold” în comun → ascunse');
 });
+
+test('alimente unite („cartofi prăjiți cu morcov”): promptul le interzice; „Împarte” le desparte cu gramajul împărțit egal', async () => {
+  const L = await logica();
+  assert.match(L.INSTRUCTIUNI, /exactly ONE food/);
+  assert.match(L.INSTRUCTIUNI, /cartofi prăjiți cu morcov/);
+  assert.deepEqual(B.partiNumeScanare('cartofi prăjiți cu morcov'), ['cartofi prăjiți', 'morcov']);
+  assert.deepEqual(B.partiNumeScanare('Piept de pui cu orez și broccoli'), ['Piept de pui', 'orez', 'broccoli']);
+  assert.deepEqual(B.partiNumeScanare('salată verde, roșii, castraveți'), ['salată verde', 'roșii', 'castraveți']);
+  assert.equal(B.partiNumeScanare('Ciorbă de perișoare'), null);
+  assert.equal(B.partiNumeScanare('Sarmale'), null);
+  let n = 0;
+  const parti = B.imparteArticolScanare({ id: 'x', nume: 'cartofi prăjiți cu morcov', numeEn: 'fried potatoes with carrots', grame: 250, grameEstimat: 250, grameMin: 200, grameMax: 300, incredere: 'ridicata', preparare: 'prajit', ascunse: ['ulei'], potrivire: { tip: 'local' } }, () => `n${n++}`);
+  assert.deepEqual(parti.map(a => [a.id, a.nume, a.numeEn, a.grame, a.cantitate, a.unitate, a.sursaGramaj, a.incredere, a.potrivire]),
+    [['n0', 'cartofi prăjiți', 'fried potatoes', 125, 125, 'g', 'estimat', 'medie', null], ['n1', 'morcov', 'carrots', 125, 125, 'g', 'estimat', 'medie', null]]);
+  assert.deepEqual(parti[0].ascunse, ['ulei']);
+  assert.match(parti[1].note, /părți egale/);
+  const fara = B.imparteArticolScanare({ id: 'y', nume: 'pui cu orez', numeEn: 'chicken', grame: 300, grameEstimat: 300, grameMin: 250, grameMax: 350, incredere: 'medie' }, () => 'z');
+  assert.deepEqual(fara.map(a => a.numeEn), ['', ''], 'numele englezesc nepereche → căutare după numele românesc');
+});

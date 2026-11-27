@@ -23,6 +23,15 @@ function inchideResurseScanare() {
   scanare.urluriRecente = [];
 }
 
+// Pașii fluxului, sub titlu: Poză → Analiză → Verificare → Salvare.
+const PASI_SCANARE = ['Poză', 'Analiză', 'Verificare', 'Salvare'];
+function pasScanare(n) {
+  if (!scanare.ctrl) return;
+  let bara = scanare.ctrl.caseta.querySelector('.scan-pasi');
+  if (!bara) { bara = el('ol', { class: 'scan-pasi', 'aria-label': 'Pașii scanării' }); scanare.ctrl.caseta.querySelector('h2').after(bara); }
+  bara.replaceChildren(...PASI_SCANARE.map((t, k) => el('li', { class: k + 1 < n ? 'gata' : k + 1 === n ? 'activ' : '', 'aria-current': k + 1 === n ? 'step' : null, text: t })));
+}
+
 function zonaScanare() { return scanare.ctrl && scanare.ctrl.caseta.querySelector('.scan-zona'); }
 // replaceChildren(null) ar scrie textul „null”; elementele opționale lipsă se sar.
 function puneInZona(zona, ...copii) { if (zona) zona.replaceChildren(...copii.filter(Boolean)); }
@@ -31,6 +40,7 @@ function inchideScanare() { if (scanare.ctrl) scanare.ctrl.inchide(() => { if (s
 
 // Ecranul 1: cameră sau galerie.
 function pasAlegereScanare(eroare = '') {
+  pasScanare(1);
   const intrare = captura => {
     const i = el('input', { type: 'file', accept: 'image/*', class: 'ascuns-vizual', tabindex: '-1', 'aria-hidden': 'true' });
     if (captura) i.setAttribute('capture', 'environment');
@@ -139,6 +149,7 @@ function base64Blob(blob) {
 
 // Ecranul 2: poza aleasă, o notă opțională și „Analizează”.
 function pasPrevizualizareScanare(eroare = null) {
+  pasScanare(1);
   const nota = el('input', { type: 'text', maxlength: '200', value: scanare.nota, placeholder: 'ex.: gătit cu ulei de măsline, porție mare', 'aria-label': 'Detalii despre masă (opțional)' });
   nota.addEventListener('input', () => { scanare.nota = nota.value; });
   puneInZona(zonaScanare(), 
@@ -164,14 +175,15 @@ async function analizeazaScanare() {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return pasPrevizualizareScanare(mesajEroareScanare({ cod: 'offline' }));
   if (!sinc.utilizator || !sinc.adaptor || typeof sinc.adaptor.functie !== 'function') return pasPrevizualizareScanare(mesajEroareScanare({ cod: 'fara_cont' }));
   const amprenta = scanare.imagine.amprenta;
-  const cheieCacheVerif = amprenta ? `p3:${amprenta}:${scanare.nota.trim()}` : null;
+  const cheieCacheVerif = amprenta ? `p4:${amprenta}:${scanare.nota.trim()}` : null;
   const limitaMea = typeof limitaProprieAtinsa === 'function' ? limitaProprieAtinsa() : null;
   if (limitaMea && !(cheieCacheVerif && citesteCacheScanare(localStorage, cheieCacheVerif))) return pasPrevizualizareScanare(mesajEroareScanare(limitaMea));
-  const cheieCache = amprenta ? `p3:${amprenta}:${scanare.nota.trim()}` : null;
+  const cheieCache = amprenta ? `p4:${amprenta}:${scanare.nota.trim()}` : null;
   const dinCache = cheieCache ? citesteCacheScanare(localStorage, cheieCache) : null;
   if (dinCache) return arataRezultatScanare(dinCache, true);
 
   scanare.inCurs = true;
+  pasScanare(2);
   const ctrl = new AbortController();
   scanare.cerere = ctrl;
   puneInZona(zonaScanare(), 
@@ -219,7 +231,8 @@ function arataRezultatScanare(raspuns, dinCache) {
 function potrivesteLocalScanare(a) {
   if (!a.nume.trim()) return { ...a, candidatiLocali: [], candidatiExterni: [], potrivire: null, stareCautare: 'gol' };
   const locali = candidatiLocaliScanare(a, toateAlimentele(), toateRetetele(), indexNutritie);
-  const ales = alegeLocalScanare(locali);
+  // Un produs ambalat cu marcă se caută întâi exact (Open Food Facts / USDA Branded); varianta generică rămâne în listă.
+  const ales = a.ambalat && a.marca ? null : alegeLocalScanare(locali);
   const b = { ...a, candidatiLocali: locali, candidatiExterni: a.candidatiExterni || [], potrivire: null, stareCautare: ales ? 'gata' : 'cauta' };
   return ales ? aplicaPotrivireScanare(b, ales) : b;
 }
@@ -290,6 +303,7 @@ function redeseneazaRevizuireScanare() {
 
 // Ecranul de revizuire: alimente, cantități, surse, valori și totalul mesei — totul se recalculează imediat.
 function pasRevizuireScanare() {
+  pasScanare(3);
   const r = scanare.rezultat;
   const zona = zonaScanare();
   if (!r.esteMancare || r.calitate === 'inutilizabila') {
@@ -358,6 +372,7 @@ function incearcaSalvareScanare() {
 
 // Ecranul 5: confirmarea — masa, numele, data și ora. Abia aici se salvează.
 function pasConfirmareScanare() {
+  pasScanare(4);
   const acum = new Date();
   const oraAcum = `${String(acum.getHours()).padStart(2, '0')}:${String(acum.getMinutes()).padStart(2, '0')}`;
   const t = scanare.tinta || {};
@@ -460,6 +475,23 @@ function actualizeazaTotalScanare() {
   if (b) umpleTotalScanare(b);
 }
 
+// „Împarte”: un aliment cu mai multe nume devine alimente separate, fiecare căutat în aplicație și apoi în USDA.
+function imparteInScanare(id) {
+  const k = scanare.articole.findIndex(a => a.id === id);
+  if (k < 0) return;
+  const parti = imparteArticolScanare(scanare.articole[k], () => `sa-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`);
+  if (!parti) return;
+  const noi = parti.map(potrivesteLocalScanare);
+  scanare.articole = [...scanare.articole.slice(0, k), ...noi, ...scanare.articole.slice(k + 1)];
+  scanare.deschise.delete(id);
+  pasRevizuireScanare();
+  const deCautat = noi.filter(a => a.stareCautare === 'cauta').map(a => a.id);
+  if (deCautat.length) cautaExternScanare(deCautat);
+  const prim = zonaScanare().querySelector(`[data-id="${noi[0].id}"]`);
+  if (prim) prim.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  notifica(`Împărțit în ${noi.length} alimente. Verifică gramajele: s-au împărțit egal.`, 'info', 4500);
+}
+
 function adaugaArticolScanare(nume) {
   const a = { ...initializeazaCantitateScanare(articolManualScanare(nume)), candidatiLocali: [], candidatiExterni: [], potrivire: null, stareCautare: 'gol' };
   scanare.articole = [...scanare.articole, nume ? potrivesteLocalScanare(a) : a];
@@ -529,6 +561,10 @@ function cardArticolScanare(a) {
       buton({ icon: 'cos', tip: 'fantoma', mic: true, eticheta: `Șterge ${a.nume || 'alimentul'}`, onclick: () => { scanare.articole = scanare.articole.filter(x => x.id !== a.id); pasRevizuireScanare(); } }),
     ]),
     inc.detaliu ? el('p', { class: 'nota nota-mica scan-incredere-text', text: inc.detaliu }) : null,
+    partiNumeScanare(a.nume) ? el('div', { class: 'scan-imparte' }, [
+      el('span', { class: 'nota nota-mica', text: `Pare să fie mai multe alimente: ${partiNumeScanare(a.nume).join(' + ')}.` }),
+      buton({ text: 'Împarte', icon: 'schimba', tip: 'secundar', mic: true, eticheta: `Împarte ${a.nume} în alimente separate`, onclick: () => imparteInScanare(a.id) }),
+    ]) : null,
     a.alternative.length ? el('div', { class: 'scan-chips' }, [
       el('span', { class: 'nota nota-mica', text: 'Poate fi:' }),
       ...a.alternative.map(alt => el('button', { type: 'button', class: 'chip', onclick: () => {

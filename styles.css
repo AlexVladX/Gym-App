@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "48";
+  --versiune-css: "49";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -2002,6 +2002,7 @@ html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
 .zi-din-poza .iconita { width: 13px; height: 13px; }
 .zi-adauga { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .zi-adauga .btn { flex: 1 1 auto; }
+.dialog-scanare .dialog-butoane .btn-lat { flex: 1 1 100%; width: 100%; }
 .dialog-scanare .dialog-butoane .btn-lat + .btn-lat { margin-top: -4px; }
 
 /* Ștergere rapidă: „−” roșu în colț (fel de mâncare în zi, zi întreagă în săptămână) */
@@ -2040,3 +2041,11 @@ html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
 .scan-comparare .mai-putin { color: var(--pozitiv); font-weight: 600; }
 #set-scanare select { max-width: 55%; }
 .scan-setari-butoane { display: grid; gap: var(--s2); margin-top: var(--s3); }
+
+/* ---------- Scanarea meselor (etapa 5) ---------- */
+.scan-pasi { display: flex; gap: 4px; margin: -4px 0 var(--s3); padding: 0; list-style: none; }
+.scan-pasi li { flex: 1; padding-top: 6px; border-top: 3px solid var(--bordura-tare); font-size: 11.5px; font-weight: 600; color: var(--text-2); text-align: center; }
+.scan-pasi li.gata { border-top-color: var(--accent); color: var(--accent); opacity: 0.75; }
+.scan-pasi li.activ { border-top-color: var(--accent); color: var(--accent); }
+.scan-imparte { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-top: 6px; padding: 6px 8px; border-radius: var(--raza-mica); background: rgba(211, 146, 35, 0.12); }
+.scan-imparte .nota { margin: 0; flex: 1 1 160px; }
