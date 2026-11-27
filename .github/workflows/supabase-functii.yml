@@ -26,4 +26,4 @@ jobs:
           version: latest
       - name: Publică „scanare”
         if: env.ARE_TOKEN == '1'
-        run: supabase functions deploy scanare --project-ref ibxqtjxlhywkvejbizqk --no-verify-jwt
+        run: supabase functions deploy scanare --project-ref ibxqtjxlhywkvejbizqk --no-verify-jwt --yes

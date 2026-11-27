@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "41";
+  --versiune-css: "42";
 
   /* Culori */
   --fundal: #0B0D10;

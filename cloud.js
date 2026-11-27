@@ -115,9 +115,13 @@ function adaptorSupabase(client) {
       if (!error) return data;
       let det = null;
       try { det = response ? await response.clone().json() : null; } catch (_) { det = null; }
-      const e = new Error((det && det.mesaj) || error.message || 'Eroare la server.');
-      e.cod = (det && det.cod) || (semnal && semnal.aborted ? 'anulat' : (error.name === 'FunctionsFetchError' ? 'retea' : 'eroare'));
-      e.status = response ? response.status : 0;
+      const status = response ? response.status : 0;
+      // Fără { cod, mesaj } răspunsul nu vine din funcția noastră (ex. funcția nu e publicată → 404).
+      const strain = det && !det.cod ? (det.message || det.msg || det.error || '') : '';
+      const e = new Error((det && det.mesaj) || (status === 404 ? 'Funcția „scanare” nu e publicată în Supabase.' : '')
+        || (status ? `Serverul a răspuns cu eroarea ${status}${strain ? ` (${String(strain).slice(0, 120)})` : ''}.` : '') || error.message || 'Eroare la server.');
+      e.cod = (det && det.cod) || (status === 404 ? 'configurare' : (semnal && semnal.aborted ? 'anulat' : (error.name === 'FunctionsFetchError' ? 'retea' : 'eroare')));
+      e.status = status;
       throw e;
     },
     async urcaFisier(cale, blob) { verifica(await client.storage.from('poze').upload(cale, blob, { upsert: true, contentType: blob.type || 'application/octet-stream' })); },
