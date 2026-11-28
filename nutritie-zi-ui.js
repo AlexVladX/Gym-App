@@ -36,6 +36,7 @@ async function incarcaZiNutritie(data = dataZiNutritie) {
     ziNutritie = { data, mese: [] };
     notifica('Mesele zilei nu au putut fi citite.', 'eroare');
   }
+  await incarcaZiIeri(); // etapa 7: „Copiază ziua de ieri”, „Ca ieri”
 }
 
 async function salveazaZiua(zi, mesajEroare = 'Modificarea nu a putut fi salvată.') {
@@ -100,6 +101,7 @@ function deseneazaSumarZi() {
     el('h2', { text: 'Calorii și macronutrienți' }),
     el('div', { class: 'card-cap-actiuni' }, [
       buton({ text: tinte ? 'Ținte' : 'Setează ținte', icon: 'editeaza', tip: 'fantoma', mic: true, onclick: deschideTinteNutritie }),
+      buton({ icon: 'puncte', tip: 'fantoma', mic: true, eticheta: 'Mai multe: copiază o zi', onclick: meniuZiNutritie }),
     ]),
   ]);
   continut.push(cap);
@@ -224,17 +226,22 @@ function deseneazaMeseZi() {
     const intrari = ziNutritie.mese.filter(i => i.masa === m.id);
     // Masă goală: un singur rând („Gustarea 2 · + Adaugă”), care deschide foaia de adăugare pe masa respectivă.
     if (!intrari.length) {
-      return el('button', { type: 'button', class: 'card zi-masa-goala', 'aria-label': `${m.nume}: nimic notat. Adaugă`,
+      const rand = el('button', { type: 'button', class: 'card zi-masa-goala', 'aria-label': `${m.nume}: nimic notat. Adaugă`,
         onclick: () => deschideAdaugareRapida({ masa: m.id, data: dataZiNutritie }) }, [
         el('span', { class: 'zi-masa-goala-nume', text: m.nume }),
         el('span', { class: 'zi-masa-goala-adauga' }, [iconita('plus', 'iconita mica'), el('span', { text: 'Adaugă' })]),
       ]);
+      const caIeri = m.id !== 'alta' ? sugestieMasaGoala(m.id) : null; // etapa 7: „Ca ieri: … · 650 kcal”
+      return caIeri ? el('div', { class: 'zi-masa-goala-grup' }, [rand, caIeri]) : rand;
     }
     const t = totaluriPeMasa(ziNutritie, m.id);
     return el('section', { class: 'card zi-masa', 'aria-label': m.nume }, [
       el('div', { class: 'card-cap' }, [
         el('h2', { text: m.nume }),
-        el('span', { class: 'nota', text: intrari.length ? `${fmtNr(t.mancat.kcal)} / ${fmtNr(t.planificat.kcal)} kcal` : '' }),
+        el('div', { class: 'card-cap-actiuni' }, [
+          el('span', { class: 'nota', text: intrari.length ? `${fmtNr(t.mancat.kcal)} / ${fmtNr(t.planificat.kcal)} kcal` : '' }),
+          buton({ icon: 'puncte', tip: 'fantoma', mic: true, clasa: 'zi-masa-meniu', eticheta: `Mai multe pentru ${m.nume.toLowerCase()}: copiază masa`, onclick: () => meniuMasaZi(m.id) }),
+        ]),
       ]),
       intrari.length ? el('ul', { class: 'zi-intrari' }, intrari.map(randIntrare)) : null,
       el('div', { class: 'zi-adauga' }, [
@@ -245,6 +252,7 @@ function deseneazaMeseZi() {
       ]),
     ]);
   });
+  if (!ziNutritie.mese.length) carduri.unshift(cardCopiereZiGoala()); // etapa 7
   $('zi-mese').replaceChildren(...carduri);
 }
 
@@ -915,7 +923,7 @@ async function deschideAdaugareRapida({ masa = null, data = null } = {}) {
   const chipuri = el('div', { class: 'chipuri chipuri-mici adauga-mese', role: 'group', 'aria-label': 'Masa' });
   const deseneazaChipuri = () => chipuri.replaceChildren(...MESE.map(m => el('button', {
     type: 'button', class: 'chip chip-mic' + (m.id === masaAleasa ? ' activ' : ''), 'aria-pressed': String(m.id === masaAleasa), text: m.scurt || m.nume,
-    onclick: () => { masaAleasa = m.id; deseneazaChipuri(); },
+    onclick: () => { masaAleasa = m.id; deseneazaChipuri(); deseneazaRecente(); },
   })));
   deseneazaChipuri();
   const actiune = (icon, titlu, detaliu, f) => el('button', { type: 'button', class: 'adauga-actiune', onclick: () => d.inchide(() => f(masaAleasa)) }, [
@@ -930,26 +938,38 @@ async function deschideAdaugareRapida({ masa = null, data = null } = {}) {
         actiune('carte', 'Rețetă', 'o porție', m => alegeRetetaPentruMasa(m, { data: ziua, direct: true })),
         actiune('plus', 'Aliment', 'ex. un măr', m => deschideAdaugareAlimente({ masa: m, data: ziua })),
       ]),
-      el('p', { class: 'sectiune-eticheta', text: 'Recente' }),
       recente,
     ]),
     butoane: [buton({ text: 'Închide', tip: 'fantoma', onclick: () => d.inchide() })],
   });
-  // Ultimele 5 lucruri notate (din ultimele 14 zile), adăugabile cu o atingere la masa aleasă.
-  let lista = [];
-  try {
-    const zile = await Promise.all(Array.from({ length: 14 }, (_, k) => citesteZiNutritie(mutaData(dataLocala(), -k))));
-    lista = recenteNutritie(zile, 5);
-  } catch (err) { console.warn(err); }
-  if (dialogDeschis !== d) return;
-  recente.replaceChildren(...(lista.length ? lista.map(i => {
+  // Etapa 7: „Recente” (ultimele lucruri puse la masa aleasă) și „Frecvente” (cele mai dese la masa aceea în ultimele
+  // 30 de zile), adăugabile cu o atingere, cu porția folosită ultima dată. Listele urmează masa aleasă.
+  let zile = null;
+  const rand = (i, detaliu = '') => {
     const v = valoriPlanificateIntrare(i);
     return el('button', { type: 'button', class: 'adauga-recent', onclick: () => d.inchide(() => adaugaRecent(i, masaAleasa, ziua)) }, [
       el('span', { class: 'adauga-recent-text' }, [el('strong', { text: i.nume }),
-        el('span', { class: 'nota', text: `${fmtNr(v.kcal)} kcal${i.idReteta ? ` · ${fmtNumarPortiiZi(i.portii)}` : ''}` })]),
+        el('span', { class: 'nota', text: `${fmtNr(v.kcal)} kcal${i.idReteta ? ` · ${fmtNumarPortiiZi(i.portii)}` : ''}${detaliu}` })]),
       el('span', { class: 'adauga-recent-plus', 'aria-hidden': 'true' }, [iconita('plus', 'iconita mica')]),
     ]);
-  }) : [el('p', { class: 'nota', text: 'Ce notezi apare aici, ca să adaugi din nou cu o atingere.' })]));
+  };
+  function deseneazaRecente() {
+    if (!zile) return;
+    const rec = recentePeMasa(zile, masaAleasa, 5);
+    const fr = frecventePeMasa(zile, { idMasa: masaAleasa, azi: dataLocala(), n: 5, exclude: new Set(rec.map(cheieRecent)) });
+    const nume = (MESE.find(m => m.id === masaAleasa) || { nume: '' }).nume.toLowerCase();
+    recente.replaceChildren(...[
+      el('p', { class: 'sectiune-eticheta', text: `Recente la ${nume}` }),
+      ...(rec.length ? rec.map(i => rand(i)) : [el('p', { class: 'nota', text: `Ce pui la ${nume} apare aici, ca să adaugi din nou cu o atingere.` })]),
+      fr.length ? el('p', { class: 'sectiune-eticheta', text: 'Frecvente (30 de zile)' }) : null,
+      ...fr.map(x => rand(x.intrare, ` · de ${x.numar} ori`)),
+    ].filter(Boolean));
+  }
+  try {
+    zile = await Promise.all(Array.from({ length: 30 }, (_, k) => citesteZiNutritie(mutaData(dataLocala(), -k))));
+  } catch (err) { console.warn(err); zile = []; }
+  if (dialogDeschis !== d) return;
+  deseneazaRecente();
 }
 
 function fmtNumarPortiiZi(p) {

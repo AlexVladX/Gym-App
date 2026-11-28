@@ -598,3 +598,19 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
   (`{ tip: 'meseZi', inregistrare: { data, mese } }`, `puneMeseInCos`); restaurarea le adaugă înapoi în zi doar pe cele care lipsesc
   (`meseDeRestauratInZi`), fără să suprascrie ce s-a adăugat între timp.
 - Necesarul adaptiv (v62): starea de acum folosește zilele până ieri; „Ziua nu e notată complet” e comutator.
+
+## Etapa 7, funcția 2: copierea zilei și a meselor (v64)
+
+- **Logica** (nutritie-zi.js): `copieIntrariCa` (prin `copiazaIntrarea`: id nou, fără stare/blocare/porții mâncate; planificate fără oră),
+  `copieZi({ mod: 'adauga' | 'inlocuieste', stare, stergeMancate })` — la înlocuire rămân mesele mâncate/începute, afară de
+  `stergeMancate` (cerut separat); cafeaua nu se copiază; ziua sursă nu se schimbă. `copieMasa` (altă zi și/sau altă masă),
+  `rezumatMeseZi`, `sugestieCaIeri`, `recentePeMasa`, `frecventePeMasa` (≥ 2 zile în ultimele 30, cu ultima folosire).
+- **Interfața** (`nutritie-copiere-ui.js`, încărcat cu nutriția): în Ziua mea, ziua goală are cardul „Copiază ziua de ieri”
+  (cu rezumat) / „Copiază din altă zi…” (calendar cu zilele cu mese marcate); meniul „…” de lângă „Ținte” are aceleași opțiuni.
+  Dialogul: „Adaug peste” / „Înlocuiesc ziua” (doar dacă ziua are mese) și „Ca planificate” / „Direct ca mâncate”; mesele mâncate
+  șterse la înlocuire (după confirmarea separată) intră în „Șterse recent”. „Anulează” rescrie ziua exact cum era (sau o șterge,
+  dacă nu exista). Fiecare masă cu conținut are „…” → „Copiază masa în…” (azi / mâine / dată, masa țintă). Mesele goale au
+  „Ca ieri: … · N kcal” (ziua dinaintea celei afișate), adăugate ca la „Recente”. Foaia „+ Adaugă”: „Recente la <masă>” și
+  „Frecvente (30 de zile)”, care urmează masa aleasă.
+- Acasă (Sală): rutinele sunt una pe rând, cu numele întreg.
+- Teste: tests/copiere-zi.test.js; în browser qa47.py.

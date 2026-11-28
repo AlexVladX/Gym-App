@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "63";
+  --versiune-css: "64";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -2101,8 +2101,11 @@ html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
 .sesiune-start { display: grid; gap: var(--s2); margin-top: var(--s4); }
 .sesiune-start .rand-butoane > .btn { flex: 1 1 0; }
 
-.acasa-rutine-rapide > .btn { flex: 1 1 auto; min-width: 0; }
-.acasa-rutine-rapide > .btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Rutinele de pe Acasă: una pe rând, pe toată lățimea, cu numele întreg (pe două rânduri, dacă e lung) */
+.acasa-rutine-rapide { display: flex; flex-direction: column; align-items: stretch; gap: var(--s2); }
+.acasa-rutine-rapide > .btn { width: 100%; justify-content: flex-start; text-align: left; height: auto; min-height: var(--atingere); padding-top: 10px; padding-bottom: 10px; }
+.acasa-rutine-rapide > .btn > span:not(.insigna-sugerata) { flex: 1 1 auto; min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.3; }
+.acasa-rutine-rapide > .btn > .insigna-sugerata { flex: none; margin-left: auto; }
 
 /* Capătul unei liste desenate pe bucăți (deseneazaPeBucati): invizibil, doar semnal pentru următoarea bucată. */
 .santinela-lista { height: 1px; grid-column: 1 / -1; }
@@ -2261,3 +2264,23 @@ html[data-tema="deschisa"][data-mod="gym"] {
 /* Planificator: meniul „…” al zilei (în locul „−” roșu, care golea ziua dintr-o atingere) */
 .sapt-zi > .sapt-zi-meniu { position: absolute; top: 6px; right: 6px; z-index: 2; }
 .sapt-zi:has(> .sapt-zi-meniu) > .card-cap { padding-right: 44px; }
+
+/* Etapa 7, funcția 2: copierea zilei / mesei, „Ca ieri” */
+.zi-copiere { display: grid; gap: var(--s2); }
+.zi-copiere .nota { margin: 0; }
+.zi-masa-goala-grup { display: grid; gap: 0; margin-bottom: var(--s3); }
+.zi-masa-goala-grup > .zi-masa-goala { border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; }
+.zi-ca-ieri { display: flex; align-items: center; gap: var(--s2); width: 100%; min-height: var(--atingere); padding: 8px var(--s4, 16px); text-align: left;
+  background: var(--suprafata); border: 1px solid var(--bordura); border-top: 0; border-radius: 0 0 var(--raza) var(--raza); color: var(--text); font: inherit; cursor: pointer; }
+.zi-ca-ieri-text { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font-size: 0.92rem; }
+.zi-masa .card-cap-actiuni .nota { margin: 0; white-space: nowrap; }
+.copiere-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 0.92rem; max-height: 30vh; overflow-y: auto; }
+.copiere-lista li { overflow-wrap: anywhere; }
+.calendar-copiere { display: grid; gap: var(--s2); }
+.cal-cap { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
+.cal-grila { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; text-align: center; }
+.cal-antet span { color: var(--text-2); font-size: 12px; font-weight: 650; }
+.cal-zi { min-height: 40px; border-radius: var(--raza-mica); border: 1px solid transparent; background: transparent; color: var(--discret); font: inherit; font-variant-numeric: tabular-nums; }
+.cal-zi.are-mese { background: var(--accent-slab); color: var(--text); border-color: color-mix(in srgb, var(--accent) 40%, transparent); font-weight: 700; cursor: pointer; }
+.cal-zi.azi { outline: 1px solid var(--bordura-tare); }
+.cal-zi:disabled { cursor: default; }

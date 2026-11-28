@@ -584,8 +584,87 @@ function copieIntrareRecenta(i, { id, masa, acum = Date.now() }) {
   return rez;
 }
 
+// ---------- Etapa 7, funcția 2: copierea unei zile sau a unei mese ----------
+// Copiile sunt intrări noi (id nou, prin copiazaIntrarea), independente de original; ziua sursă nu se schimbă.
+// Cafeaua nu se copiază (are regula ei, cafeaua zilnică). Mesele din poză se copiază cu valorile lor (fără poză).
+// stare: 'neinceput' (implicit: le bifezi pe măsură ce mănânci) sau 'complet' (direct ca mâncate).
+function copieIntrariCa(intrari, { stare = 'neinceput', masa = null, idNou, acum = Date.now() }) {
+  return (intrari || []).map(i => {
+    const c = copiazaIntrarea(i, { id: idNou(), masa: masa || i.masa, acum });
+    delete c.ajustat;
+    if (stare === 'complet') c.stare = 'complet';
+    if (stare !== 'complet') delete c.ora; // ora arată când ai mâncat; o masă planificată nu o are încă
+    return c;
+  });
+}
+
+// mod: 'adauga' (peste ce e în zi) sau 'inlocuieste' (scoate ce n-ai început; mesele mâncate sau începute rămân,
+// afară de cazul stergeMancate: true, care se cere separat). Întoarce { zi, adaugate, pastrate, sterse }.
+function copieZi({ sursa, tinta, data, mod = 'adauga', stare = 'neinceput', stergeMancate = false, idNou, acum = Date.now() }) {
+  const baza = tinta || { data, mese: [] };
+  const copii = copieIntrariCa((sursa && sursa.mese) || [], { stare, idNou, acum });
+  let ramase = baza.mese || [];
+  let sterse = [];
+  if (mod === 'inlocuieste') {
+    sterse = ramase.filter(i => stergeMancate || i.stare === 'neinceput');
+    ramase = ramase.filter(i => !sterse.includes(i));
+  }
+  return { zi: { ...baza, data: baza.data || data, mese: ordoneazaDupaMasa([...ramase, ...copii]) }, adaugate: copii.length, pastrate: ramase.length, sterse };
+}
+
+// O singură masă (ex. „Mic dejun” cu toate intrările ei) copiată în altă zi și/sau altă masă.
+function copieMasa({ sursa, idMasa, tinta, data, masaTinta = idMasa, stare = 'neinceput', idNou, acum = Date.now() }) {
+  const intrari = ((sursa && sursa.mese) || []).filter(i => i.masa === idMasa);
+  const baza = tinta || { data, mese: [] };
+  const copii = copieIntrariCa(intrari, { stare, masa: masaTinta, idNou, acum });
+  return { zi: { ...baza, data: baza.data || data, mese: ordoneazaDupaMasa([...(baza.mese || []), ...copii]) }, adaugate: copii.length };
+}
+
+// Rezumatul unei zile pentru „Copiază ziua de ieri”: câte feluri, kcal și proteine (doar mesele, fără cafea).
+function rezumatMeseZi(zi) {
+  const t = totaluriZi({ mese: (zi && zi.mese) || [] });
+  return { numar: t.numar, kcal: Math.round(t.planificat.kcal), proteine: Math.round(t.planificat.proteine) };
+}
+
+// „Ca ieri” pentru o masă goală: ce ai avut ieri la aceeași masă.
+function sugestieCaIeri(ieri, idMasa) {
+  const intrari = ((ieri && ieri.mese) || []).filter(i => i.masa === idMasa && i.valoriPortie);
+  if (!intrari.length) return null;
+  const t = totaluriZi({ mese: intrari });
+  return { intrari, nume: intrari.map(i => i.nume), kcal: Math.round(t.planificat.kcal) };
+}
+
+// „Recente” la o masă: ultimele lucruri diferite puse la masa aceea (cel mai recent întâi), cu porția de atunci.
+function recentePeMasa(zile, idMasa, n = 5) {
+  return recenteNutritie((zile || []).map(z => ({ ...z, mese: ((z && z.mese) || []).filter(i => !idMasa || i.masa === idMasa) })), n);
+}
+
+// „Frecvente” la o masă, în ultimele `zileInapoi` zile până azi: după de câte ori apar (zile diferite), apoi cele mai recente.
+// Fiecare vine cu ultima folosire (porția folosită ultima dată). exclude: chei (cheieRecent) de sărit (ex. cele din „Recente”).
+function frecventePeMasa(zile, { idMasa, azi, zileInapoi = 30, n = 5, exclude = new Set() } = {}) {
+  const de = (() => { const [a, l, z] = azi.split('-').map(Number); const d = new Date(Date.UTC(a, l - 1, z - (zileInapoi - 1))); return d.toISOString().slice(0, 10); })();
+  const pe = new Map();
+  for (const zi of zile || []) {
+    if (!zi || typeof zi.data !== 'string' || zi.data < de || zi.data > azi) continue;
+    const vazuteAzi = new Set();
+    for (const i of zi.mese || []) {
+      if (!i || !i.valoriPortie || (idMasa && i.masa !== idMasa)) continue;
+      const k = cheieRecent(i);
+      if (exclude.has(k)) continue;
+      const r = pe.get(k) || { numar: 0, ultima: null };
+      if (!vazuteAzi.has(k)) { r.numar++; vazuteAzi.add(k); }
+      if (!r.ultima || (i.adaugat || 0) > (r.ultima.adaugat || 0)) r.ultima = i;
+      pe.set(k, r);
+    }
+  }
+  return [...pe.values()].filter(r => r.numar >= 2)
+    .sort((a, b) => b.numar - a.numar || (b.ultima.adaugat || 0) - (a.ultima.adaugat || 0))
+    .slice(0, n).map(r => ({ intrare: r.ultima, numar: r.numar }));
+}
+
 if (typeof module !== 'undefined') {
-  module.exports = { masaDupaOra, recenteNutritie, copieIntrareRecenta, cheieRecent,
+  module.exports = { copieIntrariCa, copieZi, copieMasa, rezumatMeseZi, sugestieCaIeri, recentePeMasa, frecventePeMasa,
+    masaDupaOra, recenteNutritie, copieIntrareRecenta, cheieRecent,
     STARI_MASA, NIVELURI_ACTIVITATE, SCOPURI_NUTRITIE, LIMITE_TINTE, FIBRE_PE_1000_KCAL,
     curataSnapshotScanare, intrareDinScanare, scaleazaArticolScanat, articolScanatEditabil, modificaIntrareScanata, sumaArticoleScanate,
     estimeazaTinte, impartireMacronutrienti, KCAL_MINIM, CARBO_MAX_PE_KG, GRASIMI_MAX_PROCENT, curataTinte, valoriZero, intrareMasa, valoriPlanificateIntrare, portiiMancateIntrare,

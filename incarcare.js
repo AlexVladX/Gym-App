@@ -7,7 +7,7 @@
 // sincronizare și setări.
 const SCRIPTURI_NUTRITIE = [
   'nutritie-alimente.js', 'nutritie-retete.js', 'nutritie-analiza.js', 'nutritie-imagini.js',
-  'nutritie.js', 'nutritie-zi-ui.js', 'necesar-adaptiv-ui.js', 'cafea-ui.js', 'nutritie-saptamana-ui.js', 'nutritie-analiza-ui.js', 'nutritie-cumparaturi-ui.js',
+  'nutritie.js', 'nutritie-zi-ui.js', 'necesar-adaptiv-ui.js', 'nutritie-copiere-ui.js', 'cafea-ui.js', 'nutritie-saptamana-ui.js', 'nutritie-analiza-ui.js', 'nutritie-cumparaturi-ui.js',
   'scanare.js', 'scanare-baze.js', 'scanare-ui.js', 'acasa-mealprep.js',
 ];
 
