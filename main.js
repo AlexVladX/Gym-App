@@ -28,6 +28,25 @@ let ecranInainteDeSetari = null;
 const CATEGORII_SETARI = { cont: 'Cont și sincronizare', antrenament: 'Antrenament', progresie: 'Progresie', scanare: 'Scanarea meselor', nutritie: 'Nutriție', aspect: 'Aspect', date: 'Date și backup', despre: 'Despre' };
 const NUME_TEME = { intunecata: 'Întunecată', deschisa: 'Deschisă', sistem: 'Ca sistemul' };
 
+// Setări → Antrenament: echipamentul din sala ta (etapa 7, funcția 3). Gol = totul disponibil.
+function deseneazaSetareEchipament() {
+  const zona = $('set-echipament');
+  if (!zona) return;
+  const ales = new Set(setari.echipamentSala || []);
+  zona.replaceChildren(
+    el('h2', { text: 'Echipamentul din sala mea' }),
+    el('p', { class: 'nota', text: 'Bifează ce ai la dispoziție. La „Schimbă” exercițiul, alternativele care cer altceva coboară la final. Fără nimic bifat, totul e considerat disponibil.' }),
+    el('div', { class: 'chipuri chipuri-mici', role: 'group', 'aria-label': 'Echipamentul din sala mea' }, ECHIPAMENTE_SALA.map(e => el('button', {
+      type: 'button', class: 'chip chip-mic' + (ales.has(e) ? ' activ' : ''), 'aria-pressed': String(ales.has(e)), text: e,
+      onclick: () => {
+        if (ales.has(e)) ales.delete(e); else ales.add(e);
+        setari.echipamentSala = curataEchipamentSala([...ales]);
+        salveazaSetari(); deseneazaSetareEchipament();
+      },
+    }))),
+    el('p', { class: 'nota nota-mica', text: 'Greutatea corpului e mereu disponibilă.' }));
+}
+
 // Setări → Nutriție (etapa 7): necesarul adaptiv și istoricul țintelor aplicate.
 function deseneazaSetariNecesar() {
   const zona = $('set-necesar'), zIst = $('set-istoric-tinte');
@@ -189,6 +208,7 @@ function arataEcran(id) {
     afiseazaCategorieSetari();
     deseneazaSetareTema();
     deseneazaSetariNecesar();
+    deseneazaSetareEchipament();
     deseneazaCardCont();
     actualizeazaInfoBackup();
     deseneazaInstantanee();

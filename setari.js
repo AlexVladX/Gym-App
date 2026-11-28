@@ -14,7 +14,7 @@ const SETARI_IMPLICITE = { minRep: 8, maxRep: 12, pasKg: 2.5, ecranAprins: true,
   inaltimeCm: null, obiectiv: null, obiectivSaptamanal: 3, retetePreferate: [],
   tinteNutritie: null, anNastere: null, sex: null, activitate: null, scopNutritie: null, preferinteNutritie: null, mod: 'gym', tema: 'intunecata', profil: {},
   cafeleZilnice: [], limitaCofeina: 400, pozeScanare: '30', limitaScanari: null,
-  necesarAdaptiv: { pornit: true, ziVerificare: 1 }, istoricTinte: [] };
+  necesarAdaptiv: { pornit: true, ziVerificare: 1 }, istoricTinte: [], echipamentSala: [] };
 const setari = { ...SETARI_IMPLICITE };
 
 // Corectează valorile venite din stocare sau dintr-un backup; ce nu e valid revine la implicit.
@@ -55,6 +55,8 @@ function curataSetari(sursa) {
   // Scanarea meselor (etapa 4): câte zile se păstrează pozele ('nu' | '30' | '90' | 'mereu') și limita ta de scanări pe zi (null = a serverului).
   if (['nu', '30', '90', 'mereu'].includes(sursa.pozeScanare)) rez.pozeScanare = sursa.pozeScanare;
   if (sursa.limitaScanari === null || intreg(sursa.limitaScanari, 1, 200)) rez.limitaScanari = sursa.limitaScanari;
+  // Echipamentul din sala ta (etapa 7, funcția 3): gol = totul disponibil
+  if (Array.isArray(sursa.echipamentSala)) rez.echipamentSala = curataEchipamentSala(sursa.echipamentSala);
   // Necesarul adaptiv (etapa 7)
   if (sursa.necesarAdaptiv && typeof sursa.necesarAdaptiv === 'object') rez.necesarAdaptiv = curataNecesarAdaptiv(sursa.necesarAdaptiv);
   if (Array.isArray(sursa.istoricTinte)) rez.istoricTinte = curataIstoricTinte(sursa.istoricTinte);

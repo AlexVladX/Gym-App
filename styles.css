@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "64";
+  --versiune-css: "65";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -2284,3 +2284,9 @@ html[data-tema="deschisa"][data-mod="gym"] {
 .cal-zi.are-mese { background: var(--accent-slab); color: var(--text); border-color: color-mix(in srgb, var(--accent) 40%, transparent); font-weight: 700; cursor: pointer; }
 .cal-zi.azi { outline: 1px solid var(--bordura-tare); }
 .cal-zi:disabled { cursor: default; }
+
+/* Etapa 7, funcția 3: „⇄ Schimbă” pe cardul exercițiului, filtrul de echipament din selector */
+.exercitiu-cap .btn-schimba { flex: none; padding-left: 8px; padding-right: 8px; }
+@media (max-width: 359px) { .exercitiu-cap .btn-schimba span { display: none; } }
+.selector-echipament { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.selector-explicatie { margin: 0 0 var(--s2); padding: var(--s2) var(--s3); border-radius: var(--raza-mica); background: var(--accent-slab); color: var(--text); }

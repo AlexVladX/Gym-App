@@ -31,6 +31,7 @@ const stare = {
   pauze: [],              // [{ start, sfarsit }]
   pauzaStart: null,       // timestamp, dacă antrenamentul e pe pauză acum
   ultimaActivitate: null, // timestamp
+  rutina: null,           // { id, nume } — rutina din care a pornit antrenamentul (etapa 7: „și data viitoare?”)
 };
 // serie: { kg, repetari, durataSec, distantaM (text din câmpuri), tip, facut }
 
@@ -67,6 +68,7 @@ function dateCiorna() {
     pauze: stare.pauze,
     pauzaStart: stare.pauzaStart,
     ultimaActivitate: stare.ultimaActivitate,
+    rutina: stare.rutina,
   };
 }
 
@@ -355,7 +357,7 @@ async function alegeRutinaDeStart() {
   let rutine = [];
   try { rutine = await toateRutinele(); } catch (err) { console.warn(err); }
   const optiuni = [
-    ...[...rutine].reverse().map(r => ({ text: r.nume, icon: 'lista', detaliu: plural(r.exercitii.length, 'exercițiu', 'exerciții'), actiune: () => adaugaInSesiune(r.exercitii, r.grupe || []) })),
+    ...[...rutine].reverse().map(r => ({ text: r.nume, icon: 'lista', detaliu: plural(r.exercitii.length, 'exercițiu', 'exerciții'), actiune: () => adaugaInSesiune(r.exercitii, r.grupe || [], { rutina: r }) })),
     ...ANTRENAMENTE.map(a => ({ text: a.nume, icon: 'carte', detaliu: `Șablon · ${plural(a.exercitii.length, 'exercițiu', 'exerciții')}`, actiune: () => adaugaInSesiune(a.exercitii, a.grupe || []) })),
   ];
   alegeDinLista({ titlu: 'Începe din rutină', text: rutine.length ? null : 'Nu ai încă rutine salvate. Poți porni de la un șablon.', optiuni });
@@ -685,8 +687,8 @@ function meniuExercitiu(ex) {
       { text: ex.nota ? 'Editează nota de azi' : 'Adaugă o notă pentru azi', icon: 'nota', actiune: () => deschideNota(ex) },
       { text: 'Tipul exercițiului', icon: 'tip', detaliu: TIPURI_EXERCITIU[ex.tip].nume, actiune: () => meniuTip(ex) },
       { text: 'Înlocuiește cu o alternativă', icon: 'schimba',
-        detaliu: ex.serii.some(s => s.facut) ? 'Indisponibil: are serii bifate' : 'Ex. când aparatul e ocupat',
-        dezactivat: ex.serii.some(s => s.facut), actiune: () => alegeAlternativa(ex) },
+        detaliu: ex.serii.some(s => s.facut) ? 'Seriile bifate rămân aici; restul trec la exercițiul nou' : 'Ex. când aparatul e ocupat',
+        actiune: () => alegeAlternativa(ex) },
       { text: 'Detalii exercițiu', icon: 'info', actiune: () => arataDetaliiExercitiu(ex.nume) },
       { text: 'Mută mai sus', icon: 'sus', dezactivat: i === 0, actiune: () => mutaExercitiul(ex, -1) },
       { text: 'Mută mai jos', icon: 'jos', dezactivat: !urmator, actiune: () => mutaExercitiul(ex, 1) },
@@ -700,30 +702,60 @@ function meniuExercitiu(ex) {
 }
 
 // Înlocuiește un exercițiu fără serii bifate cu altul (alternativele întâi).
+// Etapa 7, funcția 3: alternative explicate, filtru de echipament; cu serii bifate, exercițiul se împarte
+// (seriile bifate rămân, restul trec la cel nou, imediat dedesubt) — explicat înainte de confirmare.
 function alegeAlternativa(ex) {
-  const tinta = exercitiuDupaNume(ex.nume);
-  const alternative = tinta ? alternativePentru(tinta, toateExercitiile(), 6) : [];
+  const tinta = exercitiuDupaNume(ex.nume) || (grupaExercitiu(ex.nume) ? { nume: ex.nume, grupa: grupaExercitiu(ex.nume), secundari: [] } : null);
+  const alternative = tinta ? alternativeExplicate(tinta, toateExercitiile(), { n: 10, echipamentSala: setari.echipamentSala }) : [];
+  const facute = ex.serii.filter(s => s.facut).length;
   deschideSelectorExercitii({
-    titlu: `Înlocuiește ${ex.nume}`,
+    titlu: `Schimbă ${ex.nume}`,
     unul: true,
-    sugestii: alternative.map(e => e.nume),
+    sugestii: alternative.map(a => a.e.nume),
+    motive: new Map(alternative.map(a => [a.e.nume.toLowerCase(), a.motiv])),
+    lipsa: new Set(alternative.filter(a => a.lipsa).map(a => a.e.nume.toLowerCase())),
     eticheteSugestii: 'Alternative',
-    grupaInitiala: tinta?.grupa || '',
-    laAlegere: ([nume]) => {
+    filtruEchipament: true,
+    text: facute ? `Ai ${plural(facute, 'serie bifată', 'serii bifate')}: rămân la ${ex.nume}, iar seriile nebifate trec la exercițiul ales.` : '',
+    grupaInitiala: '',
+    laAlegere: async ([nume]) => {
       if (!nume || nume.toLowerCase() === ex.nume.toLowerCase()) return;
+      nume = numeInBiblioteca(nume);
+      const nou = exercitiuNou(nume);
+      const r = imparteLaInlocuire(ex, nou, serieGoala);
+      if (r.impartit && !(await confirma({ titlu: `Împarți ${ex.nume}?`, ok: 'Schimbă', text: textImpartire(ex.nume, nume, r.facute, r.mutate) }))) return;
       const i = stare.exercitii.indexOf(ex);
       if (i < 0) return;
-      const nou = exercitiuNou(nume);
-      nou.superset = ex.superset;
-      nou.nota = ex.nota;
-      stare.exercitii[i] = nou;
+      stare.exercitii.splice(i, 1, ...r.lista);
+      if (r.impartit) Object.assign(ex, r.lista[0]); // același obiect rămâne în listă (referințele din ecran)
+      if (r.impartit) stare.exercitii[i] = ex;
       const grupa = grupaExercitiu(nume);
       if (grupa) { stare.grupe.add(grupa); deseneazaGrupe(); }
       deseneazaExercitii();
       programeazaCiorna();
-      notifica(`${ex.nume} a fost înlocuit cu ${nume}.`, 'succes');
+      notifica(r.impartit ? `${nume} a fost adăugat sub ${ex.nume}, cu seriile rămase.` : `${ex.nume} a fost înlocuit cu ${nume}.`, 'succes');
+      intreabaRutinaDupaInlocuire(ex.nume, nume, grupa);
     },
   });
+}
+
+// Dacă antrenamentul a pornit dintr-o rutină care conține exercițiul: „și data viitoare?” (Da / Doar azi).
+async function intreabaRutinaDupaInlocuire(vechi, nou, grupaNoua) {
+  if (!stare.rutina) return;
+  let rutine = [];
+  try { rutine = await toateRutinele(); } catch (err) { console.warn(err); return; }
+  const rutina = rutine.find(r => r.id === stare.rutina.id);
+  if (!rutina) return;
+  const actualizata = inlocuiesteInRutina(rutina, vechi, nou, grupaNoua);
+  if (!actualizata) return;
+  const da = await confirma({ titlu: `Folosești ${nou} și data viitoare?`, ok: 'Da', anulare: 'Doar azi',
+    text: `În rutina „${rutina.nume}”, ${vechi} devine ${nou}. Istoricul și graficele rămân separate pe fiecare exercițiu.` });
+  if (!da) return;
+  try {
+    await actualizeazaRutina(actualizata);
+    notifica(`Rutina „${rutina.nume}” a fost actualizată.`, 'succes');
+    if (typeof randeazaBiblioteca === 'function') randeazaBiblioteca();
+  } catch (err) { console.error(err); notifica(mesajEroareSalvare(err, 'Rutina nu a putut fi actualizată.'), 'eroare'); }
 }
 
 // Numele exact sub care e ținut exercițiul în bibliotecă (litere mari/mici ca în catalog).
@@ -821,6 +853,7 @@ function deseneazaExercitii() {
             el('span', { class: 'eticheta-progres', text: `${facute}/${ex.serii.length}` }),
           ]),
         ]),
+        buton({ text: 'Schimbă', icon: 'schimba', tip: 'fantoma', mic: true, clasa: 'btn-schimba', eticheta: `Schimbă ${ex.nume} cu o alternativă`, onclick: () => alegeAlternativa(ex) }),
         buton({ icon: 'puncte', tip: 'fantoma', eticheta: `Opțiuni pentru ${ex.nume}`, onclick: () => meniuExercitiu(ex) }),
       ]),
       alegereGrupa(ex),
@@ -975,6 +1008,7 @@ function golesteSesiunea() {
   stare.pauze = [];
   stare.pauzaStart = null;
   stare.ultimaActivitate = null;
+  stare.rutina = null;
   $('sesiune-nota').value = '';
   opresteTimerul();
   elibereazaEcranul();
@@ -1121,6 +1155,7 @@ async function incarcaCiorna() {
     stare.pauze = Array.isArray(ciorna.pauze) ? ciorna.pauze.filter(p => p && Number.isFinite(p.start) && Number.isFinite(p.sfarsit)) : [];
     stare.pauzaStart = Number.isFinite(ciorna.pauzaStart) ? ciorna.pauzaStart : null;
     stare.ultimaActivitate = Number.isFinite(ciorna.ultimaActivitate) ? ciorna.ultimaActivitate : null;
+    stare.rutina = ciorna.rutina && ciorna.rutina.id != null && typeof ciorna.rutina.nume === 'string' ? { id: ciorna.rutina.id, nume: ciorna.rutina.nume } : null;
     normalizeazaSupersets();
     $('sesiune-nota').value = stare.nota;
   } catch (err) {

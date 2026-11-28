@@ -385,6 +385,10 @@ async function bibliotecaExercitii() {
 function salveazaRutina(rutina) {
   return cere('rutine', 'readwrite', st => st.add(rutina));
 }
+// O rutină existentă, modificată (ex. „Folosești … și data viitoare?” → Da). Păstrează id-ul.
+function actualizeazaRutina(rutina) {
+  return cere('rutine', 'readwrite', st => st.put(rutina));
+}
 
 async function toateRutinele() {
   const lista = await cere('rutine', 'readonly', st => st.getAll());

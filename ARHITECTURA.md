@@ -614,3 +614,19 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
   „Frecvente (30 de zile)”, care urmează masa aleasă.
 - Acasă (Sală): rutinele sunt una pe rând, cu numele întreg.
 - Teste: tests/copiere-zi.test.js; în browser qa47.py.
+
+## Etapa 7, funcția 3: înlocuirea exercițiului (v65)
+
+- **Logica** (`inlocuire.js`, nucleu, după catalog.js): `alternativeExplicate(tinta, toate, { echipamentSala })` — scor: aceeași mișcare
+  (aceeași ilustrație `poza`) +5, mușchi secundari comuni +2, aceeași categorie +3, același tip +1, alt echipament +1, nivel −1/treaptă;
+  cele care cer echipament lipsă (`setari.echipamentSala`, gol = tot) coboară la final cu `lipsa`. `motivAlternativa`: „aceeași mișcare /
+  aceiași mușchi / tot picioare (grupa)” + „gantere în loc de bară” sau „tot cu bara”. Grupa veche „Picioare” (exerciții proprii, rămâne
+  neschimbată) caută în Cvadricepși, Femurali, Fese, Gambe. `imparteLaInlocuire(ex, nou, serieGoala)`: fără serii bifate → pe loc
+  (superset și notă păstrate); cu serii bifate → bifatele rămân la ex, nebifatele (aceleași tipuri, goale) trec la nou, imediat dedesubt
+  (supersetul continuă, nota rămâne la ex). `inlocuiesteInRutina` (o singură dată, fără dubluri). `FILTRE_ECHIPAMENT`.
+- **Interfața**: „⇄ Schimbă” pe cardul exercițiului (și „Înlocuiește cu o alternativă” în „…”, acum și cu serii bifate); selectorul
+  primește `motive`, `lipsa`, `filtruEchipament`, `text`; confirmare cu `textImpartire` înainte de împărțire. Antrenamentul reține
+  `stare.rutina { id, nume }` (în ciornă) când pornește dintr-o rutină proprie; după înlocuire: „Folosești … și data viitoare?”
+  (Da → `actualizeazaRutina`, put; Doar azi → nimic). Setări → Antrenament: „Echipamentul din sala mea”.
+- Istoricul rămâne separat pe exercițiu (seriile se salvează sub numele exercițiului din antrenament).
+- Teste: tests/inlocuire.test.js; în browser qa48.py. qa7, qa16, qa34 adaptate (înlocuire permisă cu serii bifate; confirmarea v63).

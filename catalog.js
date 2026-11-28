@@ -140,7 +140,7 @@ function valideazaExercitiuPropriu(f, existente, numeVechi = null) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { GRUPE, GRUPA_VECHE, MUSCHI_GRUPA, fara, tipDinCatalog, unificaExercitiu, construiesteBiblioteca,
+  module.exports = { GRUPE, GRUPA_VECHE, NIVELURI, MUSCHI_GRUPA, fara, tipDinCatalog, unificaExercitiu, construiesteBiblioteca,
     alternativePentru, valideazaExercitiuPropriu };
 }
 

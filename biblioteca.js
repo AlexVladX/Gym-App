@@ -472,8 +472,12 @@ async function stergeExercitiuPropriu(e) {
 
 // ---------- Selectorul rapid (din antrenament) ----------
 // optiuni: { titlu, unul (alegere unică), sugestii (nume), eticheteSugestii, grupaInitiala, laAlegere(nume[]) }
-function deschideSelectorExercitii({ titlu, unul = false, sugestii = [], eticheteSugestii = 'Sugestii', grupaInitiala = '', laAlegere }) {
-  const sel = { cautare: '', grupa: grupaInitiala, mod: sugestii.length ? 'sugestii' : (toateExercitiile().some(e => e.favorit) ? 'favorite' : (istoric.length ? 'recente' : 'toate')) };
+// Etapa 7: motive (Map nume cu litere mici → „aceeași mișcare · …”), lipsa (Set: cer echipament pe care nu-l ai),
+// filtruEchipament: rândul Toate / Gantere / Aparat / Scripete / Corp / Bară; text: explicația de sus (ex. împărțirea).
+function deschideSelectorExercitii({ titlu, unul = false, sugestii = [], eticheteSugestii = 'Sugestii', grupaInitiala = '', laAlegere,
+  motive = null, lipsa = null, filtruEchipament = false, text = '' }) {
+  const sel = { cautare: '', grupa: grupaInitiala, echipament: 'toate', mod: sugestii.length ? 'sugestii' : (toateExercitiile().some(e => e.favorit) ? 'favorite' : (istoric.length ? 'recente' : 'toate')) };
+  const chipuriEchipament = filtruEchipament ? el('div', { class: 'chipuri chipuri-mici chipuri-defilare selector-echipament', role: 'radiogroup', 'aria-label': 'Echipament' }) : null;
   const alese = [];
   const inAntrenament = new Set(stare.exercitii.map(x => x.nume.toLowerCase()));
   const cautare = el('input', { type: 'search', placeholder: 'Caută exercițiu sau mușchi', 'aria-label': 'Caută exercițiu', autocomplete: 'off' });
@@ -494,6 +498,9 @@ function deschideSelectorExercitii({ titlu, unul = false, sugestii = [], etichet
       onclick: () => { sel.mod = m; sel.grupa = ''; selectGrupa.value = ''; deseneaza(); },
     })));
     selectGrupa.value = sel.grupa;
+    if (chipuriEchipament) chipuriEchipament.replaceChildren(...FILTRE_ECHIPAMENT.map(f => el('button', {
+      type: 'button', role: 'radio', class: 'chip chip-mic' + (sel.echipament === f.id ? ' activ' : ''), 'aria-checked': String(sel.echipament === f.id), text: f.nume,
+      onclick: () => { sel.echipament = f.id; deseneaza(); } })));
     const cuvinte = fara(sel.cautare).split(/\s+/).filter(Boolean);
     let rezultate;
     if (cuvinte.length || sel.grupa || sel.mod === 'toate') {
@@ -505,6 +512,7 @@ function deschideSelectorExercitii({ titlu, unul = false, sugestii = [], etichet
     } else {
       rezultate = exercitiiRecente(20).map(exercitiuDupaNume).filter(Boolean);
     }
+    if (filtruEchipament) rezultate = rezultate.filter(e => potrivesteFiltruEchipament(e, sel.echipament));
     const goale = {
       favorite: 'Niciun favorit încă. Apasă steaua unui exercițiu în bibliotecă.',
       recente: 'Niciun exercițiu în istoric încă.',
@@ -523,7 +531,8 @@ function deschideSelectorExercitii({ titlu, unul = false, sugestii = [], etichet
         },
       }, [
         figuraExercitiu(e, 'figura-mica'),
-        el('span', { class: 'rand-biblio-text' }, [el('strong', { text: e.nume }), el('span', { class: 'nota', text: deja ? 'Deja în antrenament' : metaExercitiu(e) })]),
+        el('span', { class: 'rand-biblio-text' }, [el('strong', { text: e.nume }), el('span', { class: 'nota', text: deja ? 'Deja în antrenament'
+          : [motive && motive.get(e.nume.toLowerCase()) || metaExercitiu(e), lipsa && lipsa.has(e.nume.toLowerCase()) ? 'nu e în sala ta' : ''].filter(Boolean).join(' · ') })]),
         e.favorit ? iconita('stea', 'iconita mica stea-mica') : null,
         unul ? null : el('span', { class: 'selector-bifa' }, [ales ? iconita('bifa', 'iconita mica') : null]),
       ]);
@@ -547,7 +556,8 @@ function deschideSelectorExercitii({ titlu, unul = false, sugestii = [], etichet
   cautare.addEventListener('input', () => { sel.cautare = cautare.value; deseneaza(); });
   const d = deschideDialog({
     titlu,
-    continut: el('div', { class: 'selector' }, [el('div', { class: 'cautare' }, [iconita('cauta'), cautare]), chipuri, selectGrupa, lista]),
+    continut: el('div', { class: 'selector' }, [text ? el('p', { class: 'nota selector-explicatie', text }) : null,
+      el('div', { class: 'cautare' }, [iconita('cauta'), cautare]), chipuri, chipuriEchipament, selectGrupa, lista].filter(Boolean)),
     butoane: unul ? [buton({ text: 'Renunță', tip: 'fantoma', onclick: () => d.inchide() })]
       : [buton({ text: 'Renunță', tip: 'fantoma', onclick: () => d.inchide() }), btnAdauga],
   });
@@ -586,7 +596,7 @@ function cardRutina(r) {
     el('p', { class: 'descriere', text: r.exercitii.join(' · ') }),
     el('div', { class: 'rand-butoane' }, [
       buton({ icon: 'cos', tip: 'fantoma', eticheta: `Șterge rutina ${r.nume}`, onclick: () => stergeRutinaConfirmat(r) }),
-      buton({ text: 'Adaugă în antrenament', icon: 'plus', tip: 'principal', onclick: () => adaugaInSesiune(r.exercitii, r.grupe || []) }),
+      buton({ text: 'Adaugă în antrenament', icon: 'plus', tip: 'principal', onclick: () => adaugaInSesiune(r.exercitii, r.grupe || [], { rutina: r }) }),
     ]),
   ]);
 }
@@ -610,8 +620,10 @@ async function stergeRutinaConfirmat(r) {
 // ---------- Adăugarea în antrenament ----------
 // Adaugă exercițiile în sesiunea curentă, cu grupele lor. Grupa veche „Picioare" din rutinele vechi
 // e înlocuită de grupele reale ale exercițiilor.
-async function adaugaInSesiune(exercitii, grupe = [], { faraNavigare = false } = {}) {
+async function adaugaInSesiune(exercitii, grupe = [], { faraNavigare = false, rutina = null } = {}) {
   grupe.filter(g => GRUPE.includes(g)).forEach(g => stare.grupe.add(g));
+  // Rutina din care pornește antrenamentul (etapa 7): la „Schimbă” întrebăm dacă schimbarea rămâne și în rutină.
+  if (rutina && rutina.id != null && !stare.rutina) stare.rutina = { id: rutina.id, nume: rutina.nume };
 
   let adaugate = 0;
   for (const nume of exercitii) {

@@ -122,7 +122,7 @@ function cardRepeta(sesiuni, rutine, urmator = null) {
       el('div', { class: 'rand-butoane acasa-rutine-rapide' }, rapide.map(r => {
         const b = buton({ text: r.nume, icon: 'lista', tip: 'secundar',
           eticheta: `${r === sugerata ? 'Sugerată: ' : ''}Începe rutina „${r.nume}”${r === sugerata && urmator.ultimaData ? `, făcută ultima dată ${textZile(urmator.zile)}` : ''}`,
-          onclick: () => adaugaInSesiune(r.exercitii, r.grupe || []) });
+          onclick: () => adaugaInSesiune(r.exercitii, r.grupe || [], { rutina: r }) });
         if (r === sugerata) b.append(el('span', { class: 'insigna-sugerata', text: 'Sugerată' }));
         return b;
       })),
