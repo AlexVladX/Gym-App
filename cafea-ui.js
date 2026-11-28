@@ -1,4 +1,4 @@
-// Cafeaua (Faza 4 din 3.0): cardul din „Ziua mea”, cardul de pe Acasă (MEAL PREP), formularul și cafeaua zilnică.
+// Cafeaua (Faza 4 din 3.0): cardul din „Ziua mea”, cardul de pe Acasă (modul Nutriție), formularul și cafeaua zilnică.
 // Calculele sunt în cafea.js. Valorile cafelei intră în totalurile zilei (planificat, mâncat), cofeina se arată separat.
 
 const fmtMl = v => `${String(Math.round(v * 10) / 10).replace('.', ',')}`;
@@ -349,7 +349,7 @@ function deschideCafeleZilnice() {
   });
 }
 
-// ---------- Cardul de pe Acasă (MEAL PREP) ----------
+// ---------- Cardul de pe Acasă (modul Nutriție) ----------
 function cardCafeaAcasa(zi) {
   const t = totalCafeaZi(zi);
   const limita = limitaCofeinaMea();

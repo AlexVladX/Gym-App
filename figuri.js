@@ -27,7 +27,7 @@ function caleIlustratie(nume, grupa, catalog, tip = 'mini') {
 // ---------- În pagină ----------
 // Versiunea ilustrațiilor e separată de a aplicației (scrisă de tools/ilustratii/optimizeaza.mjs din conținutul
 // desenelor): o actualizare de cod nu le mai descarcă din nou, doar o schimbare a desenelor.
-const VERSIUNE_ILUSTRATII = 'd049461e17';
+const VERSIUNE_ILUSTRATII = 'ac7d0d740a';
 function versiuneIlustratii() {
   return VERSIUNE_ILUSTRATII;
 }

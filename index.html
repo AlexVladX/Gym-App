@@ -13,10 +13,10 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
   <title>Jurnal de antrenament</title>
-  <link rel="stylesheet" href="styles.css?v=57">
-  <script src="tema.js?v=57"></script>
+  <link rel="stylesheet" href="styles.css?v=58">
+  <script src="tema.js?v=58"></script>
 </head>
-<body class="se-incarca" data-versiune="57">
+<body class="se-incarca" data-versiune="58">
   <header class="topbar">
     <div class="topbar-interior">
       <div class="marca">
@@ -27,8 +27,8 @@
         <h1 id="titlu-ecran">Acasă</h1>
       </div>
       <div class="comutator-mod" role="group" aria-label="Modul aplicației">
-        <button type="button" data-mod-tinta="gym" aria-pressed="true">GYM MODE</button>
-        <button type="button" data-mod-tinta="mealprep" aria-pressed="false">MEAL PREP</button>
+        <button type="button" data-mod-tinta="gym" aria-pressed="true">Sală</button>
+        <button type="button" data-mod-tinta="mealprep" aria-pressed="false">Nutriție</button>
       </div>
       <button id="btn-setari" class="btn btn-fantoma btn-icon" type="button" aria-label="Setări">
         <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
@@ -348,9 +348,13 @@
 
     <!-- ================= Corp ================= -->
     <section id="ecran-masuratori" class="ecran" aria-labelledby="titlu-ecran">
+      <!-- Etapa 5: sus greutatea (media pe 7 zile, tendința, graficul) cu „+” pentru cântărire; dedesubt file. -->
       <div class="card" id="card-greutate">
         <div class="card-cap">
           <h2>Greutate corporală</h2>
+          <button id="btn-cantarire" class="btn btn-principal btn-icon" type="button" aria-label="Adaugă o cântărire">
+            <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
         </div>
         <div id="greutate-info"></div>
         <div id="greutate-obiectiv"></div>
@@ -359,12 +363,65 @@
           <canvas id="grafic-greutate" class="grafic mt" aria-label="Graficul greutății: media pe 7 zile și cântăririle"></canvas>
           <p class="nota">Linia: media pe 7 zile. Punctele: fiecare cântărire.</p>
         </div>
-        <div class="rand mt">
-          <input id="greutate-valoare" type="number" inputmode="decimal" step="0.1" min="20" max="300" placeholder="Greutatea de azi (kg)" aria-label="Greutatea de azi, în kg" enterkeyhint="done">
-          <button id="btn-greutate" class="btn btn-principal" type="button">Salvează</button>
-        </div>
       </div>
 
+      <div class="segment" role="tablist" aria-label="Corp">
+        <button id="tab-corp-masuratori" class="activ" type="button" role="tab" aria-selected="true">Măsurători</button>
+        <button id="tab-corp-poze" type="button" role="tab" aria-selected="false">Poze</button>
+        <button id="tab-corp-profil" type="button" role="tab" aria-selected="false">Profil</button>
+      </div>
+
+      <div id="corp-masuratori">
+        <div class="card">
+          <h2>Măsurători</h2>
+          <div id="masuratori-rezumat" class="grila-masuratori"></div>
+          <div class="rand-butoane rand-flexibil mt">
+            <button id="btn-masurare-completa" class="btn btn-secundar" type="button">Măsurare completă</button>
+            <button id="btn-adauga-valoare" class="btn btn-secundar" type="button">
+              <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>O valoare</span>
+            </button>
+          </div>
+        </div>
+        <div class="card" id="card-evolutie-corp">
+        <h2>Evoluție</h2>
+        <select id="masuratoare-grafic-tip" aria-label="Tipul de măsurătoare afișat"></select>
+        <canvas id="grafic-masuratori" class="grafic mt" aria-label="Graficul măsurătorii"></canvas>
+        <p id="masuratoare-sumar" class="nota"></p>
+        <div id="masuratori-lista" class="lista-simpla"></div>
+      </div>
+      <div class="card">
+        <h2>Compară două date</h2>
+        <div class="rand">
+          <label class="camp"><span class="camp-eticheta">De la</span><select id="compara-a" aria-label="Prima dată"></select></label>
+          <label class="camp"><span class="camp-eticheta">Până la</span><select id="compara-b" aria-label="A doua dată"></select></label>
+        </div>
+        <div id="compara-rezultat"></div>
+      </div>
+      </div>
+
+      <div id="corp-poze" hidden>
+      <div class="card">
+        <div class="card-cap">
+          <h2>Poze de progres</h2>
+          <button id="btn-poza" class="btn btn-secundar btn-mic" type="button">Adaugă poză</button>
+        </div>
+        <input id="fisier-poza" type="file" accept="image/*" hidden>
+        <div id="poze-compara-bloc" hidden>
+          <p class="sectiune-eticheta">Compară</p>
+          <div class="rand">
+            <select id="poze-a" aria-label="Prima dată"></select>
+            <select id="poze-b" aria-label="A doua dată"></select>
+          </div>
+          <div id="poze-unghi" class="chipuri chipuri-mici mt" role="group" aria-label="Unghiul pozei"></div>
+          <div id="poze-compara" class="poze-alaturate mt"></div>
+        </div>
+        <p class="sectiune-eticheta">Toate pozele</p>
+        <div id="poze-galerie"></div>
+        <p class="nota" data-confidentialitate="poze">Pozele stau doar pe acest telefon (micșorate la cel mult 1280 px) și intră în backup.</p>
+      </div>
+      </div>
+
+      <div id="corp-profil" hidden>
       <div class="card">
         <h2>Profil și obiectiv</h2>
         <!-- Profilul unic (etapa 4): folosit pentru IMC, ținte și estimări -->
@@ -391,17 +448,11 @@
         <button id="btn-profil" class="btn btn-secundar btn-lat" type="button">Salvează profilul</button>
         <p id="profil-nota" class="nota"></p>
       </div>
-
-      <div class="card">
-        <div class="card-cap">
-          <h2>Măsurători</h2>
-          <button id="btn-masurare-completa" class="btn btn-secundar btn-mic" type="button">Măsurare completă</button>
-        </div>
-        <div id="masuratori-rezumat" class="grila-masuratori"></div>
       </div>
 
-      <div class="card">
-        <h2>Adaugă o valoare</h2>
+      <!-- Formularul „Adaugă o valoare” se mută într-o foaie când îl deschizi (corp.js → deschideAdaugaValoare) -->
+      <div id="loc-formular-valoare" hidden>
+        <div id="formular-valoare" class="formular">
         <label class="camp">
           <span class="camp-eticheta">Tip</span>
           <input id="masuratoare-tip" type="text" list="tipuri" placeholder="Ex. Talie, Braț, Piept" autocomplete="off">
@@ -418,57 +469,33 @@
           </label>
         </div>
         <button id="btn-masuratoare" class="btn btn-principal btn-lat" type="button">Salvează măsurătoarea</button>
-      </div>
-
-      <div class="card" id="card-evolutie-corp">
-        <h2>Evoluție</h2>
-        <select id="masuratoare-grafic-tip" aria-label="Tipul de măsurătoare afișat"></select>
-        <canvas id="grafic-masuratori" class="grafic mt" aria-label="Graficul măsurătorii"></canvas>
-        <p id="masuratoare-sumar" class="nota"></p>
-        <div id="masuratori-lista" class="lista-simpla"></div>
-      </div>
-
-      <div class="card">
-        <h2>Compară două date</h2>
-        <div class="rand">
-          <label class="camp"><span class="camp-eticheta">De la</span><select id="compara-a" aria-label="Prima dată"></select></label>
-          <label class="camp"><span class="camp-eticheta">Până la</span><select id="compara-b" aria-label="A doua dată"></select></label>
         </div>
-        <div id="compara-rezultat"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-cap">
-          <h2>Poze de progres</h2>
-          <button id="btn-poza" class="btn btn-secundar btn-mic" type="button">Adaugă poză</button>
-        </div>
-        <input id="fisier-poza" type="file" accept="image/*" hidden>
-        <div id="poze-compara-bloc" hidden>
-          <p class="sectiune-eticheta">Compară</p>
-          <div class="rand">
-            <select id="poze-a" aria-label="Prima dată"></select>
-            <select id="poze-b" aria-label="A doua dată"></select>
-          </div>
-          <div id="poze-unghi" class="chipuri chipuri-mici mt" role="group" aria-label="Unghiul pozei"></div>
-          <div id="poze-compara" class="poze-alaturate mt"></div>
-        </div>
-        <p class="sectiune-eticheta">Toate pozele</p>
-        <div id="poze-galerie"></div>
-        <p class="nota">Pozele rămân doar pe telefonul tău (micșorate la cel mult 1280 px) și intră în backup.</p>
       </div>
     </section>
 
     <!-- ================= Setări ================= -->
-    <!-- ================= Acasă MEAL PREP ================= -->
+    <!-- ================= Acasă, modul Nutriție ================= -->
     <section id="ecran-masa" class="ecran" aria-labelledby="titlu-ecran">
       <div id="masa-continut"></div>
     </section>
 
     <section id="ecran-setari" class="ecran" aria-labelledby="titlu-ecran">
-      <h2 class="titlu-sectiune">Cont</h2>
+      <!-- Etapa 5: pagina principală e lista categoriilor, fiecare cu un rând de stare; fiecare se deschide separat. -->
+      <div id="setari-lista" class="card setari-lista">
+        <button class="setari-rand" type="button" data-categorie="cont"><span class="setari-rand-text"><strong>Cont și sincronizare</strong><span class="nota" id="stare-set-cont"></span></span><svg class="iconita mica" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button class="setari-rand" type="button" data-categorie="antrenament"><span class="setari-rand-text"><strong>Antrenament</strong><span class="nota" id="stare-set-antrenament"></span></span><svg class="iconita mica" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button class="setari-rand" type="button" data-categorie="progresie"><span class="setari-rand-text"><strong>Progresie</strong><span class="nota" id="stare-set-progresie"></span></span><svg class="iconita mica" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button class="setari-rand" type="button" data-categorie="scanare"><span class="setari-rand-text"><strong>Scanarea meselor</strong><span class="nota" id="stare-set-scanare"></span></span><svg class="iconita mica" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button class="setari-rand" type="button" data-categorie="aspect"><span class="setari-rand-text"><strong>Aspect</strong><span class="nota" id="stare-set-aspect"></span></span><svg class="iconita mica" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button class="setari-rand" type="button" data-categorie="date"><span class="setari-rand-text"><strong>Date și backup</strong><span class="nota" id="stare-set-date"></span></span><svg class="iconita mica" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button class="setari-rand" type="button" data-categorie="despre"><span class="setari-rand-text"><strong>Despre</strong><span class="nota" id="stare-set-despre"></span></span><svg class="iconita mica" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
+
+      <div class="setari-categorie" data-categorie="cont" hidden>
       <div id="card-cont" class="card"></div>
 
-      <h2 class="titlu-sectiune">Antrenament</h2>
+      </div>
+      <div class="setari-categorie" data-categorie="antrenament" hidden>
       <div class="card">
         <div class="rand aliniat">
           <label for="set-pauza">Odihnă între serii (secunde)</label>
@@ -502,7 +529,8 @@
         <p class="nota">Funcționează pe iPhone cu iOS 18.4 sau mai nou și pe Android în Chrome.</p>
       </div>
 
-      <h2 class="titlu-sectiune">Progresie</h2>
+      </div>
+      <div class="setari-categorie" data-categorie="progresie" hidden>
       <div class="card">
         <p class="nota">Sugestia urcă repetările până la maxim, apoi crește greutatea cu pasul ales și revine la minim.</p>
         <div class="rand aliniat">
@@ -523,10 +551,19 @@
         </div>
       </div>
 
-      <h2 class="titlu-sectiune">Scanarea meselor</h2>
+      </div>
+      <div class="setari-categorie" data-categorie="scanare" hidden>
       <div class="card" id="set-scanare"></div>
 
-      <h2 class="titlu-sectiune">Date și backup</h2>
+      </div>
+      <div class="setari-categorie" data-categorie="aspect" hidden>
+        <div class="card">
+          <h2>Temă</h2>
+          <div id="set-tema" class="chipuri" role="radiogroup" aria-label="Tema aplicației"></div>
+          <p class="nota">Ambele moduri folosesc aceeași temă; Sala are accentul verde, Nutriția portocaliu. Setarea ține doar de acest telefon.</p>
+        </div>
+      </div>
+      <div class="setari-categorie" data-categorie="date" hidden>
       <div class="card">
         <h2>Backup</h2>
         <p id="backup-info" class="nota"></p>
@@ -570,13 +607,22 @@
         <div id="verificare-rezultat"></div>
       </div>
 
+      <div class="separator-pericol" aria-hidden="true"></div>
       <div class="card card-pericol">
         <h2>Ștergerea datelor</h2>
-        <p class="nota">Toate datele stau doar pe acest telefon și nu sunt trimise nicăieri.</p>
+        <p class="nota" data-confidentialitate="stergere">Datele stau doar pe acest telefon și nu sunt trimise nicăieri.</p>
         <button id="btn-sterge-tot" class="btn btn-pericol btn-lat" type="button">Șterge toate datele</button>
       </div>
 
-      <p class="versiune" id="versiune-app">Gym App 3.0</p>
+      </div>
+      <div class="setari-categorie" data-categorie="despre" hidden>
+        <div class="card">
+          <h2>Despre</h2>
+          <p class="versiune" id="versiune-app">Gym App 3.0</p>
+          <p class="nota" data-confidentialitate="general">Datele stau doar pe acest telefon.</p>
+          <p class="nota">Valorile nutriționale: USDA SR28 și FoodData Central (domeniu public). Estimările sunt orientative, nu recomandări medicale.</p>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -609,7 +655,7 @@
     </button>
     <button data-mod="gym" data-ecran="ecran-sesiune" type="button" aria-label="Antrenament">
       <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>
-      <span class="eticheta-lunga">Antrenament</span><span class="eticheta-scurta">Sală</span>
+      <span>Antrenament</span>
     </button>
     <button data-mod="gym" data-ecran="ecran-biblioteca" type="button">
       <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5zM4 19a2 2 0 0 1 2-2h13M9 7h6"/></svg>
@@ -637,7 +683,7 @@
     </button>
     <button data-mod="mealprep" data-ecran="ecran-nutritie" data-grup="nutritie" type="button">
       <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8c-1.5-1.6-5-2-6.5.5C4 11 5 16 7.5 19c1.4 1.7 2.8 2 4.5 1 1.7 1 3.1.7 4.5-1C19 16 20 11 18.5 8.5 17 6 13.5 6.4 12 8zM12 8c0-2 1-4 3-5"/></svg>
-      <span>Nutriție</span>
+      <span>Ziua mea</span>
     </button>
     <button data-mod="mealprep" data-ecran="ecran-nutritie" data-grup="lista" type="button" aria-label="Listă de cumpărături">
       <svg class="iconita" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12zM6 6L5 3H2M9 20a1 1 0 1 0 0-.01M18 20a1 1 0 1 0 0-.01"/></svg>
@@ -645,40 +691,40 @@
     </button>
   </nav>
 
-  <script defer src="db.js?v=57"></script>
-  <script defer src="validare.js?v=57"></script>
-  <script defer src="exercitii.js?v=57"></script>
-  <script defer src="analiza.js?v=57"></script>
-  <script defer src="statistici.js?v=57"></script>
-  <script defer src="corp-calcul.js?v=57"></script>
-  <script defer src="realizari.js?v=57"></script>
-  <script defer src="nutritie-calcul.js?v=57"></script>
-  <script defer src="nutritie-zi.js?v=57"></script>
-  <script defer src="cafea.js?v=57"></script>
-  <script defer src="nutritie-generator.js?v=57"></script>
-  <script defer src="nutritie-cumparaturi.js?v=57"></script>
-  <script defer src="catalog.js?v=57"></script>
-  <script defer src="figuri.js?v=57"></script>
-  <script defer src="ui.js?v=57"></script>
-  <script defer src="navigare.js?v=57"></script>
-  <script defer src="incarcare.js?v=57"></script>
-  <script defer src="grafice.js?v=57"></script>
-  <script defer src="setari.js?v=57"></script>
-  <script defer src="timer.js?v=57"></script>
-  <script defer src="sesiune.js?v=57"></script>
-  <script defer src="corp.js?v=57"></script>
-  <script defer src="progres.js?v=57"></script>
-  <script defer src="realizari-ui.js?v=57"></script>
-  <script defer src="istoric.js?v=57"></script>
-  <script defer src="biblioteca.js?v=57"></script>
-  <script defer src="scanare-istoric.js?v=57"></script>
-  <script defer src="backup.js?v=57"></script>
-  <script defer src="siguranta.js?v=57"></script>
-  <script defer src="acasa.js?v=57"></script>
-  <script defer src="cloud-config.js?v=57"></script>
-  <script defer src="sincron.js?v=57"></script>
-  <script defer src="cloud.js?v=57"></script>
-  <script defer src="cloud-ui.js?v=57"></script>
-  <script defer src="main.js?v=57"></script>
+  <script defer src="db.js?v=58"></script>
+  <script defer src="validare.js?v=58"></script>
+  <script defer src="exercitii.js?v=58"></script>
+  <script defer src="analiza.js?v=58"></script>
+  <script defer src="statistici.js?v=58"></script>
+  <script defer src="corp-calcul.js?v=58"></script>
+  <script defer src="realizari.js?v=58"></script>
+  <script defer src="nutritie-calcul.js?v=58"></script>
+  <script defer src="nutritie-zi.js?v=58"></script>
+  <script defer src="cafea.js?v=58"></script>
+  <script defer src="nutritie-generator.js?v=58"></script>
+  <script defer src="nutritie-cumparaturi.js?v=58"></script>
+  <script defer src="catalog.js?v=58"></script>
+  <script defer src="figuri.js?v=58"></script>
+  <script defer src="ui.js?v=58"></script>
+  <script defer src="navigare.js?v=58"></script>
+  <script defer src="incarcare.js?v=58"></script>
+  <script defer src="grafice.js?v=58"></script>
+  <script defer src="setari.js?v=58"></script>
+  <script defer src="timer.js?v=58"></script>
+  <script defer src="sesiune.js?v=58"></script>
+  <script defer src="corp.js?v=58"></script>
+  <script defer src="progres.js?v=58"></script>
+  <script defer src="realizari-ui.js?v=58"></script>
+  <script defer src="istoric.js?v=58"></script>
+  <script defer src="biblioteca.js?v=58"></script>
+  <script defer src="scanare-istoric.js?v=58"></script>
+  <script defer src="backup.js?v=58"></script>
+  <script defer src="siguranta.js?v=58"></script>
+  <script defer src="acasa.js?v=58"></script>
+  <script defer src="cloud-config.js?v=58"></script>
+  <script defer src="sincron.js?v=58"></script>
+  <script defer src="cloud.js?v=58"></script>
+  <script defer src="cloud-ui.js?v=58"></script>
+  <script defer src="main.js?v=58"></script>
 </body>
 </html>

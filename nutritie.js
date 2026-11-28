@@ -92,7 +92,7 @@ function imagineReteta(r, clasa = 'reteta-imagine') {
 }
 
 // ---------- File (Rețete / Alimente) ----------
-// Fiecare buton din navigarea MEAL PREP deschide un grup de file; filele grupului apar sus doar dacă sunt mai multe.
+// Fiecare buton din navigarea modului Nutriție deschide un grup de file; filele grupului apar sus doar dacă sunt mai multe.
 const GRUPURI_NUTRITIE = { nutritie: ['zi', 'analiza'], saptamana: ['saptamana'], lista: ['lista'], retete: ['retete', 'alimente'] };
 const ultimaFilaGrup = { nutritie: 'zi', saptamana: 'saptamana', lista: 'lista', retete: 'retete' };
 function grupFilaNutritie(fila) {
@@ -123,7 +123,7 @@ function arataFilaNutritie(fila, { randeaza = true } = {}) {
   if (typeof actualizeazaButonAdaugare === 'function') actualizeazaButonAdaugare();
   if (randeaza) randeazaNutritie();
 }
-const TITLU_GRUP_NUTRITIE = { nutritie: 'Nutriție', saptamana: 'Planificator mese', lista: 'Listă de cumpărături', retete: 'Rețete' };
+const TITLU_GRUP_NUTRITIE = { nutritie: 'Ziua mea', saptamana: 'Planificator mese', lista: 'Listă de cumpărături', retete: 'Rețete' };
 
 function randeazaNutritie() {
   if (filaNutritie === 'zi') { randeazaZiNutritie({ reincarca: true }); return; }

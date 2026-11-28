@@ -1,7 +1,7 @@
 # Jurnal de antrenament — arhitectură
 
 Aplicație web (PWA) în JavaScript simplu, fără framework și fără pas de build.
-Fișierele se urcă direct pe GitHub Pages. Datele stau doar pe telefon (IndexedDB) și nu sunt trimise nicăieri.
+Fișierele se urcă direct pe GitHub Pages. Datele stau pe telefon (IndexedDB). Doar dacă utilizatorul își face cont, se copiază și în contul lui (Supabase); pozele de la scanarea meselor se trimit la analiză (funcția `scanare`) și nu se păstrează pe server.
 
 ## Fișiere (în ordinea încărcării din index.html)
 
@@ -531,3 +531,13 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
 - **Filtre la fel** în Exerciții și Rețete: căutarea, un rând scurt (grupa / masa, defilare orizontală) și „Filtre (n)”
   care deschide `deschideFoaieFiltre` cu toate filtrele (+ sortarea la rețete) și „Resetează”; filtrele active apar ca
   chip-uri cu ✕ sub căutare (`deseneazaFiltreActive`).
+
+## Îmbunătățiri — Etapa 5: setări, Corp, texte, moduri, catalog (v58)
+
+- **Setări pe categorii.** Ecranul Setări arată o listă (`#setari-lista`): Cont și sincronizare, Antrenament, Progresie, Scanarea meselor, Aspect, Date și backup, Despre. Fiecare rând are o stare scurtă (`stariSetari()` din main.js: „Odihnă 1:30”, „Ultimul backup: …”, „Versiunea 58”). O categorie se deschide ca ecran separat (`deschideCategorieSetari`), cu titlul ei și „Înapoi”; în istoric, categoria e `fila` pentru `ecran-setari` (navigare.js). „Șterge toate datele” e ultimul card din Date și backup, după `.separator-pericol`.
+- **Ecranul Corp.** Sus: greutatea (media pe 7 zile, tendința, graficul) cu un „+” (`deschideCantarire()`, foaie cu focus în câmp). Dedesubt, file: Măsurători / Poze / Profil (`arataFilaCorp`). Formularul „O valoare” stă ascuns în `#loc-formular-valoare` și se mută într-o foaie când e deschis (se întoarce la închidere). Rezumatul gol folosește `.grila-plin` (ocupă tot rândul grilei).
+- **Texte adevărate despre date.** `textConfidentialitate(context)` din ui.js ('general', 'stergere', 'poze', 'backup', 'scanare') depinde de `sinc.utilizator`. Elementele cu `data-confidentialitate` se actualizează prin `actualizeazaTexteConfidentialitate()` la pornire, la conectare și la deconectare (cloud.js).
+- **Modurile Sală și Nutriție.** Id-urile interne rămân `gym` / `mealprep`. Ambele moduri au aceeași bază (întunecată implicit); `data-mod` schimbă doar accentul (verde / portocaliu). Tema e setarea `setari.tema` ('intunecata' | 'deschisa' | 'sistem'), în Setări → Aspect; tema.js pune `data-tema="deschisa"` pe `<html>` și culoarea barei browserului. „Ca sistemul” ascultă `prefers-color-scheme`. Tema ține de telefon: e în `SETARI_LOCALE` (nu se sincronizează). Filele din bara de jos: „Antrenament” (Sală) și „Ziua mea” (Nutriție).
+- **Catalog.** „Aparat pentru adductori” trece de la Cvadricepși la Fese; „Îndreptări românești” de la Fese la Femurali. Exercițiile proprii nu se schimbă.
+- `formatNumar` afișează cu virgulă zecimală (79,4 kg).
+- Teste: tests/etapa5.test.js; în browser qa43.py.

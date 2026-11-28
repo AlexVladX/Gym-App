@@ -266,6 +266,34 @@ function cereText({ titlu, text, eticheta, valoare = '', ok = 'Salvează', peric
   });
 }
 
+// ---------- Textele despre unde stau datele (etapa 5) ----------
+// Spun adevărul după starea contului: fără cont, totul e doar pe telefon; cu cont, se sincronizează.
+// context: 'general' | 'stergere' | 'poze' | 'backup' | 'scanare'.
+function textConfidentialitate(context = 'general') {
+  const u = typeof sinc !== 'undefined' && sinc && sinc.utilizator ? sinc.utilizator : null;
+  const cont = u ? `în contul tău${u.email ? ` (${u.email})` : ''}` : '';
+  switch (context) {
+    case 'stergere':
+      return u ? `Datele se salvează pe telefon și ${cont}. „Șterge toate datele” golește doar acest telefon și te deconectează; datele din cont rămân.`
+        : 'Datele stau doar pe acest telefon și nu sunt trimise nicăieri.';
+    case 'poze':
+      return u ? `Pozele se salvează pe telefon și ${cont} (micșorate la cel mult 1280 px) și intră în backup.`
+        : 'Pozele stau doar pe acest telefon (micșorate la cel mult 1280 px) și intră în backup.';
+    case 'backup':
+      return u ? `Datele sunt pe telefon și ${cont}; un backup în fișier e o copie în plus, doar a ta.` : 'Datele tale sunt doar pe acest telefon.';
+    case 'scanare':
+      // Verificat în supabase/functions/scanare: poza merge la Gemini doar pentru analiză; serverul nu o salvează.
+      return 'Poza e trimisă pentru analiză (Google Gemini, prin serverul aplicației) și nu e păstrată pe server. Pe telefon se păstrează după setarea din Setări → Scanarea meselor.';
+    default:
+      return u ? `Datele se salvează pe telefon și ${cont}.` : 'Datele stau doar pe acest telefon.';
+  }
+}
+
+// Textele fixe din pagină care depind de cont: se reîmprospătează la pornire, conectare și deconectare.
+function actualizeazaTexteConfidentialitate() {
+  for (const e of document.querySelectorAll('[data-confidentialitate]')) e.textContent = textConfidentialitate(e.dataset.confidentialitate);
+}
+
 // ---------- Filtre la fel peste tot (etapa 4) ----------
 // Chip-urile filtrelor active, sub căutare: fiecare cu ✕ (îl scoate). active: [{ text, scoate }].
 function deseneazaFiltreActive(container, active) {
@@ -384,7 +412,8 @@ function afiseazaData(data) {
   return `${zi}.${luna}.${an}`;
 }
 
-const formatNumar = v => (Math.round(v * 10) / 10).toString();
+// Afișare în stil românesc: virgulă zecimală (79,4 kg). Doar pentru text afișat, nu pentru valorile câmpurilor.
+const formatNumar = v => (Math.round(v * 10) / 10).toString().replace('.', ',');
 
 // 1234567 → „1.234.567"
 function formatMare(v) {
@@ -405,4 +434,4 @@ function valoareNumerica(v) {
   return Number.isFinite(n) ? n : null;
 }
 
-if (typeof module !== 'undefined') module.exports = { plural, numarDe, alegeFocusDialog };
+if (typeof module !== 'undefined') module.exports = { plural, numarDe, alegeFocusDialog, textConfidentialitate };

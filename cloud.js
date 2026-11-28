@@ -164,7 +164,7 @@ async function initializeazaAdaptor() {
   }
   sinc.adaptor.laSchimbareAuth((ev, u) => {
     if (ev === 'PASSWORD_RECOVERY') { if (typeof cereParolaNoua === 'function') cereParolaNoua(); return; }
-    if (ev === 'SIGNED_OUT') { sinc.utilizator = null; seteazaStareSincron('deconectat'); return; }
+    if (ev === 'SIGNED_OUT') { sinc.utilizator = null; actualizeazaTexteConfidentialitate(); seteazaStareSincron('deconectat'); return; }
     if ((ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION') && u && (!sinc.utilizator || sinc.utilizator.id !== u.id)) laConectare(u);
   });
   const u = await sinc.adaptor.utilizator();
@@ -181,6 +181,7 @@ async function laConectare(u) {
   if (conectareInCurs) return conectareInCurs;
   conectareInCurs = (async () => {
     sinc.utilizator = u;
+    actualizeazaTexteConfidentialitate(); // textele despre unde stau datele (etapa 5)
     const meta = citesteMetaSincron();
     if (meta.idCont && meta.idCont !== u.id) {
       // Alt cont pe același telefon: harta veche nu mai e valabilă (datele de pe telefon rămân).
@@ -210,6 +211,7 @@ async function contSchimbaParola(parola) { await initializeazaAdaptor(); return 
 async function contDeconectare() {
   if (sinc.adaptor) await sinc.adaptor.deconecteaza();
   sinc.utilizator = null;
+  actualizeazaTexteConfidentialitate();
   seteazaStareSincron('deconectat');
 }
 

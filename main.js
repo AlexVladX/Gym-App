@@ -11,7 +11,7 @@ const TITLURI_ECRANE = {
   'ecran-masa': 'Acasă',
 };
 
-// Butonul de navigare activ: același ecran și, pentru Nutriție (MEAL PREP), același grup de file.
+// Butonul de navigare activ: același ecran și, pentru modul Nutriție, același grup de file.
 function actualizeazaNavigatia() {
   const grup = typeof grupFilaNutritie === 'function' ? grupFilaNutritie(filaNutritie) : null;
   document.querySelectorAll('.navigatie button').forEach(b => {
@@ -22,6 +22,58 @@ function actualizeazaNavigatia() {
 }
 
 let ecranInainteDeSetari = null;
+
+// ---------- Setările pe categorii (etapa 5) ----------
+// '' = lista categoriilor; altfel categoria deschisă (un „ecran” separat, cu „Înapoi” și intrare în istoric).
+const CATEGORII_SETARI = { cont: 'Cont și sincronizare', antrenament: 'Antrenament', progresie: 'Progresie', scanare: 'Scanarea meselor', aspect: 'Aspect', date: 'Date și backup', despre: 'Despre' };
+const NUME_TEME = { intunecata: 'Întunecată', deschisa: 'Deschisă', sistem: 'Ca sistemul' };
+
+// Setări → Aspect: tema (Întunecată / Deschisă / Ca sistemul).
+function deseneazaSetareTema() {
+  const zona = $('set-tema');
+  if (!zona) return;
+  zona.replaceChildren(...Object.entries(NUME_TEME).map(([id, nume]) => el('button', {
+    type: 'button', role: 'radio', class: 'chip' + (setari.tema === id ? ' activ' : ''), 'aria-checked': String(setari.tema === id), text: nume,
+    onclick: () => { setari.tema = id; salveazaSetari(); schimbaTema(id); deseneazaSetareTema(); },
+  })));
+}
+let categorieSetari = '';
+
+// Rândurile de stare din lista categoriilor.
+function stariSetari() {
+  const u = typeof sinc !== 'undefined' && sinc.utilizator;
+  let ultim = null;
+  try { ultim = localStorage.getItem(CHEIE_ULTIM_BACKUP); } catch (_) { /* ignorat */ }
+  const zile = ultim ? Math.floor((Date.now() - Date.parse(ultim)) / 86400000) : null;
+  const poze = { nu: 'pozele nu se păstrează', 30: 'pozele: 30 de zile', 90: 'pozele: 90 de zile', mereu: 'pozele: păstrate' }[setari.pozeScanare] || '';
+  return {
+    cont: u ? `Conectat ca ${u.email || 'contul tău'}` : 'Neconectat',
+    antrenament: `Odihnă ${formatDurata(setari.pauzaSec)}${setari.pauzaAutomata ? ', automată' : ''}`,
+    progresie: `${setari.minRep}–${setari.maxRep} repetări · +${String(setari.pasKg).replace('.', ',')} kg · ${plural(setari.obiectivSaptamanal, 'antrenament', 'antrenamente')} pe săptămână`,
+    scanare: `${setari.limitaScanari ? `${plural(setari.limitaScanari, 'scanare', 'scanări')} pe zi` : 'limita serverului'} · ${poze}`,
+    date: zile === null ? 'Ultimul backup: niciodată' : `Ultimul backup: ${zile === 0 ? 'azi' : `acum ${plural(zile, 'zi', 'zile')}`}`,
+    aspect: `Temă: ${(NUME_TEME[setari.tema] || NUME_TEME.intunecata).toLowerCase()}`,
+    despre: `Versiunea ${document.body.dataset.versiune || ''}`,
+  };
+}
+
+function afiseazaCategorieSetari() {
+  const cat = CATEGORII_SETARI[categorieSetari] ? categorieSetari : '';
+  $('setari-lista').hidden = Boolean(cat);
+  document.querySelectorAll('.setari-categorie').forEach(c => { c.hidden = c.dataset.categorie !== cat; });
+  if (!cat) {
+    const st = stariSetari();
+    for (const k of Object.keys(CATEGORII_SETARI)) { const e = $(`stare-set-${k}`); if (e) e.textContent = st[k]; }
+  }
+  if (ecranCurent === 'ecran-setari') $('titlu-ecran').textContent = cat ? CATEGORII_SETARI[cat] : 'Setări';
+}
+
+function deschideCategorieSetari(cat) {
+  categorieSetari = cat;
+  afiseazaCategorieSetari();
+  window.scrollTo({ top: 0 });
+  if (typeof navigareDupaEcran === 'function') navigareDupaEcran();
+}
 
 let ecranCurent = 'ecran-acasa';
 
@@ -77,6 +129,8 @@ function arataEcran(id) {
   if (id === 'ecran-progres') arataFilaProgres(!$('progres-realizari').hidden ? 'realizari' : $('progres-istoric').hidden ? 'grafice' : 'istoric');
   if (id === 'ecran-masuratori') reincarcaMasuratori();
   if (id === 'ecran-setari') {
+    afiseazaCategorieSetari();
+    deseneazaSetareTema();
     deseneazaCardCont();
     actualizeazaInfoBackup();
     deseneazaInstantanee();
@@ -97,6 +151,7 @@ function actualizeazaButonAdaugare() {
 // Ieșirea din Setări: înapoi în istoric dacă se poate, altfel ecranul de dinainte (sau Acasă al modului).
 function iesiDinSetari() {
   if (typeof poateMergeInapoi === 'function' && poateMergeInapoi()) { mergiInapoi(); return; }
+  if (categorieSetari) { deschideCategorieSetari(''); return; } // fără istoric: din categorie înapoi la listă
   const inapoi = ecranInainteDeSetari && ECRANE_MOD[ecranInainteDeSetari] === modCurent ? ecranInainteDeSetari : MODURI[modCurent].acasa;
   arataEcran(inapoi);
 }
@@ -111,9 +166,10 @@ async function initializeaza() {
   }));
   document.querySelectorAll('[data-mod-tinta]').forEach(b => b.addEventListener('click', () => schimbaMod(b.dataset.modTinta)));
   $('btn-setari').addEventListener('click', () => {
-    if (ecranCurent !== 'ecran-setari') arataEcran('ecran-setari');
+    if (ecranCurent !== 'ecran-setari') { categorieSetari = ''; arataEcran('ecran-setari'); }
     else iesiDinSetari();
   });
+  document.querySelectorAll('.setari-rand').forEach(b => b.addEventListener('click', () => deschideCategorieSetari(b.dataset.categorie)));
   $('btn-inapoi').addEventListener('click', iesiDinSetari);
   $('btn-adauga-rapid').addEventListener('click', () => { if (typeof deschideAdaugareRapida === 'function') deschideAdaugareRapida(); });
 
@@ -125,8 +181,10 @@ async function initializeaza() {
   else window.addEventListener('resize', masoaraAntet);
 
   citesteSetari();
+  actualizeazaTexteConfidentialitate();
   // tema.js a rulat înaintea butoanelor din antet: acum le marcăm și pe ele.
   if (setari.mod !== modCurent) modCurent = modValid(setari.mod);
+  temaCurenta = setari.tema || 'intunecata';
   aplicaTema(modCurent);
   initSetari();
   initTimer();
@@ -160,7 +218,7 @@ async function initializeaza() {
   deseneazaExercitii();
   tineEcranulAprins();
   // Cu un antrenament în curs, aplicația se deschide direct pe el (în sală contează fiecare secundă).
-  // Altfel, pe ecranul Acasă al modului ales ultima dată (GYM MODE sau MEAL PREP).
+  // Altfel, pe ecranul Acasă al modului ales ultima dată (Sală sau Nutriție).
   // Istoricul pentru „Înapoi” pornește de la Acasă; antrenamentul în curs se pune deasupra lui.
   pornesteNavigarea(MODURI[modCurent].acasa);
   arataEcran(stare.exercitii.length > 0 ? 'ecran-sesiune' : MODURI[modCurent].acasa);

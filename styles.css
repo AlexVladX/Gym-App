@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "57";
+  --versiune-css: "58";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -51,7 +51,7 @@
 
   --tranzitie: 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
   color-scheme: dark;
-  /* Tokeni pentru suprafețe și nuanțe (Faza 1: temele GYM MODE / MEAL PREP). Valorile de aici sunt GYM MODE. */
+  /* Tokeni pentru suprafețe și nuanțe Valorile de aici: tema întunecată, cu accentul Sălii (etapa 5: ambele moduri pornesc de aici). */
   --sticla-sus: rgba(11, 13, 16, 0.86);
   --sticla-jos: rgba(21, 25, 31, 0.92);
   --sticla-foto: rgba(11, 13, 16, 0.55);
@@ -1250,12 +1250,13 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
    Nutriție (biblioteca de rețete și alimente)
    ========================================================= */
 .navigatie button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* Cu 6 butoane, „Antrenament” nu încape pe telefoanele înguste: acolo scrie „Sală”. */
-.navigatie .eticheta-scurta { display: none; }
-@media (max-width: 413px) {
-  .navigatie .eticheta-lunga { display: none; }
-  .navigatie .eticheta-scurta { display: inline; }
+/* Pe telefoanele foarte înguste (320 px), etichetele lungi („Antrenament”) se strâng puțin ca să încapă întregi. */
+@media (max-width: 359px) {
+  .navigatie button { font-size: 10px; letter-spacing: -0.03em; }
 }
+/* Corp → Măsurători: cele două butoane trec unul sub altul când nu încap. */
+.rand-butoane.rand-flexibil { flex-wrap: wrap; }
+.rand-butoane.rand-flexibil > .btn { flex: 1 1 auto; }
 .grila-retete { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s3); margin-bottom: var(--s3); }
 .grila-titlu { grid-column: 1 / -1; margin: var(--s2) var(--s1) 0; }
 .card-reteta {
@@ -1616,8 +1617,8 @@ textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3
 #ecran-nutritie .rand-butoane > .btn, .dialog .rand-butoane > .btn { min-width: min(140px, 100%); }
 
 /* =========================================================
-   Gym App 3.0 — Faza 1: GYM MODE și MEAL PREP
-   Tema = <html data-mod="gym|mealprep"> (tema.js). :root are valorile GYM MODE;
+   Modurile Sală și Nutriție + tema deschisă
+   Accentul = <html data-mod="gym|mealprep">, tema = <html data-tema="deschisa"> (tema.js). :root = tema întunecată, Sală;
    [data-mod="mealprep"] redefinește tokenii. Componentele folosesc doar tokenii.
    ========================================================= */
 
@@ -1658,9 +1659,10 @@ html:not([data-mod="mealprep"]) .navigatie button[data-mod="mealprep"],
 html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
 
 /* =========================================================
-   Tema MEAL PREP — caldă, deschisă (paleta: #FAF8F7 · #D15612 · #94390E · #C2B9A5 · #49260E · #AC580A · #D39223 · #379445)
+   Tema deschisă — caldă (paleta: #FAF8F7 · #D15612 · #94390E · #C2B9A5 · #49260E · #AC580A · #D39223 · #379445)
    ========================================================= */
-[data-mod="mealprep"] {
+/* Tema deschisă (setare, etapa 5): paleta caldă, cu accentul portocaliu (Nutriție); la Sală accentul e verde, mai jos. */
+[data-tema="deschisa"] {
   color-scheme: light;
   --fundal: #FAF8F7;
   --suprafata: #FFFFFF;
@@ -1728,30 +1730,30 @@ html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
   --g-referinta-text: rgba(73, 38, 14, 0.78);
 }
 
-/* Componente în MEAL PREP: carduri albe cu umbră fină, butoane și chipuri „pastilă”. */
-[data-mod="mealprep"] .card { border-color: transparent; box-shadow: var(--umbra); }
-[data-mod="mealprep"] .btn { border-radius: 999px; }
-[data-mod="mealprep"] .btn-secundar { background: var(--suprafata); border-color: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--accent); }
-[data-mod="mealprep"] .btn-secundar:active { background: var(--accent-slab); }
-[data-mod="mealprep"] .btn-fantoma { color: var(--accent); }
-[data-mod="mealprep"] .btn-principal { box-shadow: 0 6px 16px rgba(194, 78, 16, 0.22); }
-[data-mod="mealprep"] .chip { border-color: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--accent); background: var(--suprafata); }
-[data-mod="mealprep"] .chip.activ { background: var(--accent); border-color: var(--accent); color: var(--pe-accent); }
-[data-mod="mealprep"] .segment { background: var(--suprafata-3); border-color: transparent; border-radius: 999px; }
-[data-mod="mealprep"] .segment button { border-radius: 999px; }
-[data-mod="mealprep"] .segment button.activ { background: var(--suprafata); color: var(--accent); }
-[data-mod="mealprep"] input, [data-mod="mealprep"] select { background: var(--suprafata); }
-[data-mod="mealprep"] .navigatie { box-shadow: var(--umbra-sus); border-top-color: transparent; }
-[data-mod="mealprep"] .topbar { border-bottom-color: transparent; }
-[data-mod="mealprep"] .marca-semn { box-shadow: none; border-radius: 999px; }
-[data-mod="mealprep"] .comutator-mod { background: var(--suprafata-3); border-color: transparent; }
-[data-mod="mealprep"] .card-reteta-imagine::after { background: linear-gradient(to top, rgba(73, 38, 14, 0.18), transparent); }
-[data-mod="mealprep"] .eticheta-masa, .eticheta-masa {
+/* Componente în tema deschisă: carduri albe cu umbră fină, butoane și chipuri „pastilă”. */
+[data-tema="deschisa"] .card { border-color: transparent; box-shadow: var(--umbra); }
+[data-tema="deschisa"] .btn { border-radius: 999px; }
+[data-tema="deschisa"] .btn-secundar { background: var(--suprafata); border-color: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--accent); }
+[data-tema="deschisa"] .btn-secundar:active { background: var(--accent-slab); }
+[data-tema="deschisa"] .btn-fantoma { color: var(--accent); }
+[data-tema="deschisa"] .btn-principal { box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 22%, transparent); }
+[data-tema="deschisa"] .chip { border-color: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--accent); background: var(--suprafata); }
+[data-tema="deschisa"] .chip.activ { background: var(--accent); border-color: var(--accent); color: var(--pe-accent); }
+[data-tema="deschisa"] .segment { background: var(--suprafata-3); border-color: transparent; border-radius: 999px; }
+[data-tema="deschisa"] .segment button { border-radius: 999px; }
+[data-tema="deschisa"] .segment button.activ { background: var(--suprafata); color: var(--accent); }
+[data-tema="deschisa"] input, [data-tema="deschisa"] select { background: var(--suprafata); }
+[data-tema="deschisa"] .navigatie { box-shadow: var(--umbra-sus); border-top-color: transparent; }
+[data-tema="deschisa"] .topbar { border-bottom-color: transparent; }
+[data-tema="deschisa"] .marca-semn { box-shadow: none; border-radius: 999px; }
+[data-tema="deschisa"] .comutator-mod { background: var(--suprafata-3); border-color: transparent; }
+[data-tema="deschisa"] .card-reteta-imagine::after { background: linear-gradient(to top, rgba(73, 38, 14, 0.18), transparent); }
+.eticheta-masa {
   display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 650;
   background: var(--accent-slab); color: var(--accent);
 }
 
-/* ---------- Acasă în MEAL PREP ---------- */
+/* ---------- Acasă în modul Nutriție ---------- */
 .masa-erou-cap { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s2); margin-bottom: var(--s3); }
 .masa-erou-cap h2 { margin: 0; font-size: 22px; }
 .masa-data { margin: 0 0 2px; color: var(--discret); font-size: 13px; }
@@ -1849,7 +1851,7 @@ html[data-mod="mealprep"] .navigatie button[data-mod="gym"] { display: none; }
 .cafea-cofeina-text span { color: var(--discret); font-size: 14px; }
 .cafea-bara { margin-bottom: var(--s3); }
 .zi-bara .cafea-bara-baut { background: #8B5A3C; }
-[data-mod="mealprep"] .zi-bara .cafea-bara-baut { background: #7A4A2E; }
+[data-tema="deschisa"] .zi-bara .cafea-bara-baut { background: #7A4A2E; }
 .cafea-avertizare { display: flex; align-items: flex-start; gap: 4px; margin: 0 0 var(--s2); color: var(--avertizare); }
 .cafea-atentie { color: var(--avertizare); }
 .cafea-lista { list-style: none; margin: 0 0 var(--s3); padding: 0; display: flex; flex-direction: column; gap: var(--s2); }
@@ -2175,3 +2177,59 @@ body.cu-timer .fab { bottom: calc(var(--nav-h) + var(--timer-h) + var(--jos) + v
 .foaie-filtre .camp-eticheta { display: block; }
 .rand-contor { flex-wrap: wrap; row-gap: var(--s2); }
 .rand-contor > .nota { flex: 1 1 auto; }
+
+/* Etapa 5: Corp — starea goală a rezumatului pe toată lățimea grilei; formularul de valoare în foaie */
+.grila-plin { grid-column: 1 / -1; margin: 0; }
+#card-greutate .card-cap .btn-icon { flex: 0 0 auto; }
+#ecran-masuratori > .segment { margin-bottom: var(--s3); }
+
+/* Etapa 5: Setări pe categorii */
+.setari-lista { padding: 0; overflow: hidden; }
+.setari-rand {
+  display: flex; align-items: center; gap: var(--s3); width: 100%; min-height: 64px; padding: var(--s3) var(--s4);
+  border: none; border-bottom: 1px solid var(--bordura); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.setari-rand:last-child { border-bottom: none; }
+.setari-rand-text { flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; }
+.setari-rand-text .nota { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.setari-rand > .iconita { color: var(--discret); flex: 0 0 auto; }
+.separator-pericol { height: 1px; margin: var(--s6) 0 var(--s4); background: color-mix(in srgb, var(--pericol) 40%, transparent); }
+
+/* =========================================================
+   Etapa 5: aceeași bază pentru ambele moduri (implicit întunecată); diferă doar accentul.
+   Sală = verde-lămâie (valorile din :root). Nutriție = portocaliu. Tema deschisă e o setare (data-tema).
+   ========================================================= */
+/* Nutriție, tema întunecată: portocaliu luminos pe fundal închis; text închis pe accent (contrast ≥ 4,5:1). */
+html[data-mod="mealprep"]:not([data-tema="deschisa"]) {
+  --accent: #FF8A3D;
+  --accent-apasat: #F07425;
+  --accent-slab: rgba(255, 138, 61, 0.14);
+  --pe-accent: #1A0D04;
+  --pozitiv: #7BD88F;
+  --macro-p: #6FC3FF;
+  --macro-c: #F2C14E;
+  --macro-g: #FF7A59;
+  --macro-f: #7BD88F;
+  --urma-plan: rgba(255, 138, 61, 0.30);
+  --urma-plan-leg: rgba(255, 138, 61, 0.40);
+  --g-accent: #FF8A3D;
+  --g-zona-sus: rgba(255, 138, 61, 0.28);
+  --g-zona-jos: rgba(255, 138, 61, 0);
+  --g-bara: rgba(255, 138, 61, 0.38);
+}
+/* Sală, tema deschisă: verde închis (lămâia nu se vede pe crem), text alb pe accent. */
+html[data-tema="deschisa"][data-mod="gym"] {
+  --accent: #3F7A12;
+  --accent-apasat: #336410;
+  --accent-slab: rgba(63, 122, 18, 0.10);
+  --pe-accent: #FFFFFF;
+  --pozitiv: #3F7A12;
+  --macro-c: #B07A12;
+  --urma-plan: rgba(63, 122, 18, 0.22);
+  --urma-plan-leg: rgba(63, 122, 18, 0.30);
+  --g-accent: #3F7A12;
+  --g-zona-sus: rgba(63, 122, 18, 0.22);
+  --g-zona-jos: rgba(63, 122, 18, 0);
+  --g-umbra: rgba(63, 122, 18, 0.18);
+  --g-bara: rgba(63, 122, 18, 0.40);
+}

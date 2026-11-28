@@ -1,14 +1,17 @@
-// Modurile aplicației (Faza 1): GYM MODE și MEAL PREP. Aceeași aplicație, aceleași date, două teme și două navigări.
-// Se încarcă în <head>, înaintea paginii, ca tema corectă să se aplice fără o clipă în culorile celeilalte.
+// Modurile aplicației: Sală și Nutriție (id-urile interne rămân 'gym' / 'mealprep', pentru compatibilitate cu
+// setările și backupurile). Aceeași aplicație, aceleași date, două navigări.
+// Se încarcă în <head>, înaintea paginii, ca tema corectă să se aplice fără o clipă în culorile greșite.
 //
-// Tema = atributul data-mod pe <html>; culorile vin din variabilele CSS (styles.css: :root = GYM MODE,
-// [data-mod="mealprep"] = MEAL PREP). Modul ales se ține în setări (setari.mod), deci intră în backup
-// și, mai târziu, poate merge cu contul în cloud.
+// Etapa 5: ambele moduri au aceeași bază (implicit întunecată); diferă doar accentul (data-mod pe <html>:
+// verde la Sală, portocaliu la Nutriție). Tema e o setare a telefonului (setari.tema: 'intunecata' | 'deschisa' |
+// 'sistem'), pusă ca data-tema="deschisa" pe <html> când e cazul. Modul și tema nu se sincronizează între telefoane.
 
 const MODURI = {
-  gym: { nume: 'GYM MODE', acasa: 'ecran-acasa', culoareBara: '#0B0D10' },
-  mealprep: { nume: 'MEAL PREP', acasa: 'ecran-masa', culoareBara: '#FAF8F7' },
+  gym: { nume: 'Sală', acasa: 'ecran-acasa' },
+  mealprep: { nume: 'Nutriție', acasa: 'ecran-masa' },
 };
+const TEME = ['intunecata', 'deschisa', 'sistem'];
+const CULOARE_BARA = { intunecata: '#0B0D10', deschisa: '#FAF8F7' };
 // Ce ecrane aparțin fiecărui mod. Setările sunt comune.
 const ECRANE_MOD = {
   'ecran-acasa': 'gym', 'ecran-sesiune': 'gym', 'ecran-biblioteca': 'gym', 'ecran-progres': 'gym', 'ecran-masuratori': 'gym',
@@ -22,21 +25,53 @@ function modSalvat() {
   try { return modValid((JSON.parse(localStorage.getItem('setari') || '{}') || {}).mod); } catch (_) { return 'gym'; }
 }
 
+function temaSalvata() {
+  try { const t = (JSON.parse(localStorage.getItem('setari') || '{}') || {}).tema; return TEME.includes(t) ? t : 'intunecata'; } catch (_) { return 'intunecata'; }
+}
+// Tema efectivă: „Ca sistemul” urmează setarea telefonului (prefers-color-scheme).
+function temaEfectiva(tema) {
+  if (tema === 'sistem') return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: light)').matches ? 'deschisa' : 'intunecata';
+  return tema === 'deschisa' ? 'deschisa' : 'intunecata';
+}
+let temaCurenta = typeof document !== 'undefined' ? temaSalvata() : 'intunecata';
+
 let modCurent = typeof document !== 'undefined' ? modSalvat() : 'gym';
 const ultimulEcranMod = { gym: MODURI.gym.acasa, mealprep: MODURI.mealprep.acasa };
 
 function aplicaTema(mod) {
   if (typeof document === 'undefined') return;
   document.documentElement.dataset.mod = mod;
+  const tema = temaEfectiva(temaCurenta);
+  if (tema === 'deschisa') document.documentElement.dataset.tema = 'deschisa';
+  else delete document.documentElement.dataset.tema;
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', MODURI[mod].culoareBara);
+  if (meta) meta.setAttribute('content', CULOARE_BARA[tema]);
   document.querySelectorAll('[data-mod-tinta]').forEach(b => {
     const activ = b.dataset.modTinta === mod;
     b.classList.toggle('activ', activ);
     b.setAttribute('aria-pressed', String(activ));
   });
 }
-if (typeof document !== 'undefined') aplicaTema(modCurent);
+if (typeof document !== 'undefined') {
+  aplicaTema(modCurent);
+  // „Ca sistemul”: când telefonul trece între luminos și întunecat, tema se schimbă pe loc.
+  if (typeof matchMedia === 'function') {
+    const mq = matchMedia('(prefers-color-scheme: light)');
+    const laSchimbare = () => {
+      if (temaCurenta !== 'sistem') return;
+      aplicaTema(modCurent);
+      if (typeof redeseneazaToateGraficele === 'function') redeseneazaToateGraficele();
+    };
+    if (mq.addEventListener) mq.addEventListener('change', laSchimbare); else if (mq.addListener) mq.addListener(laSchimbare);
+  }
+}
+
+// Setări → Aspect: schimbă tema (se salvează în setări; nu se sincronizează).
+function schimbaTema(tema) {
+  temaCurenta = TEME.includes(tema) ? tema : 'intunecata';
+  aplicaTema(modCurent);
+  if (typeof redeseneazaToateGraficele === 'function') redeseneazaToateGraficele();
+}
 
 // Schimbă modul: tema, navigarea și ecranul (ultimul ecran deschis în modul respectiv). Datele nu se ating;
 // antrenamentul în curs rămâne în ciornă și cronometrul merge mai departe.
@@ -69,4 +104,4 @@ function asiguraModulEcranului(idEcran) {
   }
 }
 
-if (typeof module !== 'undefined') module.exports = { MODURI, ECRANE_MOD, modValid };
+if (typeof module !== 'undefined') module.exports = { MODURI, ECRANE_MOD, modValid, TEME, temaEfectiva };

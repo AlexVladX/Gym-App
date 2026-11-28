@@ -1,4 +1,4 @@
-// Acasă în MEAL PREP (Faza 1 din 3.0): ziua de azi pe scurt — calorii și macro față de ținte, următoarea masă,
+// Acasă în modul Nutriție (Faza 1 din 3.0): ziua de azi pe scurt — calorii și macro față de ținte, următoarea masă,
 // mesele zilei, săptămâna și scurtături. Totul vine din datele salvate (zileNutritie, setări, rețete, lista de cumpărături);
 // fără ținte sau fără plan, cardurile arată ce ai de făcut, nu cifre inventate.
 

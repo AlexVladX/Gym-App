@@ -29,7 +29,7 @@ const COLECTII_SINCRON = [
 ];
 const DEF_SINCRON = Object.fromEntries(COLECTII_SINCRON.map(d => [d.colectie, d]));
 // Setări care țin de dispozitiv și nu se copiază pe celelalte (modul ales, ecranul aprins în sală).
-const SETARI_LOCALE = ['mod', 'ecranAprins'];
+const SETARI_LOCALE = ['mod', 'ecranAprins', 'tema']; // tema (etapa 5) ține de telefon, ca modul
 
 const esteBlob = v => typeof Blob !== 'undefined' && v instanceof Blob;
 

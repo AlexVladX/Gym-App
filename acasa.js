@@ -76,7 +76,7 @@ function cardAzi(azi, sesiuni) {
     );
   } else {
     copii.push(
-      el('p', { class: 'nota acasa-indemn', text: sesiuni.length ? 'Nu te-ai antrenat încă azi.' : 'Notează-ți antrenamentele, urmărește-ți progresul și recordurile. Totul rămâne pe telefon.' }),
+      el('p', { class: 'nota acasa-indemn', text: sesiuni.length ? 'Nu te-ai antrenat încă azi.' : `Notează-ți antrenamentele, urmărește-ți progresul și recordurile. ${textConfidentialitate()}` }),
       buton({ text: 'Începe antrenamentul', icon: 'gantera', tip: 'principal', lat: true, clasa: 'btn-mare', onclick: incepeAntrenament }),
     );
   }
@@ -344,7 +344,7 @@ function cardGreutate(azi, masuratori) {
 
 function deschideGreutatea() {
   arataEcran('ecran-masuratori');
-  setTimeout(() => $('greutate-valoare').focus(), 250);
+  deschideCantarire();
 }
 
 // ---------- Nutriția de azi (etapa 7 nutriție) ----------

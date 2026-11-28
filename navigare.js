@@ -48,7 +48,9 @@ function decizieInapoi({ stare, idDialogDeschis, ultimaCheie }) {
 
 // ---------- Legătura cu history API ----------
 function stareEcranCurent() {
-  const fila = ecranCurent === 'ecran-nutritie' && typeof filaNutritie !== 'undefined' ? filaNutritie : null;
+  let fila = null;
+  if (ecranCurent === 'ecran-nutritie' && typeof filaNutritie !== 'undefined') fila = filaNutritie;
+  if (ecranCurent === 'ecran-setari' && typeof categorieSetari !== 'undefined') fila = categorieSetari || null; // etapa 5
   return { tip: 'ecran', ecran: ecranCurent, fila };
 }
 
@@ -152,7 +154,8 @@ function laInapoi(e) {
     nav.dinIstoric = true;
     try {
       const fila = decizie.ecran.fila;
-      if (fila && typeof dupaIncarcareNutritie === 'function') dupaIncarcareNutritie(() => arataFilaNutritie(fila, { randeaza: false }));
+      if (decizie.ecran.ecran === 'ecran-setari') { if (typeof categorieSetari !== 'undefined') categorieSetari = fila || ''; }
+      else if (fila && typeof dupaIncarcareNutritie === 'function') dupaIncarcareNutritie(() => arataFilaNutritie(fila, { randeaza: false }));
       arataEcran(decizie.ecran.ecran);
     } finally { nav.dinIstoric = false; }
     nav.ultimaCheie = cheieNavigare(decizie.ecran);

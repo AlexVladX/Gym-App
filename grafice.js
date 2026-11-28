@@ -2,7 +2,7 @@
 // Graficele se redesenează singure la schimbarea lățimii și arată valoarea la atingere.
 
 // Culorile vin din tema activă (variabilele CSS --g-*, vezi styles.css și tema.js).
-// Valorile de mai jos sunt cele ale temei GYM MODE și se folosesc când variabila lipsește.
+// Valorile de mai jos sunt cele ale temei întunecate (Sală) și se folosesc când variabila lipsește.
 const CULORI_GRAFIC_IMPLICITE = {
   accent: '#B7F34A', grila: 'rgba(255,255,255,0.06)', text: '#8A919C', tooltip: '#232831', 'tooltip-text': '#FFFFFF',
   'zona-sus': 'rgba(183,243,74,0.28)', 'zona-jos': 'rgba(183,243,74,0)', medie: 'rgba(200,208,218,0.45)', 'punct-interior': '#0B0D10',

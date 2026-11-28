@@ -16,8 +16,11 @@ test('catalogul: 118 exerciții, toate în cele 11 grupe, cu categorie și făr�
     assert.ok(c.GRUPE.includes(e.grupa), `${e.nume}: grupă ${e.grupa}`);
     assert.ok(['Compus', 'Izolare'].includes(e.categorie), `${e.nume}: categorie`);
   }
-  assert.equal(BIBLIOTECA.filter(e => e.grupa === 'Cvadricepși').length, 14);
-  assert.equal(BIBLIOTECA.filter(e => e.grupa === 'Femurali').length, 5);
+  // Etapa 5: „Aparat pentru adductori” Cvadricepși → Fese; „Îndreptări românești” Fese → Femurali.
+  assert.equal(BIBLIOTECA.filter(e => e.grupa === 'Cvadricepși').length, 13);
+  assert.equal(BIBLIOTECA.filter(e => e.grupa === 'Femurali').length, 6);
+  assert.equal(BIBLIOTECA.find(e => e.nume === 'Aparat pentru adductori').grupa, 'Fese');
+  assert.equal(BIBLIOTECA.find(e => e.nume === 'Îndreptări românești').grupa, 'Femurali');
   const nume = new Set(BIBLIOTECA.map(e => e.nume.toLowerCase()));
   assert.equal(nume.size, 118, 'nume unice');
   for (const a of ANTRENAMENTE) {

@@ -220,7 +220,7 @@ function cardMementoBackup(sesiuni) {
       iconita('scut'),
       el('div', {}, [
         el('h2', { text: m.niciodata ? 'Fă primul backup' : 'E timpul pentru un backup' }),
-        el('p', { class: 'nota', text: (m.niciodata ? 'Datele tale sunt doar pe acest telefon.' : `Ultimul backup a fost acum ${plural(m.zile, 'zi', 'zile')}.`)
+        el('p', { class: 'nota', text: (m.niciodata ? textConfidentialitate('backup') : `Ultimul backup a fost acum ${plural(m.zile, 'zi', 'zile')}.`)
           + ' Exportă-l și păstrează-l în Fișiere, pe Drive sau pe e-mail.' }),
       ]),
     ]),

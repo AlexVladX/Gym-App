@@ -10,7 +10,7 @@
 // cafeleZilnice (Faza 4): cafeaua care se pune singură în fiecare zi (vezi cafea.js); limitaCofeina: mg pe zi (implicit 400, EFSA).
 const SETARI_IMPLICITE = { minRep: 8, maxRep: 12, pasKg: 2.5, ecranAprins: true, pauzaSec: 90, pauzaAutomata: true, semnal: true, notificariPauza: false,
   inaltimeCm: null, obiectiv: null, obiectivSaptamanal: 3, retetePreferate: [],
-  tinteNutritie: null, anNastere: null, sex: null, activitate: null, scopNutritie: null, preferinteNutritie: null, mod: 'gym', profil: {},
+  tinteNutritie: null, anNastere: null, sex: null, activitate: null, scopNutritie: null, preferinteNutritie: null, mod: 'gym', tema: 'intunecata', profil: {},
   cafeleZilnice: [], limitaCofeina: 400, pozeScanare: '30', limitaScanari: null };
 const setari = { ...SETARI_IMPLICITE };
 
@@ -44,6 +44,7 @@ function curataSetari(sursa) {
   if (NIVELURI_ACTIVITATE.some(a => a.id === sursa.activitate)) rez.activitate = sursa.activitate;
   if (SCOPURI_NUTRITIE.some(s => s.id === sursa.scopNutritie)) rez.scopNutritie = sursa.scopNutritie;
   if (sursa.mod === 'gym' || sursa.mod === 'mealprep') rez.mod = sursa.mod;
+  if (['intunecata', 'deschisa', 'sistem'].includes(sursa.tema)) rez.tema = sursa.tema;
   const pref = curataPreferinteNutritie(sursa.preferinteNutritie);
   if (pref) rez.preferinteNutritie = pref;
   if (Array.isArray(sursa.cafeleZilnice)) rez.cafeleZilnice = curataCafeleZilnice(sursa.cafeleZilnice);

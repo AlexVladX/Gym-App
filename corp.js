@@ -105,23 +105,64 @@ function chipuriCorp(container, optiuni, activ, laAlegere) {
   })));
 }
 
-async function salveazaGreutatea() {
-  const valoare = parseFloat($('greutate-valoare').value);
-  if (!Number.isFinite(valoare) || valoare < 20 || valoare > 300) {
-    notifica('Introdu greutatea în kg, între 20 și 300 (de exemplu 74.5).', 'eroare');
-    return;
+// Cântărirea (etapa 5): butonul „+” din cardul greutății deschide o foaie cu un singur câmp.
+// Singurul scop al foii e scrisul, deci câmpul primește focus (și tastatura).
+function deschideCantarire() {
+  const input = el('input', { type: 'number', inputmode: 'decimal', step: '0.1', min: '20', max: '300', placeholder: 'ex. 78,5',
+    'aria-label': 'Greutatea de azi, în kg', enterkeyhint: 'done' });
+  const salveaza = async () => {
+    const valoare = parseFloat(String(input.value).replace(',', '.'));
+    if (!Number.isFinite(valoare) || valoare < 20 || valoare > 300) {
+      notifica('Introdu greutatea în kg, între 20 și 300 (de exemplu 74,5).', 'eroare');
+      input.focus();
+      return;
+    }
+    try {
+      await salveazaMasuratoare({ data: dataLocala(), tip: 'Greutate', valoare, creat: Date.now() });
+    } catch (err) {
+      console.error(err);
+      notifica(mesajEroareSalvare(err, 'Greutatea nu a putut fi salvată.'), 'eroare');
+      return;
+    }
+    d.inchide();
+    await reincarcaMasuratori();
+    if (ecranCurent === 'ecran-acasa') randeazaAcasa();
+    notifica(`Greutate salvată: ${formatNumar(valoare)} kg.`, 'succes');
+  };
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); salveaza(); } });
+  const d = deschideDialog({
+    titlu: 'Cântărirea de azi', focus: 'camp',
+    continut: el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Greutate (kg)' }), input]),
+    butoane: [buton({ text: 'Renunță', tip: 'fantoma', onclick: () => d.inchide() }), buton({ text: 'Salvează', tip: 'principal', onclick: salveaza })],
+  });
+}
+
+// ---------- File: Măsurători · Poze · Profil (etapa 5) ----------
+let filaCorp = 'masuratori';
+function arataFilaCorp(fila) {
+  filaCorp = fila;
+  for (const f of ['masuratori', 'poze', 'profil']) {
+    $(`tab-corp-${f}`).classList.toggle('activ', f === fila);
+    $(`tab-corp-${f}`).setAttribute('aria-selected', String(f === fila));
+    $(`corp-${f}`).hidden = f !== fila;
   }
-  try {
-    await salveazaMasuratoare({ data: dataLocala(), tip: 'Greutate', valoare, creat: Date.now() });
-  } catch (err) {
-    console.error(err);
-    notifica(mesajEroareSalvare(err, 'Greutatea nu a putut fi salvată.'), 'eroare');
-    return;
-  }
-  $('greutate-valoare').value = '';
-  $('greutate-valoare').blur();
-  await reincarcaMasuratori();
-  notifica(`Greutate salvată: ${formatNumar(valoare)} kg.`, 'succes');
+  // graficele se desenează doar când sunt vizibile (au nevoie de dimensiunea reală)
+  if (fila === 'masuratori') deseneazaMasuratori();
+  if (fila === 'poze') deseneazaPoze();
+  if (fila === 'profil') afiseazaProfil();
+}
+
+// „Adaugă o valoare”: formularul din pagină se mută într-o foaie și revine la închidere.
+let foaieValoare = null;
+function deschideAdaugaValoare() {
+  const form = $('formular-valoare');
+  const inapoi = () => { $('loc-formular-valoare').append(form); foaieValoare = null; };
+  if (!$('masuratoare-data').value) $('masuratoare-data').value = dataLocala();
+  foaieValoare = deschideDialog({
+    titlu: 'Adaugă o valoare', continut: form, laAnulare: inapoi,
+    butoane: [buton({ text: 'Renunță', tip: 'fantoma', onclick: () => foaieValoare.inchide(inapoi) })],
+  });
+  foaieValoare.inapoi = inapoi;
 }
 
 // ---------- Profil și obiectiv ----------
@@ -226,7 +267,7 @@ function deseneazaRezumatMasuratori() {
   const valori = ultimeleValori(masuratoriCache).filter(v => v.tip !== 'Greutate');
   const cont = $('masuratori-rezumat');
   if (!valori.length) {
-    cont.replaceChildren(el('p', { class: 'nota', text: 'Încă nu ai măsurători. Cu „Măsurare completă" le notezi pe toate deodată (talie, piept, brațe…), o dată la 2–4 săptămâni, dimineața.' }));
+    cont.replaceChildren(el('p', { class: 'nota grila-plin', text: 'Încă nu ai măsurători. Cu „Măsurare completă" le notezi pe toate deodată (talie, piept, brațe…), o dată la 2–4 săptămâni, dimineața.' }));
     return;
   }
   cont.replaceChildren(...valori.map(v => el('button', { type: 'button', class: 'placuta placuta-apasabila', onclick: () => arataEvolutia(v.tip) }, [
@@ -237,6 +278,7 @@ function deseneazaRezumatMasuratori() {
 }
 
 function arataEvolutia(tip) {
+  if (filaCorp !== 'masuratori') arataFilaCorp('masuratori');
   $('masuratoare-grafic-tip').value = tip;
   deseneazaMasuratori();
   $('card-evolutie-corp').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -257,7 +299,7 @@ function deseneazaMasuratori() {
 
   if (intrari.length === 0) {
     $('masuratori-lista').replaceChildren(stareGoala({
-      icon: 'corp', titlu: `Nicio înregistrare pentru „${tip}"`, text: 'Adaugă prima valoare din formularul de mai sus.',
+      icon: 'corp', titlu: `Nicio înregistrare pentru „${tip}"`, text: 'Adaugă prima valoare cu „O valoare” sau „Măsurare completă”.',
     }));
     return;
   }
@@ -351,6 +393,7 @@ async function salveazaMasuratoarea() {
   }
   $('masuratoare-valoare').value = '';
   $('masuratoare-tip').value = tip;
+  if (foaieValoare) foaieValoare.inchide(foaieValoare.inapoi);
   await reincarcaMasuratori();
   $('masuratoare-grafic-tip').value = tip;
   deseneazaMasuratori();
@@ -591,8 +634,9 @@ async function pozaAleasa(e) {
 }
 
 function initCorp() {
-  $('btn-greutate').addEventListener('click', salveazaGreutatea);
-  $('greutate-valoare').addEventListener('keydown', e => { if (e.key === 'Enter') salveazaGreutatea(); });
+  $('btn-cantarire').addEventListener('click', deschideCantarire);
+  $('btn-adauga-valoare').addEventListener('click', deschideAdaugaValoare);
+  for (const f of ['masuratori', 'poze', 'profil']) $(`tab-corp-${f}`).addEventListener('click', () => arataFilaCorp(f));
   $('btn-masuratoare').addEventListener('click', salveazaMasuratoarea);
   $('masuratoare-tip').addEventListener('input', afiseazaUnitate);
   $('masuratoare-grafic-tip').addEventListener('change', deseneazaMasuratori);

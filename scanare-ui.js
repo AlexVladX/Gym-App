@@ -80,6 +80,7 @@ function pasAlegereScanare(eroare = '') {
       el('li', { text: 'Fotografiază de sus, cu toată farfuria în cadru și lumină bună.' }),
       el('li', { text: 'Alimentele separate se recunosc mai bine decât cele amestecate.' }),
       el('li', { text: 'Gramajele vor fi estimate din poză; le poți corecta înainte de orice salvare.' }),
+      el('li', { text: textConfidentialitate('scanare') }),
     ]),
   );
   butoaneScanare(buton({ text: 'Închide', tip: 'fantoma', onclick: inchideScanare }));
