@@ -206,3 +206,17 @@ test('diferențele față de țintele actuale', () => {
   assert.deepEqual(N.diferenteTinte({ kcal: 3330, proteine: 140 }, { kcal: 2670, proteine: 160, carbohidrati: 300 }), { kcal: -660, proteine: 20, carbohidrati: null });
   assert.deepEqual(N.diferenteTinte(null, { kcal: 2000 }), { kcal: null });
 });
+
+test('starea de acum folosește zilele până ieri, nu doar până în ajunul ultimei verificări', () => {
+  // azi sâmbătă, verificarea lunea: 12 zile notate până ieri; în fereastra veche (până duminică) ar fi intrat doar 7
+  const sambata = '2026-11-28';
+  const ieri = N.plusZileNecesar(sambata, -1);
+  const z = zile(12, 3000, ieri);
+  const m = cantariri(12, 80, { pana: ieri });
+  const ist = N.istoricNecesar({ zileNutritie: z, masuratori: m, azi: sambata, ziVerificare: 1 });
+  const acum = ist[ist.length - 1];
+  assert.equal(acum.data, '2026-11-23');   // data verificării (pentru „răspuns”)
+  assert.equal(acum.panaLa, ieri);          // dar datele până ieri
+  assert.equal(acum.zileValide, 12);
+  assert.equal(acum.stare, 'ok');
+});

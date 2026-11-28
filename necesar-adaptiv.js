@@ -189,16 +189,20 @@ function dataVerificarii(azi, ziVerificare = 1) {
 }
 
 // Istoricul săptămânal: necesarul la fiecare verificare din ultimele 26 de săptămâni (fereastra se termină în ziua
-// dinaintea verificării). Valoarea afișată se mișcă cu cel mult 150 kcal față de săptămâna dinainte; prima e cea calculată.
+// dinaintea verificării). Ultimul punct e starea de ACUM: fereastra se termină ieri (nu în ajunul ultimei verificări),
+// ca zilele notate de atunci să conteze imediat; `data` lui rămâne data verificării (pentru răspuns).
+// Valoarea afișată se mișcă cu cel mult 150 kcal față de punctul dinainte; prima e cea calculată.
 // Se recalculează de fiecare dată din date (nu se salvează), deci o zi corectată corectează și istoricul.
 function istoricNecesar({ zileNutritie, masuratori, azi, ziVerificare = 1, tintaKcal = 0, necesarFormula = null, saptamani = NECESAR.SAPTAMANI_ISTORIC }) {
   const ultima = dataVerificarii(azi, ziVerificare);
-  const serie = serieGreutate(masuratori, plusZileNecesar(ultima, -1));
+  const ieri = plusZileNecesar(azi, -1);
+  const serie = serieGreutate(masuratori, ieri);
   const rez = [];
   let anterior = null;
   for (let k = saptamani - 1; k >= 0; k--) {
     const data = plusZileNecesar(ultima, -7 * k);
-    const e = estimeazaNecesar({ zileNutritie, masuratori, panaLa: plusZileNecesar(data, -1), tintaKcal, necesarFormula, serie });
+    const panaLa = k === 0 ? ieri : plusZileNecesar(data, -1);
+    const e = estimeazaNecesar({ zileNutritie, masuratori, panaLa, tintaKcal, necesarFormula, serie });
     if (e.stare !== 'ok') { if (k === 0) rez.push({ data, ...e, afisat: anterior }); continue; }
     const afisat = anterior === null ? e.necesar : Math.min(anterior + NECESAR.PAS_MAXIM, Math.max(anterior - NECESAR.PAS_MAXIM, e.necesar));
     const r = { data, ...e, afisat: Math.round(afisat / 10) * 10, limitatPas: anterior !== null && Math.abs(afisat - e.necesar) > 0.5 };

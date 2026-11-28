@@ -207,6 +207,7 @@ function bifaZiIncompleta() {
     if (await salveazaZiua(zi)) notifica(input.checked ? 'Ziua nu intră în calculul necesarului.' : 'Ziua intră din nou în calculul necesarului.', 'info');
     else input.checked = !input.checked;
   } });
-  return el('label', { class: 'bifa-zi-incompleta' }, [input, el('span', { text: 'Ziua nu e notată complet' }),
-    el('span', { class: 'nota nota-mica', text: ' (nu intră în necesarul adaptiv)' })]);
+  // ca celelalte comutatoare din aplicație (stilul .comutator; o căsuță simplă ar lua stilul câmpurilor de text)
+  return el('label', { class: 'rand comutator bifa-zi-incompleta' }, [
+    el('span', {}, ['Ziua nu e notată complet', el('span', { class: 'nota nota-mica', text: ' — nu intră în necesarul adaptiv' })]), input]);
 }
