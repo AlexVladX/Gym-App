@@ -82,7 +82,32 @@ function verificaLimitaProprie(c, limita, azi) {
   return { cod: 'limita_proprie', message: `Ai atins limita ta de ${limita} scanări pe azi (o poți schimba din Setări → Scanarea meselor).` };
 }
 
+// Recuperarea meselor din istoricul scanărilor: istoricul se scrie doar când o masă scanată e adăugată într-o zi și stă
+// separat de zile, deci păstrează data, masa, ora, alimentele cu gramele și valorile, și id-ul intrării din zi.
+// Pentru fiecare scanare cu dată și masă: dacă ziua nu mai are intrarea (același id), o refacem, bifată ca mâncată.
+// Nu se atinge nimic din ce e deja în zi. zile: Map data → zi (sau lipsă). Întoarce Map data → [intrări de adăugat].
+function planRecuperareScanari(scanari, zile, { idNou, acum = Date.now() } = {}) {
+  const nzi = typeof intrareDinScanare === 'function' ? { intrareDinScanare } : require('./nutritie-zi.js');
+  const plan = new Map();
+  const vazute = new Set();
+  for (const s of [...(scanari || [])].sort((a, b) => a.creat - b.creat)) {
+    if (!s || !s.data || !s.masa || !Array.isArray(s.articole) || !s.articole.length) continue;
+    const id = s.idIntrare || (idNou ? idNou() : `r-${s.id}`);
+    if (vazute.has(id)) continue; // aceeași intrare scanată de două ori (ex. refolosită): o singură dată
+    vazute.add(id);
+    const zi = zile.get(s.data);
+    if (zi && Array.isArray(zi.mese) && zi.mese.some(i => i.id === id)) continue;
+    let intrare;
+    try { intrare = nzi.intrareDinScanare({ id, masa: s.masa, nume: s.nume, articole: s.articole, ora: s.ora, acum }); } catch (_) { continue; }
+    intrare.adaugat = s.creat || acum;
+    if (!plan.has(s.data)) plan.set(s.data, []);
+    plan.get(s.data).push(intrare);
+  }
+  return plan;
+}
+
 if (typeof module !== 'undefined') module.exports = {
+  planRecuperareScanari,
   OPTIUNI_POZE_SCANARE, PRET_INTRARE_SCANARE, PRET_IESIRE_SCANARE, curataInregistrareScanare, filtreazaScanari, limitaPozeScanare,
   comparaScanari, actualizeazaContorScanari, costEstimatScanari, verificaLimitaProprie,
 };
@@ -120,6 +145,55 @@ async function inregistreazaScanareInIstoric({ intrare, data, blob, tokeni }) {
   };
   try { await salveazaScanareIstoric(rec); } catch (err) { console.warn('Istoricul scanării nu a putut fi salvat', err); }
 }
+
+// Recuperarea meselor scanate în zilele lor (vezi planRecuperareScanari). Întâi o copie automată a datelor de acum.
+async function planRecuperareDinIstoric() {
+  const lista = await toateScanarileIstoric();
+  const date = [...new Set(lista.map(x => x.data).filter(Boolean))];
+  const zile = new Map();
+  for (const d of date) zile.set(d, await citesteZiNutritieSalvata(d));
+  return { plan: planRecuperareScanari(lista, zile, { idNou: typeof idNutritieNou === 'function' ? idNutritieNou : undefined }), zile };
+}
+async function recupereazaMeseDinScanari(dupa) {
+  let p;
+  try { p = await planRecuperareDinIstoric(); } catch (err) { console.error(err); notifica('Istoricul scanărilor nu a putut fi citit.', 'eroare'); return; }
+  const zileDeRefacut = [...p.plan.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  if (!zileDeRefacut.length) { notifica('Toate mesele din istoricul scanărilor sunt deja în zilele lor.', 'info'); return; }
+  const nr = zileDeRefacut.reduce((s, [, l]) => s + l.length, 0);
+  const da = await confirma({
+    titlu: 'Pui înapoi mesele scanate?',
+    text: `${plural(nr, 'masă scanată lipsește', 'mese scanate lipsesc')} din zilele lor. Le pun înapoi exact cum au fost salvate (masa, ora, alimentele și valorile), bifate ca mâncate. Ce e deja în zile nu se schimbă. Mesele adăugate de mână nu sunt în istoric.`,
+    ok: 'Pune-le înapoi',
+    continut: el('ul', { class: 'lista-recuperare' }, zileDeRefacut.map(([data, l]) => el('li', {}, [
+      el('strong', { text: afiseazaData(data) }),
+      el('span', { text: ` ${l.map(i => `${numeMasaRecuperare(i.masa)}: ${i.nume}`).join(' · ')} (${Math.round(l.reduce((s, i) => s + i.valoriPortie.kcal, 0)).toLocaleString('ro-RO')} kcal)` }),
+    ]))),
+  });
+  if (!da) return;
+  try { await salveazaInstantaneu('Înainte de recuperarea meselor scanate', await construiesteBackup({ cuPoze: false })); } catch (err) { console.warn(err); }
+  let puse = 0;
+  try {
+    for (const [data, intrari] of zileDeRefacut) {
+      const zi = (await citesteZiNutritieSalvata(data)) || { data, mese: [] };
+      const existente = new Set(zi.mese.map(i => i.id));
+      const noi = intrari.filter(i => !existente.has(i.id));
+      if (!noi.length) continue;
+      await salveazaZiNutritie({ ...zi, mese: ordoneazaDupaMasa([...zi.mese, ...noi]) });
+      puse += noi.length;
+    }
+  } catch (err) {
+    console.error(err);
+    notifica(mesajEroareSalvare(err, 'Mesele nu au putut fi puse înapoi.'), 'eroare');
+  }
+  notifica(`${plural(puse, 'masă pusă înapoi', 'mese puse înapoi')}.`, 'succes', 6000);
+  if (typeof semnaleazaModificare === 'function') semnaleazaModificare();
+  if (typeof ecranCurent !== 'undefined') {
+    if (ecranCurent === 'ecran-masa' && typeof randeazaAcasaMasa === 'function') randeazaAcasaMasa();
+    if (ecranCurent === 'ecran-nutritie' && typeof randeazaNutritie === 'function') randeazaNutritie();
+  }
+  if (dupa) dupa();
+}
+function numeMasaRecuperare(id) { return typeof numeMasa === 'function' ? numeMasa(id) : id; }
 
 // Pe primul ecran al scanării: ultimele 3 scanări.
 async function blocScanariRecente() {
@@ -166,6 +240,8 @@ async function deschideIstoricScanari(idDeschis = null) {
   const zona = el('div', { class: 'scan-istoric' });
   const alese = new Set();
   let cautare = '';
+  let lipsa = 0; // mese scanate care nu mai sunt în zilele lor (recuperare)
+  try { lipsa = [...(await planRecuperareDinIstoric()).plan.values()].reduce((s, l) => s + l.length, 0); } catch (err) { console.warn(err); }
   const d = deschideDialog({ titlu: 'Istoricul scanărilor', continut: zona, butoane: [], laAnulare: elibereaza });
   d.caseta.classList.add('dialog-scanare');
   const butoane = (...b) => d.caseta.querySelector('.dialog-butoane').replaceChildren(...b.filter(Boolean));
@@ -177,6 +253,10 @@ async function deschideIstoricScanari(idDeschis = null) {
     const cauta = el('input', { type: 'search', value: cautare, placeholder: 'Caută după masă sau aliment', 'aria-label': 'Caută în scanări' });
     cauta.addEventListener('input', () => { cautare = cauta.value; const poz = cauta.selectionStart; deseneazaLista(); const c = zona.querySelector('input[type=search]'); c.focus(); c.setSelectionRange(poz, poz); });
     zona.replaceChildren(...[
+      lipsa ? el('div', { class: 'conflicte-banda' }, [
+        el('span', { text: `${plural(lipsa, 'masă scanată nu mai e', 'mese scanate nu mai sunt')} în ziua ei.` }),
+        buton({ text: 'Pune înapoi', tip: 'principal', mic: true, onclick: () => d.inchide(() => { elibereaza(); recupereazaMeseDinScanari(); }) }),
+      ]) : null,
       lista.length ? cauta : null,
       !lista.length ? stareGoala({ icon: 'camera', titlu: 'Nicio scanare încă', text: 'Mesele fotografiate și adăugate în zi apar aici.' }) : null,
       lista.length && !filtrate.length ? el('p', { class: 'nota', text: 'Nicio scanare nu se potrivește căutării.' }) : null,
@@ -283,6 +363,10 @@ async function deseneazaSetariScanare() {
       : 'Costul estimat al lunii apare după prima scanare.' }),
     el('div', { class: 'scan-setari-butoane' }, [
       buton({ text: `Istoricul scanărilor${nrIstoric ? ` (${nrIstoric})` : ''}`, icon: 'istoric', tip: 'secundar', mic: true, lat: true, onclick: () => deschideIstoricScanari() }),
+      nrIstoric ? buton({ text: 'Pune înapoi în zile mesele scanate', icon: 'schimba', tip: 'secundar', mic: true, lat: true, onclick: async () => {
+        if (typeof incarcaNutritia === 'function') { try { await incarcaNutritia(); } catch (_) { /* fără nume de mese */ } }
+        recupereazaMeseDinScanari();
+      } }) : null,
       buton({ text: 'Șterge toate pozele scanărilor', icon: 'cos', tip: 'fantoma', mic: true, lat: true, onclick: async () => {
         if (!(await confirma({ titlu: 'Ștergi pozele scanărilor?', text: 'Se șterg toate pozele din istoricul scanărilor de pe acest telefon. Mesele și valorile lor rămân.', ok: 'Șterge pozele', pericol: true }))) return;
         const n = await stergePozeScanariIstoric(Infinity);

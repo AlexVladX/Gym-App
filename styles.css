@@ -5,7 +5,7 @@
 
 :root {
   /* Versiunea foii de stil. main.js o compară cu index.html ca să detecteze fișiere amestecate din cache. */
-  --versiune-css: "60";
+  --versiune-css: "61";
 
   /* Culori */
   --fundal: #0B0D10;
@@ -2257,3 +2257,5 @@ html[data-tema="deschisa"][data-mod="gym"] {
 .lista-istoric-tinte span { overflow-wrap: anywhere; }
 .necesar-progres .bara-fundal, .necesar-progres .bara { display: block; }
 .necesar-progres .bara-fundal { margin-bottom: 4px; }
+.lista-recuperare { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; font-size: 0.9rem; max-height: 40vh; overflow-y: auto; }
+.lista-recuperare li { overflow-wrap: anywhere; }

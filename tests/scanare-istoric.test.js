@@ -53,3 +53,33 @@ test('limita ta: blochează doar când azi ai atins-o (după numărul serverului
   assert.equal(H.verificaLimitaProprie(c, 5, '2026-11-27').cod, 'limita_proprie');
   assert.equal(H.verificaLimitaProprie(c, 5, '2026-11-28'), null, 'altă zi');
 });
+
+// Recuperarea meselor șterse din istoricul scanărilor.
+test('recuperare: fiecare scanare revine în ziua ei, la masa și ora ei, ca mâncată; ce există nu se dublează', () => {
+  const Z = require('../nutritie-zi.js');
+  const s1 = H.curataInregistrareScanare(rec());
+  const s2 = H.curataInregistrareScanare(rec({ id: 's-2', creat: 2000, masa: 'cina', ora: '20:10', nume: 'Ouă și mămăligă', idIntrare: 'u-2' }));
+  const s3 = H.curataInregistrareScanare(rec({ id: 's-3', creat: 3000, data: '2026-11-26', idIntrare: 'u-3' }));
+  const deja = H.curataInregistrareScanare(rec({ id: 's-4', creat: 4000, idIntrare: 'u-4' }));
+  const faraZi = H.curataInregistrareScanare(rec({ id: 's-5', data: '', idIntrare: 'u-5' }));
+  const dublura = H.curataInregistrareScanare(rec({ id: 's-6', creat: 5000, idIntrare: 'u-1' }));
+  const zile = new Map([['2026-11-27', { data: '2026-11-27', mese: [{ id: 'u-4', masa: 'pranz', nume: 'x' }], cafele: [{ id: 'c' }] }]]);
+  const plan = H.planRecuperareScanari([s3, s2, s1, deja, faraZi, dublura], zile, { acum: 9 });
+  assert.deepEqual([...plan.keys()].sort(), ['2026-11-26', '2026-11-27']);
+  const z27 = plan.get('2026-11-27');
+  assert.deepEqual(z27.map(i => i.id), ['u-1', 'u-2']);
+  const i = z27[0];
+  assert.equal(i.stare, 'complet');
+  assert.equal(i.masa, 'pranz');
+  assert.equal(i.ora, '13:05');
+  assert.equal(i.nume, 'Pui cu orez');
+  assert.equal(i.adaugat, 1000);
+  assert.equal(i.valoriPortie.kcal, 295);
+  assert.equal(i.scanare.articole.length, 2);
+  assert.ok(Z.curataIntrareMasa(i), 'intrarea refăcută trece validarea zilei');
+  assert.equal(z27[1].masa, 'cina');
+  assert.deepEqual(plan.get('2026-11-26').map(x => x.id), ['u-3']);
+  // a doua rulare, după ce intrările au fost puse înapoi: nimic de adăugat
+  const dupa = new Map([['2026-11-27', { data: '2026-11-27', mese: [...zile.get('2026-11-27').mese, ...z27] }], ['2026-11-26', { data: '2026-11-26', mese: plan.get('2026-11-26') }]]);
+  assert.equal(H.planRecuperareScanari([s1, s2, s3], dupa).size, 0);
+});
