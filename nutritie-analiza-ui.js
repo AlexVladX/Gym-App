@@ -67,7 +67,7 @@ async function randeazaAnalizaNutritie() {
     return;
   }
 
-  copii.push(cardRezumatAnaliza(a, tinte), cardZilnicAnaliza(a, tinte), cardMacroAnaliza(a, tinte), cardSaptamaniAnaliza(a, tinte),
+  copii.push(cardRezumatAnaliza(a, tinte), cardNecesarAnaliza(), cardZilnicAnaliza(a, tinte), cardMacroAnaliza(a, tinte), cardSaptamaniAnaliza(a, tinte),
     cardObiectiveAnaliza(a, tinte), cardConsecventaAnaliza(a));
   copii.push(el('p', { class: 'nota nota-sursa', text: 'Fiecare masă păstrează valorile din momentul în care a fost adăugată, așa că istoricul nu se schimbă dacă editezi sau ștergi rețeta. Mediile de „mâncat” se fac pe zilele în care ai notat ceva. Estimări, nu recomandări medicale.' }));
   const vizibile = copii.filter(Boolean);

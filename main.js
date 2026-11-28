@@ -25,8 +25,64 @@ let ecranInainteDeSetari = null;
 
 // ---------- Setările pe categorii (etapa 5) ----------
 // '' = lista categoriilor; altfel categoria deschisă (un „ecran” separat, cu „Înapoi” și intrare în istoric).
-const CATEGORII_SETARI = { cont: 'Cont și sincronizare', antrenament: 'Antrenament', progresie: 'Progresie', scanare: 'Scanarea meselor', aspect: 'Aspect', date: 'Date și backup', despre: 'Despre' };
+const CATEGORII_SETARI = { cont: 'Cont și sincronizare', antrenament: 'Antrenament', progresie: 'Progresie', scanare: 'Scanarea meselor', nutritie: 'Nutriție', aspect: 'Aspect', date: 'Date și backup', despre: 'Despre' };
 const NUME_TEME = { intunecata: 'Întunecată', deschisa: 'Deschisă', sistem: 'Ca sistemul' };
+
+// Setări → Nutriție (etapa 7): necesarul adaptiv și istoricul țintelor aplicate.
+function deseneazaSetariNecesar() {
+  const zona = $('set-necesar'), zIst = $('set-istoric-tinte');
+  if (!zona) return;
+  const n = curataNecesarAdaptiv(setari.necesarAdaptiv);
+  const scrie = modificari => {
+    setari.necesarAdaptiv = { ...curataNecesarAdaptiv(setari.necesarAdaptiv), ...modificari };
+    setari.necesarAdaptiv = curataNecesarAdaptiv(setari.necesarAdaptiv);
+    salveazaSetari(); deseneazaSetariNecesar(); afiseazaCategorieSetari();
+  };
+  const chipuri = (optiuni, activ, laAlegere, eticheta) => el('div', { class: 'chipuri chipuri-mici', role: 'radiogroup', 'aria-label': eticheta },
+    optiuni.map(([v, t]) => el('button', { type: 'button', role: 'radio', class: 'chip chip-mic' + (activ === v ? ' activ' : ''), 'aria-checked': String(activ === v), text: t, onclick: () => laAlegere(v) })));
+  const select = (optiuni, activ, laAlegere, eticheta) => {
+    const s = el('select', { 'aria-label': eticheta, onchange: () => laAlegere(s.value) },
+      optiuni.map(([v, t]) => el('option', { value: String(v), text: t, selected: String(v) === String(activ) })));
+    return s;
+  };
+  const procente = (min, max, pas) => { const r = []; for (let v = min; v <= max + 1e-9; v += pas) r.push(Math.round(v * 100) / 100); return r; };
+  const fp = v => String(v).replace('.', ',');
+  const copii = [
+    el('h2', { text: 'Necesar caloric adaptiv' }),
+    el('p', { class: 'nota', text: 'Din cântăririle din Corp și din ce bifezi ca mâncat, aplicația calculează cât ardei de fapt și îți propune o dată pe săptămână țintele potrivite. Țintele se schimbă doar dacă apeși „Aplică”.' }),
+    chipuri([[true, 'Pornit'], [false, 'Oprit']], n.pornit, v => scrie({ pornit: v }), 'Necesar adaptiv'),
+  ];
+  if (n.pornit) {
+    const r = RITM_OBIECTIV;
+    copii.push(
+      el('label', { class: 'camp mt' }, [el('span', { class: 'camp-eticheta', text: 'Ziua verificării' }),
+        select([1, 2, 3, 4, 5, 6, 0].map(z => [z, ZILE_SAPTAMANA_NUME[z][0].toUpperCase() + ZILE_SAPTAMANA_NUME[z].slice(1)]), n.ziVerificare, v => scrie({ ziVerificare: Number(v) }), 'Ziua verificării')]),
+      el('div', { class: 'grila-2' }, [
+        el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Ritm la masă musculară' }),
+          select(procente(r.masa.min, r.masa.max, 0.05).map(v => [v, `+${fp(v)}% pe săpt.`]), n.ritmMasa ?? r.masa.implicit, v => scrie({ ritmMasa: Number(v) }), 'Ritm la masă musculară')]),
+        el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Ritm la slăbire' }),
+          select(procente(r.slabire.min, r.slabire.max, 0.05).map(v => [v, `−${fp(v)}% pe săpt.`]), n.ritmSlabire ?? r.slabire.implicit, v => scrie({ ritmSlabire: Number(v) }), 'Ritm la slăbire')]),
+      ]),
+      el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: 'Proteine' }),
+        select([['', 'După obiectiv (2,0 / 1,8 / 2,2 g/kg)'], ...procente(1.6, 2.6, 0.1).map(v => [v, `${fp(v)} g/kg`])], n.proteinePeKg ?? '', v => {
+          const x = { ...curataNecesarAdaptiv(setari.necesarAdaptiv) };
+          if (v === '') delete x.proteinePeKg; else x.proteinePeKg = Number(v);
+          setari.necesarAdaptiv = x; salveazaSetari(); deseneazaSetariNecesar();
+        }, 'Proteine pe kg corp')]),
+      el('p', { class: 'nota nota-mica', text: 'Ritmul e procentul din greutate cu care vrei să crești sau să scazi pe săptămână; obiectivul (masă, menținere, slăbire) îl alegi la Ținte, în Ziua mea. Estimările sunt orientative, nu recomandări medicale.' }));
+  }
+  zona.replaceChildren(...copii);
+  const ist = curataIstoricTinte(setari.istoricTinte).slice().reverse();
+  const fmt = t => (t ? `${fmtNrSetari(t.kcal)} kcal${t.proteine ? ` · P ${t.proteine}` : ''}${t.carbohidrati != null ? ` · C ${t.carbohidrati}` : ''}${t.grasimi ? ` · G ${t.grasimi}` : ''}` : 'fără ținte');
+  zIst.replaceChildren(el('h2', { text: 'Istoricul țintelor' }), ist.length
+    ? el('ul', { class: 'lista-istoric-tinte' }, ist.slice(0, 12).map(x => el('li', {}, [
+      el('strong', { text: afiseazaData(x.data) }),
+      el('span', { text: `${fmt(x.vechi)} → ${fmt(x.noi)}` }),
+      x.necesar ? el('span', { class: 'nota nota-mica', text: `necesar estimat ${fmtNrSetari(x.necesar)} kcal` }) : null,
+    ])))
+    : el('p', { class: 'nota', text: 'Aici apar țintele aplicate din „Verificarea săptămânii”, cu valorile de dinainte.' }));
+}
+const fmtNrSetari = v => Math.round(v).toLocaleString('ro-RO');
 
 // Setări → Aspect: tema (Întunecată / Deschisă / Ca sistemul).
 function deseneazaSetareTema() {
@@ -52,6 +108,7 @@ function stariSetari() {
     progresie: `${setari.minRep}–${setari.maxRep} repetări · +${String(setari.pasKg).replace('.', ',')} kg · ${plural(setari.obiectivSaptamanal, 'antrenament', 'antrenamente')} pe săptămână`,
     scanare: `${setari.limitaScanari ? `${plural(setari.limitaScanari, 'scanare', 'scanări')} pe zi` : 'limita serverului'} · ${poze}`,
     date: zile === null ? 'Ultimul backup: niciodată' : `Ultimul backup: ${zile === 0 ? 'azi' : `acum ${plural(zile, 'zi', 'zile')}`}`,
+    nutritie: (() => { const n = curataNecesarAdaptiv(setari.necesarAdaptiv); return n.pornit ? `Necesar adaptiv pornit · verificarea ${ZILE_SAPTAMANA_NUME[n.ziVerificare]}` : 'Necesar adaptiv oprit'; })(),
     aspect: `Temă: ${(NUME_TEME[setari.tema] || NUME_TEME.intunecata).toLowerCase()}`,
     despre: `Versiunea ${document.body.dataset.versiune || ''}`,
   };
@@ -131,6 +188,7 @@ function arataEcran(id) {
   if (id === 'ecran-setari') {
     afiseazaCategorieSetari();
     deseneazaSetareTema();
+    deseneazaSetariNecesar();
     deseneazaCardCont();
     actualizeazaInfoBackup();
     deseneazaInstantanee();

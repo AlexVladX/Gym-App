@@ -226,6 +226,7 @@ function tipCanonic(text) {
 }
 
 async function reincarcaMasuratori() {
+  if (typeof kgReferintaNutritie !== 'undefined') kgReferintaNutritie = null; // g/kg din nutriție se recalculează (etapa 7)
   try {
     masuratoriCache = await toateMasuratorile();
   } catch (err) {

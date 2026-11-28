@@ -32,15 +32,18 @@ const NIVELURI_ACTIVITATE = [
   { id: 'extrem', nume: 'Extrem de activ', detaliu: 'muncă fizică grea și antrenamente zilnice', factor: 1.9 },
 ];
 
-// Obiectivul de nutriție: ajustarea caloriilor față de necesarul estimat și proteinele pe kg corp.
+// Obiectivul de nutriție: ajustarea caloriilor față de necesarul estimat și proteinele pe kg corp
+// (etapa 7: 2,0 / 1,8 / 2,2 g/kg, setabile în Setări → Nutriție).
 const SCOPURI_NUTRITIE = [
-  { id: 'masa', nume: 'Masă musculară', ajustare: 0.10, proteinePeKg: 1.8 },
-  { id: 'mentinere', nume: 'Menținere', ajustare: 0, proteinePeKg: 1.6 },
-  { id: 'slabire', nume: 'Slăbire', ajustare: -0.20, proteinePeKg: 2.0 },
+  { id: 'masa', nume: 'Masă musculară', ajustare: 0.10, proteinePeKg: 2.0 },
+  { id: 'mentinere', nume: 'Menținere', ajustare: 0, proteinePeKg: 1.8 },
+  { id: 'slabire', nume: 'Slăbire', ajustare: -0.20, proteinePeKg: 2.2 },
 ];
 
 const PROCENT_GRASIMI = 0.25;    // 25% din calorii
 const GRASIMI_MIN_PE_KG = 0.6;   // g/kg, minimul sub care nu coborâm grăsimile
+const GRASIMI_MAX_PROCENT = 0.35; // etapa 7: grăsimile nu trec de 35% din calorii
+const CARBO_MAX_PE_KG = 6;        // etapa 7: plafonul carbohidraților, g/kg
 const FIBRE_PE_1000_KCAL = 14;   // g (recomandarea Dietary Guidelines for Americans)
 const KCAL_MINIM = { m: 1500, f: 1200 };
 
@@ -61,13 +64,38 @@ function estimeazaTinte(date) {
   const limitat = kcal < minim;
   if (limitat) kcal = minim;
   kcal = rotunjesteLa(kcal, 10);
-  const proteine = Math.round(kg * scop.proteinePeKg);
-  const grasimi = Math.round(Math.max(kcal * PROCENT_GRASIMI / 9, kg * GRASIMI_MIN_PE_KG));
-  const carbohidrati = Math.max(0, Math.round((kcal - proteine * 4 - grasimi * 9) / 4));
-  const fibre = Math.round(kcal / 1000 * FIBRE_PE_1000_KCAL);
-  return { kcal, proteine, carbohidrati, grasimi, fibre,
+  const ppk = date.proteinePeKg >= 1.2 && date.proteinePeKg <= 3 ? date.proteinePeKg : scop.proteinePeKg;
+  const m = impartireMacronutrienti({ kcal, kg, proteinePeKg: ppk });
+  return { kcal, proteine: m.proteine, carbohidrati: m.carbohidrati, grasimi: m.grasimi, fibre: m.fibre,
     detalii: { bmr: Math.round(bmr), necesar: Math.round(necesar), factor: act.factor, ajustare: scop.ajustare,
-      proteinePeKg: scop.proteinePeKg, limitat } };
+      proteinePeKg: ppk, limitat, plafonCarbo: m.plafonCarbo } };
+}
+
+// Etapa 7: împărțirea caloriilor pe macronutrienți (aceeași la estimarea din profil și la necesarul adaptiv).
+// Proteine = g/kg; grăsimi = 25% din calorii (cel puțin 0,6 g/kg); carbohidrați = restul, dar cel mult 6 g/kg.
+// Ce depășește plafonul de carbohidrați se împarte în mod egal între proteine și grăsimi; grăsimile nu trec de 35%
+// din calorii (ce nu mai încape la grăsimi merge la proteine). Calorii puține: întâi scad grăsimile spre minimul lor.
+function impartireMacronutrienti({ kcal, kg, proteinePeKg }) {
+  let proteine = kg * proteinePeKg;
+  let grasimi = Math.max(kcal * PROCENT_GRASIMI / 9, kg * GRASIMI_MIN_PE_KG);
+  let carbohidrati = (kcal - proteine * 4 - grasimi * 9) / 4;
+  if (carbohidrati < 0) {
+    grasimi = Math.max(kg * GRASIMI_MIN_PE_KG, (kcal - proteine * 4) / 9);
+    carbohidrati = Math.max(0, (kcal - proteine * 4 - grasimi * 9) / 4);
+  }
+  const plafon = kg * CARBO_MAX_PE_KG;
+  let plafonCarbo = false;
+  if (carbohidrati > plafon) {
+    plafonCarbo = true;
+    const surplus = (carbohidrati - plafon) * 4; // kcal de mutat
+    carbohidrati = plafon;
+    const grasimiMax = kcal * GRASIMI_MAX_PROCENT / 9;
+    const laGrasimi = Math.min(surplus / 2, Math.max(0, (grasimiMax - grasimi) * 9));
+    grasimi += laGrasimi / 9;
+    proteine += (surplus - laGrasimi) / 4;
+  }
+  return { proteine: Math.round(proteine), carbohidrati: Math.round(carbohidrati), grasimi: Math.round(grasimi),
+    fibre: Math.round(kcal / 1000 * FIBRE_PE_1000_KCAL), plafonCarbo };
 }
 
 // Țintele salvate: fiecare câmp e opțional (poți urmări doar caloriile și proteinele, de ex.).
@@ -222,6 +250,8 @@ function curataZiNutritie(z) {
   const mese = Array.isArray(z.mese) ? z.mese.map(curataIntrareMasa).filter(Boolean) : [];
   const vazute = new Set();
   const rez = { ...z, mese: mese.filter(i => (vazute.has(i.id) ? false : (vazute.add(i.id), true))) };
+  // Etapa 7: „Ziua nu e notată complet” (nu intră în calculul necesarului adaptiv).
+  if ('incompleta' in z) { if (z.incompleta === true) rez.incompleta = true; else delete rez.incompleta; }
   // Cafeaua (Faza 4): câmpuri opționale; zilele vechi nu le au.
   if ('cafele' in z || 'cafeleSarite' in z) {
     const C = calculeCafea();
@@ -558,7 +588,7 @@ if (typeof module !== 'undefined') {
   module.exports = { masaDupaOra, recenteNutritie, copieIntrareRecenta, cheieRecent,
     STARI_MASA, NIVELURI_ACTIVITATE, SCOPURI_NUTRITIE, LIMITE_TINTE, FIBRE_PE_1000_KCAL,
     curataSnapshotScanare, intrareDinScanare, scaleazaArticolScanat, articolScanatEditabil, modificaIntrareScanata, sumaArticoleScanate,
-    estimeazaTinte, curataTinte, valoriZero, intrareMasa, valoriPlanificateIntrare, portiiMancateIntrare,
+    estimeazaTinte, impartireMacronutrienti, KCAL_MINIM, CARBO_MAX_PE_KG, GRASIMI_MAX_PROCENT, curataTinte, valoriZero, intrareMasa, valoriPlanificateIntrare, portiiMancateIntrare,
     valoriMancateIntrare, totaluriZi, totaluriPeMasa, ramasDinTinte, progresTinta, schimbaStareIntrare,
     curataIntrareMasa, curataZiNutritie, varstaDinAn,
     intrareModificabila, alegeRetetaAleatorie, genereazaPlanZi, regenereazaIntrare, ajusteazaIngredienteIntrare,

@@ -15,19 +15,19 @@
 //
 // La fiecare publicare: mărește VERSIUNE aici, în index.html (?v=… și data-versiune)
 // și în styles.css (--versiune-css). Toate trei trebuie să fie egale.
-const VERSIUNE = '59';
+const VERSIUNE = '60';
 const CACHE = `jurnal-v${VERSIUNE}`;
 const FISIERE_FIXE = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-180.png', './icon-192.png', './icon-512.png'];
 // Nucleul (încărcat la pornire) și modulele de nutriție + scanare (încărcate la cerere, vezi incarcare.js):
 // toate se salvează la instalare, ca ambele moduri să meargă offline după prima vizită.
 const FISIERE_VERSIONATE = [
   'styles.css', 'tema.js', 'db.js', 'validare.js', 'exercitii.js', 'analiza.js', 'statistici.js', 'corp-calcul.js', 'realizari.js',
-  'nutritie-calcul.js', 'nutritie-zi.js', 'cafea.js', 'nutritie-generator.js', 'nutritie-cumparaturi.js', 'catalog.js', 'figuri.js', 'ui.js', 'navigare.js', 'incarcare.js', 'grafice.js',
+  'nutritie-calcul.js', 'nutritie-zi.js', 'necesar-adaptiv.js', 'cafea.js', 'nutritie-generator.js', 'nutritie-cumparaturi.js', 'catalog.js', 'figuri.js', 'ui.js', 'navigare.js', 'incarcare.js', 'grafice.js',
   'setari.js', 'timer.js', 'sesiune.js', 'corp.js', 'progres.js', 'realizari-ui.js', 'istoric.js',
   'biblioteca.js', 'scanare-istoric.js', 'cloud-config.js', 'sincron.js', 'cloud.js', 'cloud-ui.js', 'vendor/supabase.js', 'backup.js', 'siguranta.js', 'acasa.js', 'main.js',
   // la cerere (incarcare.js → SCRIPTURI_NUTRITIE)
   'nutritie-alimente.js', 'nutritie-retete.js', 'nutritie-analiza.js', 'nutritie-imagini.js',
-  'nutritie.js', 'nutritie-zi-ui.js', 'cafea-ui.js', 'nutritie-saptamana-ui.js', 'nutritie-analiza-ui.js', 'nutritie-cumparaturi-ui.js',
+  'nutritie.js', 'nutritie-zi-ui.js', 'necesar-adaptiv-ui.js', 'cafea-ui.js', 'nutritie-saptamana-ui.js', 'nutritie-analiza-ui.js', 'nutritie-cumparaturi-ui.js',
   'scanare.js', 'scanare-baze.js', 'scanare-ui.js', 'acasa-mealprep.js',
 ].map(f => `./${f}?v=${VERSIUNE}`);
 // Fotografiile rețetelor și ilustrațiile stau în cache-uri separate, care NU se șterg la actualizarea aplicației.

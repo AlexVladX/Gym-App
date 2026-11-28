@@ -16,9 +16,9 @@ test('estimare Mifflin-St Jeor: bărbat 80 kg, 180 cm, 30 de ani, moderat, menț
   assert.equal(e.detalii.bmr, 1780);
   assert.equal(e.detalii.necesar, 2759);
   assert.equal(e.kcal, 2760);
-  assert.equal(e.proteine, 128);                       // 1,6 g/kg
+  assert.equal(e.proteine, 144);                       // 1,8 g/kg (etapa 7)
   assert.equal(e.grasimi, Math.round(2760 * 0.25 / 9)); // 77
-  assert.equal(e.carbohidrati, Math.round((2760 - 128 * 4 - 77 * 9) / 4));
+  assert.equal(e.carbohidrati, Math.round((2760 - 144 * 4 - 2760 * 0.25) / 4)); // 373 g = 4,7 g/kg, sub plafonul de 6
   assert.equal(e.fibre, Math.round(2.76 * 14));
   // energia macronutrienților ≈ caloriile (diferență doar din rotunjire)
   assert.ok(Math.abs(e.proteine * 4 + e.carbohidrati * 4 + e.grasimi * 9 - e.kcal) <= 6);
@@ -29,9 +29,9 @@ test('estimare: femeie, masă musculară și slăbire; limita minimă', () => {
   const bmr = 10 * 60 + 6.25 * 165 - 5 * 28 - 161; // 1330,25
   const masa = z.estimeazaTinte({ ...baza, scop: 'masa' });
   assert.equal(masa.kcal, Math.round(bmr * 1.375 * 1.1 / 10) * 10);
-  assert.equal(masa.proteine, 108); // 1,8 g/kg
+  assert.equal(masa.proteine, 120); // 2,0 g/kg (etapa 7)
   const slab = z.estimeazaTinte({ ...baza, scop: 'slabire' });
-  assert.equal(slab.proteine, 120); // 2,0 g/kg
+  assert.equal(slab.proteine, 132); // 2,2 g/kg (etapa 7)
   // −20% din 1829 = 1463 > BMR și > 1200: nu e limitat
   assert.equal(slab.detalii.limitat, false);
   // sedentară, scundă, slăbire: −20% ar coborî sub metabolismul bazal → se oprește la BMR

@@ -295,7 +295,9 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
 - **Estimarea țintelor** (orientativă): metabolism bazal Mifflin-St Jeor (10·kg + 6,25·cm − 5·ani + 5 / −161),
   × factor de activitate (1,2 / 1,375 / 1,55 / 1,725 / 1,9), ajustat pe obiectiv (masă +10%, slăbire −20%, menținere 0),
   fără să coboare sub metabolismul bazal la slăbire și sub 1500 kcal (bărbați) / 1200 kcal (femei).
-  Proteine 1,8 / 1,6 / 2,0 g/kg; grăsimi 25% din calorii (minim 0,6 g/kg); fibre 14 g la 1000 kcal; restul carbohidrați.
+  Proteine 2,0 / 1,8 / 2,2 g/kg (din etapa 7; setabile); grăsimi 25% din calorii (minim 0,6 g/kg); fibre 14 g la 1000 kcal;
+  restul carbohidrați, cel mult 6 g/kg (ce depășește trece jumătate la proteine, jumătate la grăsimi, grăsimi ≤ 35%) —
+  `impartireMacronutrienti()`, aceeași și la necesarul adaptiv.
   Greutatea = media pe 7 zile din Corp; înălțimea din Corp; vârsta din anul nașterii. Toate țintele se pot edita manual.
 
 
@@ -558,3 +560,27 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
   2.122.0 și se publică și `sterge-cont`.
 - Teste: tests/sterge-cont.test.js, tests/etapa6.test.js, `randuriDeAdus` în tests/sincron.test.js; în browser qa44.py
   (CSP fără încălcări prin toată aplicația, ștergerea contului cap-coadă, salvare întârziată prinsă de marjă).
+
+## Etapa 7, funcția 1: necesarul caloric adaptiv (v60)
+
+- **Calculul** (`necesar-adaptiv.js`, logică pură, nucleu): fereastra de 28 de zile până ieri. Zile valide = ceva bifat ca mâncat,
+  nemarcate „nu e notată complet” (`zi.incompleta`), cu cel puțin 50% din țintă (fără țintă: din mediana zilelor notate).
+  Greutatea: o valoare pe zi, cântăririle aberante (vârf izolat de peste 3% față de ambele vecine) scoase, zilele lipsă
+  interpolate, tendința = medie exponențială α = 0,1 (pentru grafic). Ritmul = panta dreptei prin valorile zilnice dintre prima
+  și ultima cântărire din fereastră (media exponențială întârzie ~9 zile și l-ar subestima).
+  `necesar = media kcal − ritm (kg/zi) × 7.700` (aproximare), plafonat (ritm ≤ 1,5 kg/săpt., necesar 1.000–6.000) cu semnalare,
+  combinat cu formula (Mifflin-St Jeor × activitate) cu ponderea datelor = zile valide / 28 (max. 95%).
+  Minim 10 zile valide, 6 cântăriri, interval ≥ 7 zile; altfel „insuficient” cu ce lipsește.
+- **Stabilitate**: `istoricNecesar()` recalculează la fiecare verificare săptămânală din ultimele 26 de săptămâni; valoarea afișată
+  se mișcă cu cel mult 150 kcal față de săptămâna dinainte. Nu se salvează nimic calculat.
+- **Ținta**: necesar + ritmul obiectivului (masă +0,25%/săpt., 0,1–0,5; slăbire −0,5%, 0,25–1; menținere 0) × greutate × 7.700 / 7,
+  nu sub `KCAL_MINIM`; macronutrienții cu `impartireMacronutrienti()`.
+- **Date noi**: `zileNutritie[].incompleta` (opțional, fără migrare); setări `necesarAdaptiv { pornit, ziVerificare, ritmMasa?, ritmSlabire?,
+  proteinePeKg?, raspunsLa? }` și `istoricTinte [{ data, vechi, noi, necesar }]` (max. 52). Intră în backup și în sincronizare
+  (setările se sincronizează ca un singur rând; obiectele se înlocuiesc întregi, nu se modifică pe loc: SETARI_IMPLICITE e partajat).
+- **Interfață** (`necesar-adaptiv-ui.js`, încărcat cu nutriția): cardul „Verificarea săptămânii” pe Acasă (Nutriție) când
+  `verificareDeAratat()`; „Aplică” (cu „Anulează” în notificare) / „Păstrez țintele actuale” / „Cum s-a calculat?” (`pasiCalcul()`).
+  Analiză: cardul „Necesarul adaptiv” cu două grafice (necesar pe săptămâni peste kcal zilnice; tendința peste cântăriri).
+  Ziua mea: g/kg lângă grame, bifa „Ziua nu e notată complet” (doar dacă funcția e pornită și ziua nu e în viitor).
+  Setări → Nutriție: pornit/oprit, ziua verificării, ritmurile, proteinele pe kg, istoricul țintelor.
+- Teste: tests/necesar-adaptiv.test.js; în browser qa45.py.

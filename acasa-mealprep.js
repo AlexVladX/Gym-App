@@ -24,8 +24,10 @@ async function randeazaAcasaMasa() {
   const tinte = setari.tinteNutritie;
   // Etapa 4: primul card e „Azi” (calorii, proteine, următoarea masă, „+ Adaugă”). Fotografierea e în foaia „+”,
   // iar Rețete / Cumpărături / Planificator / Analiză sunt în bara de jos (fără plăci dublate aici).
+  const dataVerificare = verificareDeAratat({ azi, setare: setari.necesarAdaptiv }); // etapa 7: o dată pe săptămână
   const carduri = [
     cardAziMasa(ziAzi, tinte),
+    dataVerificare ? cardVerificareNecesar(dataVerificare) : null,
     cardMeseleZilei(ziAzi),
     cardCafeaAcasa(ziAzi),
     cardSaptamanaMasa(zile, zileSapt, tinte, azi),

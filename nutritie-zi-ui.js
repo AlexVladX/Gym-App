@@ -52,6 +52,7 @@ async function salveazaZiua(zi, mesajEroare = 'Modificarea nu a putut fi salvat�
 
 async function randeazaZiNutritie({ reincarca = false } = {}) {
   if (reincarca || ziNutritie.data !== dataZiNutritie) await incarcaZiNutritie(dataZiNutritie);
+  if (kgReferintaNutritie === null) await actualizeazaKgReferinta(); // pentru g/kg lângă grame (etapa 7)
   deseneazaNavZi();
   deseneazaSumarZi();
   deseneazaCafeaZi();
@@ -132,6 +133,7 @@ function deseneazaSumarZi() {
       el('span', { class: 'zi-macro-valori' }, [
         el('b', { text: `${fmtNr(mancat[camp])}` }),
         t ? ` / ${fmtNr(t)} g` : ' g',
+        t && camp !== 'fibre' && kgReferintaNutritie ? el('span', { class: 'nota', text: ` · ${textGPeKg(t)}` }) : null,
         el('span', { class: 'nota', text: ` · plan ${fmtNr(planificat[camp])} g` }),
       ]),
       baraDubla(mancat[camp], planificat[camp], t, clasa),
@@ -148,8 +150,10 @@ function deseneazaSumarZi() {
     numar ? ` · mâncate: ${terminate} din ${numar}` : '',
   ]));
   if (tinte && tinte.estimat) {
-    continut.push(el('p', { class: 'nota nota-mica', text: 'Țintele sunt o estimare din profil, nu o recomandare medicală. Le poți ajusta oricând.' }));
+    continut.push(el('p', { class: 'nota nota-mica', text: 'Țintele sunt o estimare, nu o recomandare medicală. Le poți ajusta oricând.' }));
   }
+  const bifa = bifaZiIncompleta(); // etapa 7
+  if (bifa) continut.push(bifa);
   // Analiza are un singur loc (fila „Analiză”); aici doar un link text discret.
   continut.push(el('button', { type: 'button', class: 'link-discret', text: 'Vezi analiza nutriției →', onclick: () => arataFilaNutritie('analiza') }));
   $('zi-sumar').replaceChildren(...continut);
@@ -985,14 +989,20 @@ function dupaSalvareTinte() {
 }
 
 // Câmpurile celor 5 ținte (calorii obligatorii, restul opționale), cu verificarea limitelor la citire.
-function campuriTinte(valori) {
+function campuriTinte(valori, kg = kgReferintaNutritie) {
   const campuri = {};
   const camp = (id, eticheta) => {
     const [min, max] = LIMITE_TINTE[id];
     const input = el('input', { type: 'number', inputmode: 'numeric', step: '1', min: String(min), max: String(max),
       value: valori && valori[id] != null ? String(valori[id]) : '', placeholder: id === 'kcal' ? 'obligatoriu' : 'opțional' });
     campuri[id] = input;
-    return el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: eticheta }), input]);
+    // etapa 7: g/kg lângă grame (proteine, carbohidrați, grăsimi)
+    const gkg = ['proteine', 'carbohidrati', 'grasimi'].includes(id) && kg > 0 ? el('span', { class: 'nota nota-mica camp-gkg' }) : null;
+    if (gkg) {
+      const actual = () => { const v = Number(String(input.value).replace(',', '.')); gkg.textContent = v > 0 ? textGPeKg(v, kg) : ''; };
+      input.addEventListener('input', actual); actual();
+    }
+    return el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: eticheta }), input, gkg]);
   };
   const grila = el('div', { class: 'grila-2' }, [camp('kcal', 'Calorii (kcal)'), camp('proteine', 'Proteine (g)'),
     camp('carbohidrati', 'Carbohidrați (g)'), camp('grasimi', 'Grăsimi (g)'), camp('fibre', 'Fibre (g)')]);
@@ -1118,15 +1128,16 @@ async function deschideGhidTinte() {
     const explicatie = el('p', { class: 'nota nota-mica' });
     let f = null;
     const calculeaza = () => {
-      const e = estimeazaTinte({ kg: st.kg, inaltimeCm: st.inaltime, varsta: varstaDinAn(st.an), sex: st.sex, activitate: st.activitate, scop: st.scop });
-      f = campuriTinte(e);
+      const e = estimeazaTinte({ kg: st.kg, inaltimeCm: st.inaltime, varsta: varstaDinAn(st.an), sex: st.sex, activitate: st.activitate, scop: st.scop,
+        proteinePeKg: curataNecesarAdaptiv(setari.necesarAdaptiv).proteinePeKg });
+      f = campuriTinte(e, st.kg);
       f.estimat = true;
       for (const input of Object.values(f.campuri)) input.addEventListener('input', () => { f.estimat = false; });
       valori.replaceChildren(f.grila);
       const dt = e.detalii;
       explicatie.textContent = `Metabolism bazal ≈ ${fmtNr(dt.bmr)} kcal (Mifflin-St Jeor), necesar ≈ ${fmtNr(dt.necesar)} kcal (× ${String(dt.factor).replace('.', ',')})` +
         `${dt.ajustare ? `, ${dt.ajustare > 0 ? '+' : '−'}${Math.abs(dt.ajustare * 100)}% pentru obiectiv` : ''}. ` +
-        `Proteine ${String(dt.proteinePeKg).replace('.', ',')} g/kg, grăsimi 25% din calorii, fibre 14 g la 1000 kcal, restul carbohidrați.` +
+        `Proteine ${String(dt.proteinePeKg).replace('.', ',')} g/kg, grăsimi 25% din calorii, fibre 14 g la 1000 kcal, restul carbohidrați (cel mult 6 g/kg${dt.plafonCarbo ? '; surplusul a trecut la proteine și grăsimi' : ''}).` +
         (dt.limitat ? ' Caloriile au fost ridicate la minimul sigur pentru o estimare generală.' : '');
     };
     const deseneazaScop = () => scopBloc.replaceChildren(chipuri(SCOPURI_NUTRITIE.map(x => [x.id, x.nume]), st.scop, id => { st.scop = id; deseneazaScop(); calculeaza(); }, 'Obiectiv'));
