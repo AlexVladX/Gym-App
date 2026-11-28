@@ -169,16 +169,40 @@ async function mutaInCos(numeStore, id, eticheta = '') {
   });
 }
 
+// Felurile de mâncare scoase dintr-o zi (golire sau ștergerea unui fel mâncat) stau 30 de zile în „Șterse recent”
+// ca { tip: 'meseZi', inregistrare: { data, mese: [...] } }. Ziua în sine rămâne (cu cafelele și restul).
+function puneMeseInCos(data, mese, eticheta = '') {
+  if (!mese || !mese.length) return Promise.resolve(null);
+  return cere('cos', 'readwrite', st => st.add({ tip: 'meseZi', inregistrare: { data, mese }, sters: Date.now(), eticheta }));
+}
+// Restaurarea lor: se adaugă înapoi în zi doar felurile care nu sunt deja acolo (după id); nimic din zi nu se suprascrie.
+function meseDeRestauratInZi(zi, mese) {
+  const exista = new Set(((zi && zi.mese) || []).map(i => i.id));
+  return (mese || []).filter(i => i && !exista.has(i.id));
+}
+
 // Pune înregistrarea înapoi. Dacă între timp id-ul ei e ocupat (de ex. după o restaurare), primește un id nou.
 async function restaureazaDinCos(idCos) {
   const bd = await baza();
   return new Promise((rezolva, respinge) => {
     let element = null;
-    const tranzactie = bd.transaction([...STORES_CU_COS, 'cos'], 'readwrite');
+    const tranzactie = bd.transaction([...STORES_CU_COS, 'zileNutritie', 'cos'], 'readwrite');
     const cos = tranzactie.objectStore('cos');
     const citire = cos.get(idCos);
     citire.onsuccess = () => {
       element = citire.result;
+      if (element && element.tip === 'meseZi') {
+        const { data, mese } = element.inregistrare || {};
+        const zile = tranzactie.objectStore('zileNutritie');
+        const cz = zile.get(data);
+        cz.onsuccess = () => {
+          const zi = cz.result || { data, mese: [] };
+          const noi = meseDeRestauratInZi(zi, mese);
+          zile.put({ ...zi, mese: [...(zi.mese || []), ...noi], modificat: Date.now() });
+          cos.delete(idCos);
+        };
+        return;
+      }
       if (!element || !STORES_CU_COS.includes(element.tip)) { element = null; return; }
       const st = tranzactie.objectStore(element.tip);
       const rec = { ...element.inregistrare };
@@ -200,7 +224,7 @@ async function restaureazaDinCos(idCos) {
 
 async function toateDinCos() {
   const lista = await cere('cos', 'readonly', st => st.getAll());
-  return lista.filter(x => x && STORES_CU_COS.includes(x.tip) && x.inregistrare).sort((a, b) => b.sters - a.sters);
+  return lista.filter(x => x && (STORES_CU_COS.includes(x.tip) || x.tip === 'meseZi') && x.inregistrare).sort((a, b) => b.sters - a.sters);
 }
 
 function stergeDinCos(idCos) {

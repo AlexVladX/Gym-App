@@ -584,3 +584,17 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
   Ziua mea: g/kg lângă grame, bifa „Ziua nu e notată complet” (doar dacă funcția e pornită și ziua nu e în viitor).
   Setări → Nutriție: pornit/oprit, ziua verificării, ritmurile, proteinele pe kg, istoricul țintelor.
 - Teste: tests/necesar-adaptiv.test.js; în browser qa45.py.
+
+## Protecția meselor mâncate și recuperarea (v61–v63)
+
+- **Incidentul din 28.11.2026**: în Planificator, „−” roșu de lângă caloriile zilei (adăugat în v48) golea ziua dintr-o atingere +
+  confirmare, inclusiv mesele mâncate (cafelele rămâneau). Mesele scanate au fost refăcute din istoricul scanărilor.
+- **Recuperare** (v61): `planRecuperareScanari()` (scanare-istoric.js) — istoricul scanărilor stă separat de zile și se scrie doar la
+  adăugarea în zi (inclusiv „din alimente”), cu data, masa, ora, alimentele și id-ul intrării. „Pune înapoi” (în Istoricul scanărilor
+  și în Setări → Scanarea meselor) refăce intrările care lipsesc, bifate ca mâncate, fără să atingă ce e în zi; întâi o copie automată.
+- **Protecție** (v63): în Planificator nu mai există golire dintr-o atingere; meniul „…” al zilei are „Copiază în altă zi”,
+  „Scoate mesele neîncepute” (mesele mâncate rămân) și, separat, „Șterge toate mesele, inclusiv cele mâncate…” cu confirmare.
+  În Ziua mea, „−” pe o masă mâncată cere confirmare. Mesele mâncate șterse stau 30 de zile în „Șterse recent”
+  (`{ tip: 'meseZi', inregistrare: { data, mese } }`, `puneMeseInCos`); restaurarea le adaugă înapoi în zi doar pe cele care lipsesc
+  (`meseDeRestauratInZi`), fără să suprascrie ce s-a adăugat între timp.
+- Necesarul adaptiv (v62): starea de acum folosește zilele până ieri; „Ziua nu e notată complet” e comutator.

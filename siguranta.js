@@ -52,7 +52,7 @@ if (typeof module !== 'undefined') {
 }
 
 // ====================== În pagină ======================
-const NUME_TIP_COS = { sesiuni: 'Antrenament', masuratori: 'Măsurătoare', poze: 'Poză', rutine: 'Rutină',
+const NUME_TIP_COS = { meseZi: 'Mese din', sesiuni: 'Antrenament', masuratori: 'Măsurătoare', poze: 'Poză', rutine: 'Rutină',
   alimente: 'Aliment', retete: 'Rețetă', pozeRetete: 'Poză de rețetă', planuriNutritie: 'Plan de mese' };
 
 // După o ștergere: mesaj cu „Anulează" care pune înregistrarea înapoi.
@@ -85,6 +85,11 @@ async function dupaRestaurareDinCos(tip) {
   else if (tip === 'poze') await reincarcaPoze();
   else if (tip === 'rutine') randeazaBiblioteca();
   else if (tip === 'alimente' || tip === 'retete' || tip === 'pozeRetete' || tip === 'planuriNutritie') await reincarcaNutritiaDacaE();
+  else if (tip === 'meseZi') {
+    if (typeof semnaleazaModificare === 'function') semnaleazaModificare(); // restaurarea scrie direct în bază: o trimitem în cont
+    if (typeof ziNutritie !== 'undefined' && ziNutritie) ziNutritie = { data: '', mese: [] }; // ziua afișată se recitește
+    await reincarcaNutritiaDacaE();
+  }
 }
 
 function descriereElementCos(x) {
@@ -93,6 +98,7 @@ function descriereElementCos(x) {
   if (x.tip === 'sesiuni') return `din ${afiseazaData(r.data)}`;
   if (x.tip === 'masuratori') return `${r.tip}: ${formatNumar(r.valoare)} ${unitateTip(r.tip)}, ${afiseazaData(r.data)}`;
   if (x.tip === 'poze') return `din ${afiseazaData(r.data)}`;
+  if (x.tip === 'meseZi') return `${afiseazaData(r.data)}: ${(r.mese || []).map(i => i.nume).join(', ')}`;
   return r.nume || '';
 }
 
@@ -122,7 +128,7 @@ async function deseneazaCos() {
         try { await restaureazaDinCos(x.id); } catch (err) { console.error(err); notifica(mesajEroareSalvare(err, 'Nu s-a putut restaura.'), 'eroare'); return; }
         await dupaRestaurareDinCos(x.tip);
         await deseneazaCos();
-        notifica(`${NUME_TIP_COS[x.tip]} restaurat${['masuratori', 'poze', 'rutine', 'retete', 'pozeRetete'].includes(x.tip) && x.tip !== 'planuriNutritie' ? 'ă' : ''}.`, 'succes');
+        notifica(x.tip === 'meseZi' ? 'Felurile de mâncare au fost puse înapoi în zi.' : `${NUME_TIP_COS[x.tip]} restaurat${['masuratori', 'poze', 'rutine', 'retete', 'pozeRetete'].includes(x.tip) && x.tip !== 'planuriNutritie' ? 'ă' : ''}.`, 'succes');
       } }),
       buton({ icon: 'cos', tip: 'fantoma', eticheta: `Șterge definitiv: ${NUME_TIP_COS[x.tip]} ${descriereElementCos(x)}`, onclick: async () => {
         const da = await confirma({ titlu: 'Ștergi definitiv?', text: `${NUME_TIP_COS[x.tip]} ${descriereElementCos(x)} nu mai poate fi recuperat(ă) decât dintr-un backup.`, ok: 'Șterge definitiv', pericol: true });

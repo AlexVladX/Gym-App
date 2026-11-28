@@ -708,9 +708,14 @@ function deschideConsumPartial(i) {
 }
 
 async function scoateIntrarea(i) {
+  // O masă deja mâncată face parte din istoricul caloriilor: se șterge doar cu confirmare și ajunge în „Șterse recent”.
+  const mancata = i.stare !== 'neinceput';
+  if (mancata && !(await confirma({ titlu: `Ștergi „${i.nume}”?`, ok: 'Șterge', pericol: true,
+    text: 'E notată ca mâncată, deci dispare din istoricul caloriilor. O poți pune înapoi din Setări → Date și backup → Șterse recent, 30 de zile.' }))) return;
   const pozitie = ziNutritie.mese.findIndex(x => x.id === i.id);
   const zi = { ...ziNutritie, mese: ziNutritie.mese.filter(x => x.id !== i.id) };
   if (!(await salveazaZiua(zi))) return;
+  if (mancata) puneMeseInCos(zi.data, [i]).catch(err => console.warn(err));
   randeazaZiNutritie();
   const data = zi.data;
   notifica(`${i.nume} a fost scoasă din ziua aceasta.`, 'info', 6000, { text: 'Anulează', onclick: async () => {

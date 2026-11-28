@@ -310,8 +310,9 @@ function deseneazaZileSapt() {
       ]));
     }).flat();
     return el('section', { class: 'card sapt-zi' + (data === azi ? ' azi' : '') + (trecuta ? ' trecuta' : ''), 'aria-label': `${ZILE_LUNG[k]} ${z} ${LUNI_ANULUI[l - 1]}` }, [
-      t.numar ? el('button', { type: 'button', class: 'btn-sterge-rapid', 'aria-label': `Șterge toate felurile de mâncare din ${ZILE_LUNG[k].toLowerCase()}`, title: 'Golește ziua',
-        onclick: () => golesteZiSapt(data, ZILE_LUNG[k]) }, [el('span', { 'aria-hidden': 'true', text: '−' })]) : null,
+      // Fără buton roșu de golire lângă calorii (ștergea dintr-o atingere și mesele mâncate): acțiunile sunt în „…”.
+      t.numar ? buton({ icon: 'puncte', tip: 'fantoma', clasa: 'sapt-zi-meniu', eticheta: `Mai multe pentru ${ZILE_LUNG[k].toLowerCase()}`,
+        onclick: () => meniuZiSapt(data, ZILE_LUNG[k]) }) : null,
       el('div', { class: 'card-cap' }, [
         el('h2', {}, [`${ZILE_LUNG[k]} `, el('span', { class: 'nota', text: `${z} ${LUNI_ANULUI[l - 1].slice(0, 3)}` }), data === azi ? el('span', { class: 'eticheta-tip', text: 'azi' }) : null]),
         el('span', { class: 'nota sapt-kcal', text: t.numar ? `${fmtNr(t.planificat.kcal)}${tinte ? ` / ${fmtNr(tinte.kcal)}` : ''} kcal` : '' }),
@@ -330,20 +331,38 @@ function deseneazaZileSapt() {
 }
 
 // Golește o zi: șterge toate felurile de mâncare (cafelele rămân). Cu confirmare, apoi „Anulează” câteva secunde.
-async function golesteZiSapt(data, numeZi) {
+// Meniul „…” al unei zile: copiere și golire. Golirea obișnuită scoate doar ce n-ai început; mesele mâncate se șterg
+// doar dintr-o opțiune separată, cu confirmare, și ajung 30 de zile în „Șterse recent”.
+function meniuZiSapt(data, numeZi) {
   const zi = ziSapt(data);
-  const n = zi.mese.length;
-  if (!n) return;
-  const mancate = zi.mese.filter(i => i.stare !== 'neinceput').length;
-  const ok = await confirma({
-    titlu: `Golești ${numeZi.toLowerCase()}?`, ok: 'Șterge tot', pericol: true,
-    text: `Se ${n === 1 ? 'șterge felul de mâncare' : `șterg toate cele ${numarDe(n)} feluri de mâncare`} din ${numeZi.toLowerCase()}${mancate ? `, inclusiv ${mancate === 1 ? (n === 1 ? 'deși e notat ca mâncat' : 'unul notat ca mâncat') : `${mancate} notate ca mâncate`}` : ''}. Cafelele rămân. Poți anula imediat după.`,
-  });
-  if (!ok) return;
-  try { await salveazaZileSapt({ [data]: { ...zi, mese: [] } }); }
-  catch (err) { notifica(mesajEroareSalvare(err, 'Ziua nu a putut fi golită.'), 'eroare'); return; }
+  const neincepute = zi.mese.filter(i => i.stare === 'neinceput').length;
+  const mancate = zi.mese.length - neincepute;
+  alegeDinLista({ titlu: `${numeZi}, ${afiseazaData(data)}`, optiuni: [
+    { text: 'Copiază în altă zi', icon: 'copiaza', actiune: () => copiazaZiua(data) },
+    neincepute ? { text: `Scoate mesele neîncepute (${neincepute})`, icon: 'cos', detaliu: mancate ? 'Mesele mâncate rămân.' : 'Cafelele rămân.', actiune: () => golesteZiSapt(data, numeZi) } : null,
+    mancate ? { text: 'Șterge toate mesele, inclusiv cele mâncate…', icon: 'cos', pericol: true, detaliu: 'Cu confirmare; le găsești 30 de zile în Șterse recent.', actiune: () => golesteZiSapt(data, numeZi, { siMancate: true }) } : null,
+  ].filter(Boolean) });
+}
+
+async function golesteZiSapt(data, numeZi, { siMancate = false } = {}) {
+  const zi = ziSapt(data);
+  const scoase = siMancate ? zi.mese : zi.mese.filter(i => i.stare === 'neinceput');
+  if (!scoase.length) return;
+  const mancate = scoase.filter(i => i.stare !== 'neinceput').length;
+  if (mancate) {
+    const ok = await confirma({
+      titlu: `Ștergi și mesele mâncate din ${numeZi.toLowerCase()}?`, ok: `Șterge ${scoase.length === 1 ? 'masa' : `toate cele ${numarDe(scoase.length)}`}`, pericol: true,
+      text: `${plural(mancate, 'fel de mâncare notat ca mâncat dispare', 'feluri de mâncare notate ca mâncate dispar')} din istoricul caloriilor${scoase.length > mancate ? ` (plus ${plural(scoase.length - mancate, 'fel neînceput', 'feluri neîncepute')})` : ''}. Cafelele rămân. Le poți pune înapoi din Setări → Date și backup → Șterse recent, 30 de zile.`,
+    });
+    if (!ok) return;
+  }
+  const ramase = zi.mese.filter(i => !scoase.includes(i));
+  try {
+    await salveazaZileSapt({ [data]: { ...zi, mese: ramase } });
+    if (mancate) await puneMeseInCos(data, scoase);
+  } catch (err) { notifica(mesajEroareSalvare(err, 'Ziua nu a putut fi golită.'), 'eroare'); return; }
   await randeazaSaptamana();
-  notificaCuAnulare(`${numeZi}: ${plural(n, 'fel de mâncare șters', 'feluri de mâncare șterse')}.`, { [data]: zi }, 'info');
+  notificaCuAnulare(`${numeZi}: ${plural(scoase.length, 'fel de mâncare scos', 'feluri de mâncare scoase')}.`, { [data]: zi }, 'info');
 }
 
 // Zilele în care se poate copia: din săptămâna afișată și cea următoare, de azi încolo, fără ziua sursă.
