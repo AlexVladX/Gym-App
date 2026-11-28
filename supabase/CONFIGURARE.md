@@ -78,3 +78,25 @@ O singură dată:
 - Căutările în USDA / Open Food Facts: maximum 15 pe cerere și 200 pe oră pe cont (în memoria funcției).
 - Pozele nu se urcă nicăieri: poza micșorată merge doar la Gemini (varianta plătită, fără folosire la antrenare) și nu e păstrată pe server. Istoricul scanărilor, cu miniaturile, stă doar pe telefon și se șterge după setare (Setări → Scanarea meselor).
 - Răspunsul AI e verificat după schemă; AI-ul nu dă valori nutriționale.
+
+## Ștergerea contului (etapa 6)
+
+Funcția `supabase/functions/sterge-cont` se publică singură, la fel ca „scanare” (workflow-ul „Funcții Supabase”, cu același secret
+`SUPABASE_ACCESS_TOKEN`). Nu are nevoie de alte setări: cheia de serviciu cu care șterge contul o pune Supabase automat în funcție;
+ea nu ajunge niciodată în aplicație sau pe GitHub.
+
+Ce face, în ordine: verifică tokenul utilizatorului și adresa scrisă de el pentru confirmare → șterge toate fișierele din dosarul
+contului (pozele de progres, pozele rețetelor, copiile de siguranță) → șterge contul. Rândurile sincronizate și contorul de scanări
+dispar odată cu contul (`on delete cascade`). Dacă un pas eșuează, contul nu se șterge și se poate încerca din nou.
+
+## CSP (regula de securitate a paginii)
+
+`index.html` are o regulă CSP care lasă pagina să încarce doar fișierele ei și să trimită date doar la adresa proiectului.
+**Dacă schimbi proiectul Supabase** (altă adresă în `cloud-config.js`), schimbă adresa și în `connect-src` din `index.html`;
+testul `tests/etapa6.test.js` pică dacă cele două nu se potrivesc.
+
+## Testele pe GitHub
+
+Workflow-ul „Teste” (`.github/workflows/teste.yml`) rulează `node --test tests/*.test.js` la fiecare urcare pe main și verifică
+dacă versiunea e aceeași în `sw.js`, `index.html` și `styles.css`. Rezultatul apare în fila Actions a depozitului.
+Supabase CLI din workflow-ul de publicare e fixat la o versiune anume (nu „latest”); o schimbi manual când vrei să-l actualizezi.

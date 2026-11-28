@@ -23,7 +23,11 @@ jobs:
       - uses: supabase/setup-cli@v1
         if: env.ARE_TOKEN == '1'
         with:
-          version: latest
+          version: 2.122.0 # fixat: o versiune nouă a CLI nu poate strica publicarea pe neașteptate (se schimbă manual)
       - name: Publică „scanare”
         if: env.ARE_TOKEN == '1'
         run: supabase functions deploy scanare --project-ref ibxqtjxlhywkvejbizqk --no-verify-jwt --yes
+      # Verifică singură tokenul utilizatorului (ca „scanare”); folosește cheia de serviciu pusă automat de Supabase.
+      - name: Publică „sterge-cont”
+        if: env.ARE_TOKEN == '1'
+        run: supabase functions deploy sterge-cont --project-ref ibxqtjxlhywkvejbizqk --no-verify-jwt --yes

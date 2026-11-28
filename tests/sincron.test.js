@@ -106,3 +106,23 @@ test('marca de timp „modificat” diferită pe două dispozitive nu e conflict
   assert.equal(r.date.modificat, 300);
   assert.deepEqual(r.date.mese.map(m => [m.id, m.stare]), [['1', 'complet'], ['2', 'neinceput']]);
 });
+
+// Etapa 6: marja de rev — din rândurile ușoare se aduc doar cele pe care telefonul nu le are.
+test('randuriDeAdus: doar ce lipsește sau e mai nou, fără dubluri, în ordinea rev', () => {
+  const { randuriDeAdus } = require('../sincron.js');
+  const harta = new Map([
+    ['sesiuni|a', { versiune: 3 }],
+    ['sesiuni|b', { versiune: 1 }],
+  ]);
+  const r = randuriDeAdus([
+    { colectie: 'sesiuni', cheie: 'a', versiune: 3, rev: 10 }, // știut
+    { colectie: 'sesiuni', cheie: 'a', versiune: 2, rev: 5 },  // mai vechi decât ce știm
+    { colectie: 'sesiuni', cheie: 'b', versiune: 2, rev: 12 }, // mai nou
+    { colectie: 'sesiuni', cheie: 'c', versiune: 1, rev: 8 },  // lipsește (salvarea întârziată)
+    { colectie: 'sesiuni', cheie: 'c', versiune: 1, rev: 8 },  // dublură
+    { colectie: 'necunoscuta', cheie: 'x', versiune: 1, rev: 9 },
+    null,
+  ], harta);
+  assert.deepEqual(r.map(x => `${x.cheie}@${x.rev}`), ['c@8', 'b@12']);
+  assert.deepEqual(randuriDeAdus([], harta), []);
+});

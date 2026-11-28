@@ -541,3 +541,20 @@ nu doar în CSS, ca să rămână corecte chiar fără foaia de stil.
 - **Catalog.** „Aparat pentru adductori” trece de la Cvadricepși la Fese; „Îndreptări românești” de la Fese la Femurali. Exercițiile proprii nu se schimbă.
 - `formatNumar` afișează cu virgulă zecimală (79,4 kg).
 - Teste: tests/etapa5.test.js; în browser qa43.py.
+
+## Îmbunătățiri — Etapa 6: ștergerea contului, teste pe GitHub, CSP, sincronizare cu marjă (v59)
+
+- **Ștergerea contului.** Setări → Cont → „Șterge contul”: dialog periculos, confirmare prin adresa contului. `contStergere()` (cloud.js)
+  așteaptă să se termine o sincronizare în curs, cheamă funcția `sterge-cont`, apoi golește harta de sincronizare și meta (legătura
+  cu contul) și deconectează. Datele de pe telefon rămân. Funcția: `supabase/functions/sterge-cont` (logica testabilă în `logica.js`:
+  confirmare, toate fișierele din `<id>/…` pe toate nivelurile, ștergere în loturi de 100, apoi contul; un pas eșuat oprește tot).
+- **Sincronizare cu marjă.** `MARJA_REV = 1000`: la fiecare tragere se citesc ușor (colectie, cheie, versiune, rev) rândurile cu rev
+  în (cursor − 1000, cursor]; `randuriDeAdus()` (sincron.js) alege doar ce harta nu știe în versiunea aceea, iar acelea se aduc întregi
+  (`randuriDupaRev`). Motiv: rev-ul se ia la începutul salvării, dar rândul devine vizibil la sfârșit, deci poate apărea în urma
+  cursorului. În același ciclu, o versiune a unui rând se procesează o singură dată (deduplicare).
+- **CSP** în `index.html`: `script-src 'self'`, `style-src 'self'`, `connect-src` doar proiectul Supabase; fără stiluri inline:
+  `el()` pune `style` prin CSSOM (`e.style.cssText`). Plus `<meta name="description">`.
+- **GitHub Actions:** `teste.yml` (testele + versiunea la fel peste tot, Node 22); în `supabase-functii.yml` Supabase CLI e fixat la
+  2.122.0 și se publică și `sterge-cont`.
+- Teste: tests/sterge-cont.test.js, tests/etapa6.test.js, `randuriDeAdus` în tests/sincron.test.js; în browser qa44.py
+  (CSP fără încălcări prin toată aplicația, ștergerea contului cap-coadă, salvare întârziată prinsă de marjă).

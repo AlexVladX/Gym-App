@@ -21,6 +21,11 @@ const sinc = {
 const CHEIE_META_SINCRON = 'sincronCloud';
 const LOT_TRIMITERE = 100;
 const PAGINA_TRAGERE = 500;
+// Marja de siguranță la tragere (etapa 6): numărul „rev” se ia când începe salvarea, dar rândul devine vizibil abia când
+// salvarea se termină. O salvare mare de pe alt telefon poate deveni vizibilă DUPĂ ce cursorul a trecut de numerele ei.
+// De aceea, la fiecare ciclu se reverifică ultimele MARJA_REV numere de dinaintea cursorului (doar cheie + versiune),
+// iar rândurile care lipsesc se aduc întregi. ≥ 2 × lotul maxim al funcției salveaza_inregistrari (500).
+const MARJA_REV = 1000;
 const MAX_COPII_CLOUD = 10;
 
 // Adresa proiectului: doar „https://<proiect>.supabase.co”. Dacă s-a lipit o adresă cu ceva după
@@ -104,6 +109,13 @@ function adaptorSupabase(client) {
     async trage(cursor, limita) {
       return verifica(await db('inregistrari').select('colectie,cheie,date,sters,versiune,rev').gt('rev', cursor).order('rev', { ascending: true }).limit(limita));
     },
+    // Doar cheia și versiunea rândurilor cu rev în (dela, panaLa] — pentru verificarea marjei (puține date).
+    async versiuni(dela, panaLa, limita) {
+      return verifica(await db('inregistrari').select('colectie,cheie,versiune,rev').gt('rev', dela).lte('rev', panaLa).order('rev', { ascending: true }).limit(limita));
+    },
+    async randuriDupaRev(revuri) {
+      return verifica(await db('inregistrari').select('colectie,cheie,date,sters,versiune,rev').in('rev', revuri).order('rev', { ascending: true }));
+    },
     async numara() {
       const { count, error } = await db('inregistrari').select('cheie', { count: 'exact', head: true }).eq('sters', false);
       if (error) throw error;
@@ -118,7 +130,7 @@ function adaptorSupabase(client) {
       const status = response ? response.status : 0;
       // Fără { cod, mesaj } răspunsul nu vine din funcția noastră (ex. funcția nu e publicată → 404).
       const strain = det && !det.cod ? (det.message || det.msg || det.error || '') : '';
-      const e = new Error((det && det.mesaj) || (status === 404 ? 'Funcția „scanare” nu e publicată în Supabase.' : '')
+      const e = new Error((det && det.mesaj) || (status === 404 ? `Funcția „${nume}” nu e publicată în Supabase.` : '')
         || (status ? `Serverul a răspuns cu eroarea ${status}${strain ? ` (${String(strain).slice(0, 120)})` : ''}.` : '') || error.message || 'Eroare la server.');
       e.cod = (det && det.cod) || (status === 404 ? 'configurare' : (semnal && semnal.aborted ? 'anulat' : (error.name === 'FunctionsFetchError' ? 'retea' : 'eroare')));
       e.status = status;
@@ -208,6 +220,21 @@ async function contAutentificare(email, parola) {
 }
 async function contResetareParola(email) { await initializeazaAdaptor(); return sinc.adaptor.reseteazaParola(email); }
 async function contSchimbaParola(parola) { await initializeazaAdaptor(); return sinc.adaptor.schimbaParola(parola); }
+// Etapa 6: ștergerea definitivă a contului (funcția „sterge-cont” de pe server: pozele și copiile din cloud, apoi contul,
+// cu rândurile sincronizate). Datele de pe telefon rămân; legătura cu contul se uită, ca un cont nou să pornească curat.
+async function contStergere(confirmare) {
+  await initializeazaAdaptor();
+  if (!sinc.utilizator) throw new Error('neautentificat');
+  clearTimeout(sinc.programat);
+  for (let i = 0; sinc.ruleaza && i < 300; i++) await new Promise(ok => setTimeout(ok, 100)); // nu ștergem în timpul unei sincronizări
+  await sinc.adaptor.functie('sterge-cont', { confirmare });
+  await golesteStareaSincron();
+  scrieMetaSincron({ dispozitiv: citesteMetaSincron().dispozitiv });
+  try { await sinc.adaptor.deconecteaza(); } catch (_) { /* sesiunea nu mai e valabilă oricum */ }
+  sinc.utilizator = null;
+  actualizeazaTexteConfidentialitate();
+  seteazaStareSincron('deconectat');
+}
 async function contDeconectare() {
   if (sinc.adaptor) await sinc.adaptor.deconecteaza();
   sinc.utilizator = null;
@@ -473,16 +500,42 @@ async function trageDinCloud() {
   let cursor = meta.cursor || 0;
   let schimbari = 0;
   const harta = await citesteHarta();
+  const vazute = new Set(); // deduplicare în același ciclu: o versiune a unui rând se procesează o singură dată
+  const proceseaza = async rand => {
+    const id = `${rand.colectie}|${rand.cheie}|${rand.versiune}`;
+    if (vazute.has(id)) return 0;
+    vazute.add(id);
+    return proceseazaRand(rand, harta);
+  };
+  if (cursor > 0) schimbari += await verificaMarja(cursor, harta, proceseaza);
   for (;;) {
     const randuri = await sinc.adaptor.trage(cursor, PAGINA_TRAGERE);
     for (const rand of randuri) {
-      schimbari += await proceseazaRand(rand, harta);
+      schimbari += await proceseaza(rand);
       cursor = Math.max(cursor, rand.rev);
       meta = { ...citesteMetaSincron(), cursor };
       scrieMetaSincron(meta);
     }
     if (randuri.length < PAGINA_TRAGERE) break;
   }
+  return schimbari;
+}
+
+// Rândurile din marjă pe care telefonul nu le are încă (sau le are într-o versiune mai veche); cele știute se sar.
+async function verificaMarja(cursor, harta, proceseaza) {
+  const dela = Math.max(0, cursor - MARJA_REV);
+  let lipsa;
+  if (sinc.adaptor.versiuni && sinc.adaptor.randuriDupaRev) {
+    const usoare = await sinc.adaptor.versiuni(dela, cursor, MARJA_REV);
+    const revuri = randuriDeAdus(usoare, harta).map(x => x.rev);
+    lipsa = [];
+    for (let i = 0; i < revuri.length; i += 100) lipsa.push(...await sinc.adaptor.randuriDupaRev(revuri.slice(i, i + 100)));
+  } else {
+    // adaptor fără citirea ușoară: aducem marja întreagă și păstrăm doar ce lipsește
+    lipsa = randuriDeAdus((await sinc.adaptor.trage(dela, MARJA_REV)).filter(x => x.rev <= cursor), harta);
+  }
+  let schimbari = 0;
+  for (const rand of lipsa) schimbari += await proceseaza(rand);
   return schimbari;
 }
 

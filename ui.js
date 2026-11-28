@@ -9,6 +9,8 @@ function el(tag, props = {}, copii = []) {
     if (valoare === undefined || valoare === null || valoare === false) continue;
     if (cheie === 'text') e.textContent = valoare;
     else if (cheie.startsWith('on')) e.addEventListener(cheie.slice(2), valoare);
+    // Stilurile prin CSSOM, nu ca atribut: regula de securitate a paginii (CSP, etapa 6) blochează atributele style.
+    else if (cheie === 'style') e.style.cssText = valoare;
     else e.setAttribute(cheie, valoare === true ? '' : valoare);
   }
   for (const c of copii) if (c !== null && c !== undefined && c !== false) e.append(c);
@@ -274,7 +276,7 @@ function textConfidentialitate(context = 'general') {
   const cont = u ? `în contul tău${u.email ? ` (${u.email})` : ''}` : '';
   switch (context) {
     case 'stergere':
-      return u ? `Datele se salvează pe telefon și ${cont}. „Șterge toate datele” golește doar acest telefon și te deconectează; datele din cont rămân.`
+      return u ? `Datele se salvează pe telefon și ${cont}. „Șterge toate datele” golește doar acest telefon și te deconectează; datele din cont rămân (contul se șterge din Setări → Cont și sincronizare).`
         : 'Datele stau doar pe acest telefon și nu sunt trimise nicăieri.';
     case 'poze':
       return u ? `Pozele se salvează pe telefon și ${cont} (micșorate la cel mult 1280 px) și intră în backup.`

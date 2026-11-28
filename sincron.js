@@ -187,6 +187,21 @@ function deTrimis(locale, harta, blocate = new Set()) {
   return lot;
 }
 
+// Din rândurile marjei (doar colectie, cheie, versiune, rev): cele pe care harta nu le știe în versiunea lor sau una mai nouă.
+// Colecțiile necunoscute se sar; o cheie apărută de mai multe ori se ia o singură dată, în versiunea cea mai mare.
+function randuriDeAdus(randuri, harta) {
+  const cele = new Map();
+  for (const r of randuri || []) {
+    if (!r || !DEF_SINCRON[r.colectie]) continue;
+    const k = `${r.colectie}|${r.cheie}`;
+    const h = harta.get(k);
+    if (h && h.versiune >= r.versiune) continue;
+    const ant = cele.get(k);
+    if (!ant || r.versiune > ant.versiune) cele.set(k, r);
+  }
+  return [...cele.values()].sort((a, b) => a.rev - b.rev);
+}
+
 // ---------- Ce facem cu un rând venit din cloud ----------
 // local: forma din cloud a înregistrării de pe telefon (sau null dacă nu există); h: intrarea din hartă (sau undefined).
 // Întoarce: { actiune: 'ignora' } | { actiune: 'aplica' } (scrie varianta din cloud) |
@@ -205,5 +220,5 @@ function decideRand(def, rand, local, h) {
 
 if (typeof module !== 'undefined') {
   module.exports = { COLECTII_SINCRON, DEF_SINCRON, SETARI_LOCALE, jsonStabil, amprenta, uidDinContinut, cheieInregistrare, caleFisier,
-    dateCloud, amprentaCloud, egale, combinaCampuri, combinaListaDupaId, combinaInregistrare, deTrimis, decideRand };
+    dateCloud, amprentaCloud, egale, combinaCampuri, combinaListaDupaId, combinaInregistrare, deTrimis, decideRand, randuriDeAdus };
 }

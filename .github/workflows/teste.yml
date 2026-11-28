@@ -1,0 +1,28 @@
+# Rulează testele (tests/*.test.js) la fiecare urcare pe main și la fiecare propunere de modificare (pull request).
+# Nu are nevoie de niciun secret și nu publică nimic; dacă un test pică, apare cu roșu în fila Actions.
+name: Teste
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  teste:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Versiunea e aceeași peste tot (sw.js, index.html, styles.css)
+        run: |
+          V=$(grep -oP "const VERSIUNE = '\K[0-9]+" sw.js)
+          grep -q "data-versiune=\"$V\"" index.html || { echo "::error::data-versiune din index.html nu e $V"; exit 1; }
+          grep -q -- "--versiune-css: \"$V\"" styles.css || { echo "::error::--versiune-css din styles.css nu e $V"; exit 1; }
+          if grep -oP '\?v=\K[0-9]+' index.html | grep -vqx "$V"; then echo "::error::în index.html există ?v= diferit de $V"; exit 1; fi
+          echo "Versiunea $V"
+      - name: Teste
+        run: node --test tests/*.test.js

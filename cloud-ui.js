@@ -58,6 +58,8 @@ function deseneazaCardCont() {
       buton({ text: 'Verifică datele din cont', tip: 'fantoma', mic: true, onclick: verificaAcum }),
       buton({ text: 'Ieși din cont', tip: 'fantoma', mic: true, onclick: iesiDinCont }),
     ]),
+    el('div', { class: 'separator-pericol' }),
+    buton({ text: 'Șterge contul', icon: 'cos', tip: 'pericol', mic: true, onclick: deschideStergereCont }),
     el('p', { class: 'nota nota-mica', text: 'Datele tale stau în contul tău (Supabase, server în UE dacă ai ales așa la crearea proiectului); doar tu le poți citi. Pe acest telefon rămân și fără internet.' }),
   ];
   card.replaceChildren(...copii.filter(Boolean));
@@ -113,6 +115,40 @@ async function iesiDinCont() {
   if (!da) return;
   await contDeconectare().catch(err => notifica(mesajEroareCloud(err), 'eroare'));
   deseneazaCardCont();
+}
+
+// Etapa 6: ștergerea contului. Confirmarea: utilizatorul scrie adresa contului (verificată și pe server).
+function deschideStergereCont() {
+  if (!sinc.utilizator) return;
+  const email = sinc.utilizator.email || '';
+  const camp = el('input', { type: 'email', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', inputmode: 'email', 'aria-label': 'Adresa contului, pentru confirmare' });
+  const mesaj = el('p', { class: 'nota', role: 'status' });
+  const btn = buton({ text: 'Șterge contul definitiv', tip: 'pericol', onclick: async () => {
+    if (camp.value.trim().toLowerCase() !== email.toLowerCase()) { mesaj.textContent = 'Scrie exact adresa contului, ca să confirmi.'; camp.focus(); return; }
+    btn.disabled = true;
+    mesaj.textContent = 'Se șterge contul…';
+    try {
+      await contStergere(camp.value.trim());
+      d.inchide();
+      deseneazaCardCont();
+      if (typeof afiseazaCategorieSetari === 'function') afiseazaCategorieSetari();
+      notifica('Contul a fost șters. Datele de pe acest telefon au rămas.', 'succes', 6000);
+    } catch (err) {
+      btn.disabled = false;
+      mesaj.textContent = err && err.cod === 'confirmare_gresita' ? 'Adresa scrisă nu este cea a contului.' : mesajEroareCloud(err);
+    }
+  } });
+  const d = deschideDialog({
+    titlu: 'Ștergi contul?',
+    pericol: true,
+    continut: el('div', { class: 'formular' }, [
+      el('p', { class: 'dialog-text', text: `Se șterg definitiv contul ${email} și tot ce e în el: datele sincronizate, pozele și copiile de siguranță din cloud. Nu se poate anula.` }),
+      el('p', { class: 'dialog-text', text: 'Datele de pe acest telefon rămân. Pe celelalte telefoane legate de cont rămân și ele, dar nu se mai sincronizează.' }),
+      el('label', { class: 'camp' }, [el('span', { class: 'camp-eticheta', text: `Scrie adresa contului (${email}) ca să confirmi` }), camp]),
+      mesaj,
+    ]),
+    butoane: [buton({ text: 'Renunță', tip: 'fantoma', onclick: () => d.inchide() }), btn],
+  });
 }
 
 async function verificaAcum() {
